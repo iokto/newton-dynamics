@@ -335,7 +335,7 @@ class BasicVehicleEntity: public DemoEntity
 		m_controller->SetSteering(steering);
 
 		// add vehicle brakes
-		CustomVehicleControllerComponentBrake* const brakes = new CustomVehicleControllerComponentBrake (m_controller, VIPER_TIRE_BRAKE_TORQUE);
+		CustomVehicleControllerComponentBrake* const brakes = new CustomVehicleControllerComponentBrake (m_controller, VIPER_TIRE_BRAKE_TORQUE * 0.5f);
 		brakes->AddBrakeTire (leftFrontTire);
 		brakes->AddBrakeTire (rightFrontTire);
 		brakes->AddBrakeTire (leftRearTire);
