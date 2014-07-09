@@ -28,6 +28,7 @@ class CustomVehicleControllerBodyState
 	public:
 	CUSTOM_JOINTS_API dFloat GetMass () const;
 	CUSTOM_JOINTS_API const dMatrix& GetMatrix () const;
+	CUSTOM_JOINTS_API const dMatrix& GetLocalMatrix () const;
 	CUSTOM_JOINTS_API const dVector& GetCenterOfMass () const;
 
 	protected:
