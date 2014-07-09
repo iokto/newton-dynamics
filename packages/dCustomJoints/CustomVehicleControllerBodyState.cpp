@@ -54,6 +54,11 @@ const dMatrix& CustomVehicleControllerBodyState::GetMatrix () const
 	return m_matrix;
 }
 
+const dMatrix& CustomVehicleControllerBodyState::GetLocalMatrix () const
+{
+	return m_localFrame;
+}
+
 const dVector& CustomVehicleControllerBodyState::GetCenterOfMass () const
 {
 	return m_globalCentreOfMass;
