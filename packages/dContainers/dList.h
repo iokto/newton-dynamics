@@ -518,7 +518,6 @@ void dListAllocator<T>::Prefetch ()
 {
 	int sizeInBytes = sizeof (typename dList<T, dListAllocator<T> >::dListNode);
 	for (int i = 0; i < D_MAX_ENTRIES_IN_FREELIST; i ++) {
-		//dFreeListNode* const data = (dFreeListNode*) new char[sizeInBytes];
 		dFreeListNode* const data = (dFreeListNode*) dContainersAlloc::Alloc (sizeInBytes);
 		data->m_count = i + 1; 
 		data->m_next = m_freeListNode; 
@@ -532,7 +531,6 @@ void dListAllocator<T>::Flush ()
 	for (int i = 0; m_freeListNode && (i < D_MAX_ENTRIES_IN_FREELIST); i ++) {
 		dFreeListNode* const ptr = m_freeListNode;
 		m_freeListNode = m_freeListNode->m_next;
-		//delete[] (char*) ptr;
 		dContainersAlloc::Free (ptr);
 	}
 }
