@@ -13,9 +13,9 @@
 #ifndef _D_MESH_H_
 #define _D_MESH_H_
 
-
-
 class DemoMesh;
+class DemoEntityManager;
+
 class DemoSubMesh
 {
 	public:
@@ -26,6 +26,7 @@ class DemoSubMesh
 	void AllocIndexData (int indexCount);
 	void OptimizeForRender(const DemoMesh* const mesh) const;
 	
+	void SetOpacity(dFloat opacity);
 
 	int m_indexCount;
 	unsigned *m_indexes;
@@ -35,6 +36,7 @@ class DemoSubMesh
 	dVector m_ambient;
 	dVector m_diffuse;
 	dVector m_specular;
+	dFloat m_opacity;
 	//char m_textureName[D_NAME_STRING_LENGTH];
 	dString  m_textureName;
 };
@@ -47,7 +49,7 @@ class DemoMesh: public dList<DemoSubMesh>, virtual public dClassInfo
 	DemoMesh(const char* const name);
 	DemoMesh(NewtonMesh* const mesh);
 	DemoMesh(const dScene* const scene, dScene::dTreeNode* const meshNode);
-	DemoMesh(const char* const name, const NewtonCollision* const collision, const char* const texture0, const char* const texture1, const char* const texture2);
+	DemoMesh(const char* const name, const NewtonCollision* const collision, const char* const texture0, const char* const texture1, const char* const texture2, dFloat opacity = 1.0f);
 	DemoMesh(const char* const name, dFloat* const elevation, int size, dFloat cellSize, dFloat texelsDensity, int tileSize);
 
 	using dClassInfo::operator new;
@@ -59,16 +61,18 @@ class DemoMesh: public dList<DemoSubMesh>, virtual public dClassInfo
 	virtual const dString& GetName () const;
 	virtual const dString& GetTextureName (const DemoSubMesh* const subMesh) const;
 
-	virtual void Render ();
+    virtual void RenderTransparency () const;
+	virtual void Render (DemoEntityManager* const scene);
 	virtual void RenderNormals ();
 
+	void OptimizeForRender();
 	NewtonMesh* CreateNewtonMesh(NewtonWorld* const workd, const dMatrix& meshMatrix);
 
 	protected:
 	virtual ~DemoMesh();
 
 	dAddRtti(dClassInfo,DOMMY_API);
-	void  OptimizeForRender();
+	
 	void  ResetOptimization();
 	void  SpliteSegment(dListNode* const node, int maxIndexCount);
 
@@ -78,7 +82,8 @@ class DemoMesh: public dList<DemoSubMesh>, virtual public dClassInfo
 	dFloat* m_uv;
 	dFloat* m_vertex;
 	dFloat* m_normal;
-	unsigned m_optilizedDiplayList;		
+	unsigned m_optimizedOpaqueDiplayList;
+	unsigned m_optimizedTransparentDiplayList;		
 	dString m_name;
 };
 

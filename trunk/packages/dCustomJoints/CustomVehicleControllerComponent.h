@@ -85,7 +85,7 @@ class CustomVehicleControllerComponent: public CustomAlloc
 class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComponent
 {
 	public:
-	class dGearBox
+	class dGearBox: public CustomAlloc
 	{
 		public:
 		enum dGearID
@@ -96,7 +96,7 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 			m_maxGears = 16
 		};
 
-		class dGearState
+		class dGearState: public CustomAlloc  
 		{
 			public:
 			dGearState (dFloat ratio, dFloat shiftUp, dFloat shiftDown, dGearID id) 
@@ -155,7 +155,6 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 		CUSTOM_JOINTS_API void Update (dFloat timestep);
 		CUSTOM_JOINTS_API dFloat GetGearRatio(int gear) const;
 
-
 		CUSTOM_JOINTS_API int GetGear() const;
 		CUSTOM_JOINTS_API void SetGear (int gear);
 		CUSTOM_JOINTS_API int GetGearCount() const;
@@ -184,10 +183,13 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 		dFloat peakHorsePower, dFloat revolutionsPerMinutesAtPeakHorsePower, 
 		dFloat torqueArRedLineInPoundFoot, dFloat revolutionsPerMinutesAtRedLineTorque);
 
+	CUSTOM_JOINTS_API bool GetKey() const;
+	CUSTOM_JOINTS_API void SetKey (bool key);
 	CUSTOM_JOINTS_API int GetGear () const;
 	CUSTOM_JOINTS_API void SetGear (int gear);
 	CUSTOM_JOINTS_API dFloat GetRPM () const;
 	CUSTOM_JOINTS_API dFloat GetTopRPM () const;
+	CUSTOM_JOINTS_API dFloat GetRedLineRPM () const;
 	CUSTOM_JOINTS_API dFloat GetSpeed () const;
 	CUSTOM_JOINTS_API dFloat GetTopSpeed () const;
 	CUSTOM_JOINTS_API dFloat GetInertia() const;
@@ -197,17 +199,24 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 
 
 	dGearBox* GetGearBox() const;
-	dFloat GetIdleResistance () const;
-	dFloat GetRedLineResistance () const;
-	dFloat GetIdleRadianPerSeconds () const;
-	dFloat GetDifferencialGearRatio () const;
+//	dFloat GetIdleResistance () const;
+//	dFloat GetRedLineResistance () const;
+//	dFloat GetIdleRadianPerSeconds () const;
+//	dFloat GetDifferencialGearRatio () const;
 	dFloat GetTorque (dFloat radianPerSeconds) const;
 
-	void SetTopSpeed (dFloat topSpeedMeterPerSecunds);
+	void SetTopSpeed (dFloat topSpeedMeterPerSecunds, dFloat rpsAtPeckPower);
 	dList<CustomVehicleControllerBodyStateTire>::dListNode* GetLeftTireNode() const;
 	dList<CustomVehicleControllerBodyStateTire>::dListNode* GetRightTireNode() const;
 
 	protected:
+	void ConvertToMetricSystem (
+			dFloat& vehicleSpeedInKilometerPerHours, dFloat& engineMomentOfInertia,
+			dFloat& idleTorqueInPoundFoot, dFloat& revolutionsPerMinutesAtIdleTorque, 
+			dFloat& peakTorqueInPoundFoot, dFloat& revolutionsPerMinutesAtPeakTorque, 
+			dFloat& peakHorsePower, dFloat& revolutionsPerMinutesAtPeakHorsePower, 
+			dFloat& torqueArRedLineInPoundFoot, dFloat& revolutionsPerMinutesAtRedLineTorque) const;
+
 	dGearBox* m_gearBox;
 	dList<CustomVehicleControllerBodyStateTire>::dListNode* m_leftTire;
 	dList<CustomVehicleControllerBodyStateTire>::dListNode* m_righTire;
@@ -215,13 +224,19 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 
 	dFloat m_speedMPS;
 	dFloat m_topSpeedMPS;
+	dFloat m_crownGearRatio;
 	dFloat m_momentOfInertia;
-	dFloat m_engineResistance;
+//	dFloat m_engineResistance;
+	dFloat m_engineIdleFriction;
 	dFloat m_engineIdleResistance;
-	dFloat m_differentialGearRatio;
 	dFloat m_radiansPerSecundsAtRedLine;
 	dFloat m_radiansPerSecundsAtPeakPower;
 	dFloat m_radiansPerSecundsAtIdleTorque;
+	bool m_engineSwitch;
+
+	friend class CustomVehicleControllerBodyStateTire;
+	friend class CustomVehicleControllerBodyStateEngine;
+	friend class CustomVehicleControllerBodyStateChassis;
 };
 
 class CustomVehicleControllerComponentBrake: public CustomVehicleControllerComponent
@@ -233,6 +248,10 @@ class CustomVehicleControllerComponentBrake: public CustomVehicleControllerCompo
 
 	dFloat m_maxBrakeTorque;
 	dList<dList<CustomVehicleControllerBodyStateTire>::dListNode*> m_brakeTires;
+
+	friend class CustomVehicleControllerBodyStateTire;
+	friend class CustomVehicleControllerBodyStateEngine;
+	friend class CustomVehicleControllerBodyStateChassis;
 };
 
 class CustomVehicleControllerComponentSteering: public CustomVehicleControllerComponent
@@ -251,6 +270,10 @@ class CustomVehicleControllerComponentSteering: public CustomVehicleControllerCo
 
 	dList<dTireSignPair> m_steeringTires;
 	dFloat m_maxAngle;
+
+	friend class CustomVehicleControllerBodyStateTire;
+	friend class CustomVehicleControllerBodyStateEngine;
+	friend class CustomVehicleControllerBodyStateChassis;
 };
 
 

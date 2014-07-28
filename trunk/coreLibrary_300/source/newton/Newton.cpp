@@ -3566,7 +3566,7 @@ int NewtonTreeCollisionGetVertexListTriangleListInAABB(const NewtonCollision* co
 	Newton* const world = (Newton *)newtonWorld;
 
 	TRACE_FUNCTION(__FUNCTION__);
-	dgCollisionInstance* const collision = world->CreateHeightField(width, height, gridsDiagonals, elevationdatType, elevationMap, attributeMap, verticalScale, horizontalScale);
+	dgCollisionInstance* const collision = world->CreateHeightField(width, height, gridsDiagonals, elevationdatType, elevationMap, (const dgInt8* const) attributeMap, verticalScale, horizontalScale);
 	collision->SetUserDataID(dgUnsigned32 (shapeID));
 	return (NewtonCollision*) collision;
 }
@@ -4297,15 +4297,23 @@ void NewtonCollisionGetInfo(const NewtonCollision* const collision, NewtonCollis
 // *angle[2]* - rotation about third matrix row
 // 	
 // See also: NewtonSetEulerAngle
-void NewtonGetEulerAngle(const dFloat* const matrix, dFloat* const angles)
+void NewtonGetEulerAngle(const dFloat* const matrix, dFloat* const angles0, dFloat* const angles1)
 {
 	dgMatrix mat (matrix);
 
 	TRACE_FUNCTION(__FUNCTION__);
-	dgVector eulers (mat.CalcPitchYawRoll());
-	angles[0] = eulers.m_x;
-	angles[1] = eulers.m_y;
-	angles[2] = eulers.m_z;
+	dgVector euler0;
+	dgVector euler1;
+	mat.CalcPitchYawRoll (euler0, euler1);
+
+	angles0[0] = euler0.m_x;
+	angles0[1] = euler0.m_y;
+	angles0[2] = euler0.m_z;
+
+	angles1[0] = euler1.m_x;
+	angles1[1] = euler1.m_y;
+	angles1[2] = euler1.m_z;
+
 }
 
 
@@ -4505,14 +4513,14 @@ void NewtonBodyDisableSimulation(const NewtonBody* const bodyPtr)
 	world->BodyDisableSimulation (body);
 }
 
-int NewtonKinematicBodyGetCollidable (const NewtonBody* const bodyPtr)
+int NewtonBodyGetCollidable (const NewtonBody* const bodyPtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
 	return body->IsCollidable() ? 1 : 0;
 }
 
-void NewtonKinematicBodySetCollidable (const NewtonBody* const bodyPtr, int collidable)
+void NewtonBodySetCollidable (const NewtonBody* const bodyPtr, int collidable)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;

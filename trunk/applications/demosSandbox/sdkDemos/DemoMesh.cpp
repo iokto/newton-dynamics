@@ -16,6 +16,7 @@
 #include "toolbox_stdafx.h"
 #include "DemoMesh.h"
 #include "TargaToOpenGl.h"
+#include "DemoEntityManager.h"
 
 dInitRtti(DemoMesh);
 
@@ -33,6 +34,7 @@ DemoSubMesh::DemoSubMesh ()
 	,m_ambient (0.8f, 0.8f, 0.8f, 1.0f)
 	,m_diffuse (0.8f, 0.8f, 0.8f, 1.0f)
 	,m_specular (1.0f, 1.0f, 1.0f, 1.0f)
+	,m_opacity(1.0f)
 {
 }
 
@@ -47,7 +49,13 @@ DemoSubMesh::~DemoSubMesh ()
 	}
 }
 
-
+void DemoSubMesh::SetOpacity(dFloat opacity)
+{
+	m_opacity = opacity;
+	m_ambient.m_w = opacity;
+	m_diffuse.m_w = opacity;
+	m_specular.m_w = opacity;
+}
 
 void DemoSubMesh::Render() const
 {
@@ -112,7 +120,8 @@ DemoMesh::DemoMesh(const char* const name)
 	,m_uv (NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
-	,m_optilizedDiplayList(0)	
+	,m_optimizedOpaqueDiplayList(0)	
+	,m_optimizedTransparentDiplayList(0)
 	,m_name()
 {
 }
@@ -123,7 +132,8 @@ DemoMesh::DemoMesh(const dScene* const scene, dScene::dTreeNode* const meshNode)
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
-	,m_optilizedDiplayList(0)
+	,m_optimizedOpaqueDiplayList(0)
+	,m_optimizedTransparentDiplayList(0)
 	,m_name()
 {
 	dMeshNodeInfo* const meshInfo = (dMeshNodeInfo*)scene->GetInfoFromNode(meshNode);
@@ -181,6 +191,7 @@ DemoMesh::DemoMesh(const dScene* const scene, dScene::dTreeNode* const meshNode)
 			segment->m_ambient = material->GetAmbientColor();
 			segment->m_diffuse = material->GetDiffuseColor();
 			segment->m_specular = material->GetSpecularColor();
+			segment->SetOpacity(material->GetOpacity());
 		}
 
 		segment->AllocIndexData (indexCount);
@@ -201,7 +212,8 @@ DemoMesh::DemoMesh(NewtonMesh* const mesh)
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
-	,m_optilizedDiplayList(0)		
+	,m_optimizedOpaqueDiplayList(0)		
+	,m_optimizedTransparentDiplayList(0)
 {
 	// extract vertex data  from the newton mesh		
 	AllocVertexData(NewtonMeshGetPointCount (mesh));
@@ -265,7 +277,8 @@ DemoMesh::DemoMesh(const DemoMesh& mesh)
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
-	,m_optilizedDiplayList(0)		
+	,m_optimizedOpaqueDiplayList(0)		
+	,m_optimizedTransparentDiplayList(0)
 {
 	AllocVertexData(mesh.m_vertexCount);
 	memcpy (m_vertex, mesh.m_vertex, 3 * m_vertexCount * sizeof (float));
@@ -294,13 +307,14 @@ DemoMesh::DemoMesh(const DemoMesh& mesh)
 	OptimizeForRender ();
 }
 
-DemoMesh::DemoMesh(const char* const name, const NewtonCollision* const collision, const char* const texture0, const char* const texture1, const char* const texture2)
+DemoMesh::DemoMesh(const char* const name, const NewtonCollision* const collision, const char* const texture0, const char* const texture1, const char* const texture2, dFloat opacity)
 	:dClassInfo()
 	,dList<DemoSubMesh>()
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
-	,m_optilizedDiplayList(0)		
+	,m_optimizedOpaqueDiplayList(0)		
+	,m_optimizedTransparentDiplayList(0)
 {
 	// create a helper mesh from the collision collision
 	NewtonMesh* const mesh = NewtonMeshCreateFromCollision(collision);
@@ -360,6 +374,7 @@ DemoMesh::DemoMesh(const char* const name, const NewtonCollision* const collisio
 		DemoSubMesh* const segment = AddSubMesh();
 
 		segment->m_textureHandle = (GLuint)material;
+		segment->SetOpacity(opacity);
 
 		segment->AllocIndexData (indexCount);
 		NewtonMeshMaterialGetIndexStream (mesh, geometryHandle, handle, (int*)segment->m_indexes); 
@@ -380,7 +395,8 @@ DemoMesh::DemoMesh(const char* const name, dFloat* const elevation, int size, dF
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
-	,m_optilizedDiplayList(0)		
+	,m_optimizedOpaqueDiplayList(0)		
+	,m_optimizedTransparentDiplayList(0)
 {
 	float* elevationMap[4096];
 	dVector* normalMap[4096];
@@ -650,25 +666,63 @@ void  DemoMesh::OptimizeForRender()
 	}
 
 #ifdef USING_DISPLAY_LIST
-	m_optilizedDiplayList = glGenLists(1);
-
-	glNewList(m_optilizedDiplayList, GL_COMPILE);
-
-	//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	bool isOpaque = false;
+	bool hasTranparency = false;
 
 	for (dListNode* node = GetFirst(); node; node = node->GetNext()) {
 		DemoSubMesh& segment = node->GetInfo();
-		segment.OptimizeForRender(this);
+		isOpaque |= segment.m_opacity > 0.999f;
+		hasTranparency |= segment.m_opacity <= 0.999f;
 	}
-	glEndList();
+
+	if (isOpaque) {
+		m_optimizedOpaqueDiplayList = glGenLists(1);
+
+		glNewList(m_optimizedOpaqueDiplayList, GL_COMPILE);
+
+		//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+		for (dListNode* node = GetFirst(); node; node = node->GetNext()) {
+			DemoSubMesh& segment = node->GetInfo();
+			if (segment.m_opacity > 0.999f) {
+				segment.OptimizeForRender(this);
+			}
+		}
+		glEndList();
+	}
+
+	if (hasTranparency) {
+        m_optimizedTransparentDiplayList = glGenLists(1);
+
+        glNewList(m_optimizedTransparentDiplayList, GL_COMPILE);
+        //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        for (dListNode* node = GetFirst(); node; node = node->GetNext()) {
+            DemoSubMesh& segment = node->GetInfo();
+            if (segment.m_opacity <= 0.999f) {
+                segment.OptimizeForRender(this);
+            }
+        }
+		glDisable(GL_BLEND);
+		glLoadIdentity();
+        glEndList();
+	}
 #endif
 }
 
 void  DemoMesh::ResetOptimization()
 {
-	if (m_optilizedDiplayList) {
-		glDeleteLists(m_optilizedDiplayList, 1);
-		m_optilizedDiplayList = 0;
+	if (m_optimizedOpaqueDiplayList) {
+		glDeleteLists(m_optimizedOpaqueDiplayList, 1);
+		m_optimizedOpaqueDiplayList = 0;
+	}
+
+	if (m_optimizedTransparentDiplayList) {
+		glDeleteLists(m_optimizedTransparentDiplayList, 1);
+		m_optimizedTransparentDiplayList = 0;
 	}
 }
 
@@ -692,13 +746,16 @@ DemoSubMesh* DemoMesh::AddSubMesh()
 }
 
 
-void DemoMesh::Render ()
+void DemoMesh::Render (DemoEntityManager* const scene)
 {
-
 //	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );	
-	if (m_optilizedDiplayList) {
-		glCallList(m_optilizedDiplayList);
-	} else {
+    if (m_optimizedTransparentDiplayList) {
+        scene->PushTransparentMesh (this); 
+    }
+
+	if (m_optimizedOpaqueDiplayList) {
+		glCallList(m_optimizedOpaqueDiplayList);
+	} else if (!m_optimizedTransparentDiplayList) {
 		glEnableClientState (GL_VERTEX_ARRAY);
 		glEnableClientState (GL_NORMAL_ARRAY);
 		glEnableClientState (GL_TEXTURE_COORD_ARRAY);
@@ -715,6 +772,33 @@ void DemoMesh::Render ()
 		glDisableClientState(GL_NORMAL_ARRAY);	// disable normal arrays
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);	// disable normal arrays
 	}
+}
+
+void DemoMesh::RenderTransparency () const
+{
+//dMatrix xxxx;
+//glGetFloat (GL_MODELVIEW_MATRIX, &xxxx[0][0]);
+//glCallList(m_optimizedOpaqueDiplayList);
+
+    if (m_optimizedTransparentDiplayList) {
+        glCallList(m_optimizedTransparentDiplayList);
+    } else {
+        glEnableClientState (GL_VERTEX_ARRAY);
+        glEnableClientState (GL_NORMAL_ARRAY);
+        glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+        glVertexPointer (3, GL_FLOAT, 0, m_vertex);
+        glNormalPointer (GL_FLOAT, 0, m_normal);
+        glTexCoordPointer (2, GL_FLOAT, 0, m_uv);
+
+        for (dListNode* nodes = GetFirst(); nodes; nodes = nodes->GetNext()) {
+            DemoSubMesh& segment = nodes->GetInfo();
+            segment.Render();
+        }
+        glDisableClientState(GL_VERTEX_ARRAY);	// disable vertex arrays
+        glDisableClientState(GL_NORMAL_ARRAY);	// disable normal arrays
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);	// disable normal arrays
+    }
 }
 
 void DemoMesh::RenderNormals ()

@@ -51,7 +51,7 @@
 #endif
 
 
-class dgTriangleAnglesToUV: public SymmetricBiconjugateGradientSolve
+class dgTriangleAnglesToUV: public dgSymmetricBiconjugateGradientSolve
 {
 	public:
 	dgTriangleAnglesToUV (dgMeshEffect* const mesh, dgInt32 material, dgReportProgress progressReportCallback, void* const userData, const dgFloat64* const pinnedPoint, dgFloat64* const triangleAnglesVector = NULL)
@@ -362,6 +362,9 @@ class dgTriangleAnglesToUV: public SymmetricBiconjugateGradientSolve
 			dgInt32 v0 = face->m_incidentVertex;
 			dgInt32 v1 = face->m_next->m_incidentVertex;
 			dgInt32 v2 = face->m_prev->m_incidentVertex;
+			(void)(v0);
+			(void)(v1);
+			(void)(v2);
 			DG_DEBUG_UV (("(cos[a%d] * sin[b%d] * (u%d - u%d) + sin[a%d] * sin[b%d] * (v%d - v%d) - sin[c%d] * (u%d - u%d)) ^ 2 +\n", i, i, v1, v0, i, i, v1, v0, i, v2, v0));
 			DG_DEBUG_UV (("(cos[a%d] * sin[b%d] * (v%d - v%d) + sin[a%d] * sin[b%d] * (u%d - u%d) - sin[c%d] * (v%d - v%d)) ^ 2", i, i, v1, v0, i, i, v1, v0, i, v2, v0));
 			if (i != (m_trianglesCount - 1)) {
@@ -831,7 +834,7 @@ class dgTriangleAnglesToUV: public SymmetricBiconjugateGradientSolve
 	bool m_allocated;
 };
 
-class dgAngleBasedFlatteningMapping: public SymmetricBiconjugateGradientSolve
+class dgAngleBasedFlatteningMapping: public dgSymmetricBiconjugateGradientSolve
 {
 	public: 
 	dgAngleBasedFlatteningMapping (dgMeshEffect* const mesh, dgInt32 material, dgReportProgress progressReportCallback, void* const userData)

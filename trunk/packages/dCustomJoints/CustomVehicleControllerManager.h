@@ -34,6 +34,8 @@ class CustomVehicleControllerComponentSteering;
 class CustomVehicleController: public CustomControllerBase
 {
 	public:
+	class dTireForceSolverSolver;
+	class dWeightDistibutionSolver;
 	class TireList: public dList<CustomVehicleControllerBodyStateTire>
 	{
 		public:
@@ -56,9 +58,6 @@ class CustomVehicleController: public CustomControllerBase
 	CUSTOM_JOINTS_API void SetDryRollingFrictionTorque (dFloat torque);
 	CUSTOM_JOINTS_API dFloat GetDryRollingFrictionTorque () const;
 
-	CUSTOM_JOINTS_API void SetLongitudinalSlipRatio(dFloat maxLongitudinalSlipRatio);
-	CUSTOM_JOINTS_API void SetLateralSlipAngle(dFloat maxLongitudinalSlipAngleIndDegrees);
-
 	CUSTOM_JOINTS_API CustomVehicleControllerComponentBrake* GetBrakes() const;
 	CUSTOM_JOINTS_API CustomVehicleControllerComponentEngine* GetEngine() const;
 	CUSTOM_JOINTS_API CustomVehicleControllerComponentBrake* GetHandBrakes() const;
@@ -73,32 +72,29 @@ class CustomVehicleController: public CustomControllerBase
 	CUSTOM_JOINTS_API void SetSteering(CustomVehicleControllerComponentSteering* const steering);
 
 
+	CUSTOM_JOINTS_API void Finalize();
+
+
 	protected:
 	CUSTOM_JOINTS_API void Cleanup();
 	CUSTOM_JOINTS_API void Init (NewtonCollision* const chassisShape, const dMatrix& vehicleFrame, dFloat mass, const dVector& gravityVector);
 	CUSTOM_JOINTS_API virtual void PreUpdate(dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void PostUpdate(dFloat timestep, int threadIndex);
 
-	CUSTOM_JOINTS_API int GetActiveJoints(CustomVehicleControllerJoint** const jointArray);
-	CUSTOM_JOINTS_API int BuildJacobianMatrix (int jointCount, CustomVehicleControllerJoint** const jointArray, dFloat timestep, CustomVehicleControllerJoint::JacobianPair* const jacobianArray, CustomVehicleControllerJoint::JacobianColum* const jacobianColumnArray);
-	CUSTOM_JOINTS_API void CalculateReactionsForces(int jointCount, CustomVehicleControllerJoint** const jointArray, dFloat timestep, CustomVehicleControllerJoint::JacobianPair* const jacobianArray, CustomVehicleControllerJoint::JacobianColum* const jacobianColumnArray);
-
-//	CUSTOM_JOINTS_API void UpdateTireTransforms ();
-
 	CustomVehicleControllerBodyState m_staticWorld;
 	CustomVehicleControllerBodyStateEngine m_engineState;
 	CustomVehicleControllerBodyStateChassis m_chassisState;
-	CustomVehicleControllerComponent::dInterpolationCurve m_tireLateralSlipAngle;
-	CustomVehicleControllerComponent::dInterpolationCurve m_tireLongitidialSlipRatio;
+	//CustomVehicleControllerComponent::dInterpolationCurve m_tireLateralSlipAngle;
+	//CustomVehicleControllerComponent::dInterpolationCurve m_tireLongitidialSlipRatio;
 
 	TireList m_tireList;
 	dList<CustomVehicleControllerBodyState*> m_stateList;
 	NewtonCollision* m_tireCastShape;
-
 	CustomVehicleControllerComponentBrake* m_brakes;
 	CustomVehicleControllerComponentEngine* m_engine;
 	CustomVehicleControllerComponentBrake* m_handBrakes;
 	CustomVehicleControllerComponentSteering* m_steering; 
+	bool m_finalized;
 
 	friend class CustomVehicleControllerManager;
 	friend class CustomVehicleControllerTireJoint;
