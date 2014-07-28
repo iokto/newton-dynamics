@@ -76,7 +76,7 @@ class ComplexScene: public DemoEntity
 		}
 	}
 
-	void Render(dFloat timeStep) const
+	virtual void Render(dFloat timeStep, DemoEntityManager* const scene) const
 	{
 		// save the model matrix before changing it Matrix
 		glPushMatrix();
@@ -93,7 +93,7 @@ class ComplexScene: public DemoEntity
 			glPushMatrix();
 			NewtonCollisionGetMatrix (collision, &matrix[0][0]);
 			glMultMatrix(&matrix[0][0]);
-			mesh->Render();
+			mesh->Render(scene);
 
 			glPopMatrix();
 		}

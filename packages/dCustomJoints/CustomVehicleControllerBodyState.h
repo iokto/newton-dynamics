@@ -23,7 +23,7 @@
 
 class CustomVehicleController;
 
-class CustomVehicleControllerBodyState
+class CustomVehicleControllerBodyState: public dComplemtaritySolver::dBodyState
 {
 	public:
 	CUSTOM_JOINTS_API dFloat GetMass () const;
@@ -40,29 +40,14 @@ class CustomVehicleControllerBodyState
 	CUSTOM_JOINTS_API virtual void IntegrateForce (dFloat timestep, const dVector& force, const dVector& torque);
 	CUSTOM_JOINTS_API virtual void ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega);
 
-	dMatrix m_matrix;
-	dMatrix m_localFrame;
-	dMatrix m_inertia;
-	dMatrix m_invInertia;
-
-	dVector m_localInertia;
-	dVector m_localInvInertia;
-
-	dVector m_veloc;
-	dVector m_omega;
-	dVector m_externalForce;
-	dVector m_externalTorque;
-	dVector m_globalCentreOfMass;
-
-	dFloat m_mass;
-	dFloat m_invMass;
-	int m_myIndex;
 	CustomVehicleController* m_controller;
 
 	friend class CustomVehicleController;
 	friend class CustomVehicleControllerJoint;
 	friend class CustomVehicleControllerTireJoint;
 	friend class CustomVehicleControllerContactJoint;
+	friend class CustomVehicleControllerEngineGearJoint;
+	friend class CustomVehicleControllerEngineIdleJoint;
 	friend class CustomVehicleControllerBodyStateTire;
 	friend class CustomVehicleControllerBodyStateChassis;
 	friend class CustomVehicleControllerBodyStateEngine;
@@ -90,6 +75,7 @@ class CustomVehicleControllerBodyStateChassis: public CustomVehicleControllerBod
 	dVector m_comOffset;
 	dVector m_gravity;
 
+	dFloat m_gravityMag;
 	dFloat m_dryRollingFrictionTorque;
 	dFloat m_aerodynamicsDownForceCoefficient;
 
@@ -115,11 +101,13 @@ class CustomVehicleControllerBodyStateEngine: public CustomVehicleControllerBody
 
 	CustomVehicleControllerEngineGearJoint m_leftTire;
 	CustomVehicleControllerEngineGearJoint m_rightTire;
-	CustomVehicleControllerEngineIdleJoint	m_idleFriction;
+	CustomVehicleControllerEngineIdleJoint m_idleFriction;
 	dFloat m_radianPerSecund;
 
 	friend class CustomVehicleController;
 	friend class CustomVehicleControllerTireJoint;
+	friend class CustomVehicleControllerEngineGearJoint;
+	friend class CustomVehicleControllerEngineIdleJoint;
 	friend class CustomVehicleControllerBodyStateTire;
 	friend class CustomVehicleControllerBodyStateChassis;
 	friend class CustomVehicleControllerContactJoint;
@@ -142,6 +130,9 @@ class CustomVehicleControllerBodyStateTire: public CustomVehicleControllerBodySt
 		dFloat m_dampingRatio;
 		dFloat m_springStrength;
 		dFloat m_suspesionlenght;
+		dFloat m_lateralStiffness;
+		dFloat m_longitudialStiffness;
+		dFloat m_aligningMomentTrail;
 		void* m_userData;
 	};
 
@@ -188,16 +179,22 @@ class CustomVehicleControllerBodyStateTire: public CustomVehicleControllerBodySt
 	dFloat m_width;
 	dFloat m_posit;
 	dFloat m_speed;
+	
 	dFloat m_breakTorque;
 	dFloat m_engineTorque;
 	dFloat m_rotatonSpeed;
 	dFloat m_rotationAngle;
 	dFloat m_steeringAngle;
+	dFloat m_restSprunMass;
 	dFloat m_dampingRatio;
 	dFloat m_springStrength;
 	dFloat m_suspensionlenght;
-	dFloat m_adhesionCoefficient; 
-	dFloat m_idleRollingResistance;
+	dFloat m_lateralStiffness;
+	dFloat m_longitudialStiffness;
+	dFloat m_aligningMomentTrail;
+	
+	//dFloat m_adhesionCoefficient; 
+	//dFloat m_idleRollingResistance;
 	//dFloat m_dryFrictionTorque;
 	//dFloat m_engineTorqueResistance;
 
@@ -209,6 +206,8 @@ class CustomVehicleControllerBodyStateTire: public CustomVehicleControllerBodySt
 	friend class CustomVehicleController;
 	friend class CustomVehicleControllerTireJoint;
 	friend class CustomVehicleControllerContactJoint;
+	friend class CustomVehicleControllerEngineGearJoint;
+	friend class CustomVehicleControllerEngineIdleJoint;
 	friend class CustomVehicleControllerComponentBrake;
 	friend class CustomVehicleControllerComponentEngine;
 	friend class CustomVehicleControllerComponentSteering;

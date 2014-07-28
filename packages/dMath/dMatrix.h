@@ -49,7 +49,8 @@ class dMatrix
 	dVector UntransformVector (const dVector &v) const;
 	dVector TransformPlane (const dVector &localPlane) const;
 	dVector UntransformPlane (const dVector &globalPlane) const;
-	dVector GetEulerAngles(dEulerAngleOrder order = m_pitchYawRoll) const;
+	//dVector GetEulerAngles(dEulerAngleOrder order = m_pitchYawRoll) const;
+    void GetEulerAngles(dVector& euler1, dVector& euler2, dEulerAngleOrder order = m_pitchYawRoll) const;
 
 	bool TestIdentity() const; 
 	bool TestOrthogonal() const; 
@@ -139,6 +140,6 @@ inline const dVector& dMatrix::operator[] (int  i) const
 dMatrix dRollMatrix(dFloat ang);
 dMatrix dYawMatrix(dFloat ang);
 dMatrix dPitchMatrix(dFloat ang);
-dMatrix dgGrammSchmidt(const dVector& dir);
+dMatrix dGrammSchmidt(const dVector& dir);
 #endif
 

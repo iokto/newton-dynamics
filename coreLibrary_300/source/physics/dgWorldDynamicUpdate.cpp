@@ -85,13 +85,13 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	dgWorld* const world = (dgWorld*) this;
 	dgUnsigned32 updateTime = world->m_getPerformanceCount();
 
+	world->m_dynamicsLru = world->m_dynamicsLru + DG_BODY_LRU_STEP;
+
 	m_bodies = 0;
 	m_joints = 0;
 	m_islands = 0;
-	m_markLru = 0;
-
-	world->m_dynamicsLru = world->m_dynamicsLru + DG_BODY_LRU_STEP;
 	m_markLru = world->m_dynamicsLru;
+
 	dgUnsigned32 lru = m_markLru - 1;
 
 	dgBodyMasterList& me = *world;
@@ -651,9 +651,7 @@ void dgWorldDynamicUpdate::FindActiveJointAndBodies (dgIsland* const island)
 
 	dgInt32 jointCount = island->m_jointCount;
 //	if (jointCount > 100000000) {
-	if (0) {
-
-	} else if (jointCount > DG_SMALL_ISLAND_COUNT) {
+	if (jointCount > DG_SMALL_ISLAND_COUNT) {
 		for (dgInt32 i = 0; i < jointCount; i ++) {
 			dgJointInfo* const jointInfo = &constraintArray[i];
 			dgConstraint* const joint = jointInfo->m_joint;

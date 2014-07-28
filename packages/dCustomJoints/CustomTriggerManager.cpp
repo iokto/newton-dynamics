@@ -19,6 +19,7 @@
 
 
 
+
 CustomTriggerManager::CustomTriggerManager(NewtonWorld* const world)
 	:CustomControllerManager<CustomTriggerController>(world, TRIGGER_PLUGIN_NAME)
 	,m_lock(0)

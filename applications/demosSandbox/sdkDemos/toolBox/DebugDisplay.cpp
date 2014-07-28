@@ -36,22 +36,24 @@ void SetDebugDisplayMode(int state)
 static void RenderBodyContactsAndTangentDiretions (NewtonBody* const body, float length)
 {
 	for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body); joint; joint = NewtonBodyGetNextContactJoint(body, joint)) {
-		for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
-			dVector point;
-			dVector normal;	
-			NewtonMaterial* const material = NewtonContactGetMaterial (contact);
-			NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
+		if (NewtonJointIsActive (joint)) {
+			for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
+				dVector point;
+				dVector normal;	
+				NewtonMaterial* const material = NewtonContactGetMaterial (contact);
+				NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
 
-			dVector tangnetDir0;
-			dVector tangnetDir1;
-			NewtonMaterialGetContactTangentDirections(material, body, &tangnetDir0[0], &tangnetDir1[0]);
+				dVector tangnetDir0;
+				dVector tangnetDir1;
+				NewtonMaterialGetContactTangentDirections(material, body, &tangnetDir0[0], &tangnetDir1[0]);
 
-			// if we are display debug info we need to block other threads from writing the data at the same time
-			dVector p1 (point + normal.Scale (length));
-			//dVector p0 (point - normal.Scale (length));
-			dVector p0 (point);
-			glVertex3f (p0.m_x, p0.m_y, p0.m_z);
-			glVertex3f (p1.m_x, p1.m_y, p1.m_z);
+				// if we are display debug info we need to block other threads from writing the data at the same time
+				dVector p1 (point + normal.Scale (length));
+				//dVector p0 (point - normal.Scale (length));
+				dVector p0 (point);
+				glVertex3f (p0.m_x, p0.m_y, p0.m_z);
+				glVertex3f (p1.m_x, p1.m_y, p1.m_z);
+			}
 		}
 	}
 }
@@ -69,29 +71,31 @@ static void RenderBodyContactsForces (NewtonBody* const body, float scale)
 	if (mass > 0.0f) {
 		scale = scale/mass;
 		for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body); joint; joint = NewtonBodyGetNextContactJoint(body, joint)) {
-			for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
-				dVector point;
-				dVector normal;	
-				dVector tangnetDir0;
-				dVector tangnetDir1;
-				dVector contactForce;	
-				NewtonMaterial* const material = NewtonContactGetMaterial (contact);
+			if (NewtonJointIsActive (joint)) {
+				for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
+					dVector point;
+					dVector normal;	
+					dVector tangnetDir0;
+					dVector tangnetDir1;
+					dVector contactForce;	
+					NewtonMaterial* const material = NewtonContactGetMaterial (contact);
 
-				NewtonMaterialGetContactForce(material, body, &contactForce.m_x);
-				NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
+					NewtonMaterialGetContactForce(material, body, &contactForce.m_x);
+					NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
 
-				// these are the components of the tangents forces at the contact point, the can be display at the contact position point.
-				//NewtonMaterialGetContactTangentDirections(material, body, &tangnetDir0[0], &tangnetDir1[0]);
-				//dVector tangentForce1 (tangnetDir0.Scale ((contactForce % tangnetDir0) * scale));
-				//dVector tangentForce2 (tangnetDir1.Scale ((contactForce % tangnetDir1) * scale));
+					// these are the components of the tangents forces at the contact point, the can be display at the contact position point.
+					//NewtonMaterialGetContactTangentDirections(material, body, &tangnetDir0[0], &tangnetDir1[0]);
+					//dVector tangentForce1 (tangnetDir0.Scale ((contactForce % tangnetDir0) * scale));
+					//dVector tangentForce2 (tangnetDir1.Scale ((contactForce % tangnetDir1) * scale));
 
-				dVector normalforce (normal.Scale (contactForce % normal));
+					dVector normalforce (normal.Scale (contactForce % normal));
 
-				dVector p0 (point);
-				dVector p1 (point + normalforce.Scale (scale));
-				glVertex3f (p0.m_x, p0.m_y, p0.m_z);
-				glVertex3f (p1.m_x, p1.m_y, p1.m_z);
+					dVector p0 (point);
+					dVector p1 (point + normalforce.Scale (scale));
+					glVertex3f (p0.m_x, p0.m_y, p0.m_z);
+					glVertex3f (p1.m_x, p1.m_y, p1.m_z);
 
+				}
 			}
 		}
 	}
@@ -199,29 +203,21 @@ void RenderContactPoints (NewtonWorld* const world)
 	glDisable (GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 
-	glColor3f(0.0f, 0.5f, 1.0f);
-
-	glBegin(GL_LINES);
-	
-	for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
-//		const float length = 0.5f;
-//		RenderBodyContactsAndTangentDiretions (body, length);
-	}
-	glEnd();
-
 	glPointSize(8.0f);
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glBegin(GL_POINTS);
 	for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
 		for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body); joint; joint = NewtonBodyGetNextContactJoint(body, joint)) {
-			for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
-				dVector point;
-				dVector normal;	
-				NewtonMaterial* const material = NewtonContactGetMaterial (contact);
-				NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
+			if (NewtonJointIsActive (joint)) {
+				for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
+					dVector point;
+					dVector normal;	
+					NewtonMaterial* const material = NewtonContactGetMaterial (contact);
+					NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
 
-				// if we are display debug info we need to block other threads from writing the data at the same time
-				glVertex3f (point.m_x, point.m_y, point.m_z);
+					// if we are display debug info we need to block other threads from writing the data at the same time
+					glVertex3f (point.m_x, point.m_y, point.m_z);
+				}
 			}
 		}
 	}
@@ -238,32 +234,11 @@ void RenderNormalForces (NewtonWorld* const world)
 	glColor3f(0.0f, 0.5f, 1.0f);
 	glBegin(GL_LINES);
 
-
 	float length = 0.25f;
 	for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
 		RenderBodyContactsForces (body, length);
 	}
 	glEnd();
-
-	glPointSize(8.0f);
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glBegin(GL_POINTS);
-	for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
-		for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body); joint; joint = NewtonBodyGetNextContactJoint(body, joint)) {
-			for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
-				dVector point;
-				dVector normal;	
-				NewtonMaterial* const material = NewtonContactGetMaterial (contact);
-				NewtonMaterialGetContactPositionAndNormal (material, body, &point.m_x, &normal.m_x);
-
-				// if we are display debug info we need to block other threads from writing the data at the same time
-				glVertex3f (point.m_x, point.m_y, point.m_z);
-
-			}
-		}
-	}
-	glEnd();
-	glPointSize(1.0f);
 }
 
 
@@ -464,78 +439,79 @@ void RenderJointsDebugInfo (NewtonWorld* const world, dFloat size)
 			NewtonJointRecord info;
 			NewtonJointGetInfo (joint, &info);
 
-			// draw first frame
-			dMatrix matrix0;
-			NewtonBodyGetMatrix (info.m_attachBody_0, &matrix0[0][0]);
-			matrix0 = dMatrix (&info.m_attachmenMatrix_0[0][0]) * matrix0;
-			dVector o0 (matrix0.m_posit);
+			if (strcmp (info.m_descriptionType, "customJointNotInfo")) {
 
-			dVector x (o0 + matrix0.RotateVector (dVector (size, 0.0f, 0.0f, 0.0f)));
-			glColor3f (1.0f, 0.0f, 0.0f);
-			glVertex3f (o0.m_x, o0.m_y, o0.m_z);
-			glVertex3f (x.m_x, x.m_y, x.m_z);
+				// draw first frame
+				dMatrix matrix0;
+				NewtonBodyGetMatrix (info.m_attachBody_0, &matrix0[0][0]);
+				matrix0 = dMatrix (&info.m_attachmenMatrix_0[0][0]) * matrix0;
+				dVector o0 (matrix0.m_posit);
 
-			dVector y (o0 + matrix0.RotateVector (dVector (0.0f, size, 0.0f, 0.0f)));
-			glColor3f (0.0f, 1.0f, 0.0f);
-			glVertex3f (o0.m_x, o0.m_y, o0.m_z);
-			glVertex3f (y.m_x, y.m_y, y.m_z);
+				dVector x (o0 + matrix0.RotateVector (dVector (size, 0.0f, 0.0f, 0.0f)));
+				glColor3f (1.0f, 0.0f, 0.0f);
+				glVertex3f (o0.m_x, o0.m_y, o0.m_z);
+				glVertex3f (x.m_x, x.m_y, x.m_z);
 
-			dVector z (o0 + matrix0.RotateVector (dVector (0.0f, 0.0f, size, 0.0f)));
-			glColor3f (0.0f, 0.0f, 1.0f);
-			glVertex3f (o0.m_x, o0.m_y, o0.m_z);
-			glVertex3f (z.m_x, z.m_y, z.m_z);
+				dVector y (o0 + matrix0.RotateVector (dVector (0.0f, size, 0.0f, 0.0f)));
+				glColor3f (0.0f, 1.0f, 0.0f);
+				glVertex3f (o0.m_x, o0.m_y, o0.m_z);
+				glVertex3f (y.m_x, y.m_y, y.m_z);
+
+				dVector z (o0 + matrix0.RotateVector (dVector (0.0f, 0.0f, size, 0.0f)));
+				glColor3f (0.0f, 0.0f, 1.0f);
+				glVertex3f (o0.m_x, o0.m_y, o0.m_z);
+				glVertex3f (z.m_x, z.m_y, z.m_z);
 
 
-			// draw second first frame
-			dMatrix matrix1;
-			NewtonBodyGetMatrix (info.m_attachBody_1, &matrix1[0][0]);
-			matrix1 = dMatrix (&info.m_attachmenMatrix_1[0][0]) * matrix1;
-			dVector o1 (matrix1.m_posit);
-
-			x = o1 + matrix1.RotateVector (dVector (size, 0.0f, 0.0f, 0.0f));
-			glColor3f (1.0f, 0.0f, 0.0f);
-			glVertex3f (o1.m_x, o1.m_y, o1.m_z);
-			glVertex3f (x.m_x, x.m_y, x.m_z);
-
-			y = o1 + matrix1.RotateVector (dVector (0.0f, size, 0.0f, 0.0f));
-			glColor3f (0.0f, 1.0f, 0.0f);
-			glVertex3f (o1.m_x, o1.m_y, o1.m_z);
-			glVertex3f (y.m_x, y.m_y, y.m_z);
-
-			z = o1 + matrix1.RotateVector (dVector (0.0f, 0.0f, size, 0.0f));
-			glColor3f (0.0f, 0.0f, 1.0f);
-			glVertex3f (o1.m_x, o1.m_y, o1.m_z);
-			glVertex3f (z.m_x, z.m_y, z.m_z);
-
-			if (!strcmp (info.m_descriptionType, "limitballsocket")) {
-				// draw the cone limit of this joint
-				int steps = 12;
-				dMatrix coneMatrix (dRollMatrix(info.m_maxAngularDof[1]));
-				dMatrix ratationStep (dPitchMatrix(2.0f * 3.14151693f / steps));
-
-				dVector p0 (coneMatrix.RotateVector(dVector (size * 0.5f, 0.0f, 0.0f, 0.0f)));
-				dVector q0 (matrix1.TransformVector(p0));
-
-				glColor3f (1.0f, 1.0f, 0.0f);
-				for (int i = 0; i < (steps + 1); i ++) {
-					dVector p1 (ratationStep.RotateVector(p0));
-					dVector q1 (matrix1.TransformVector(p1));
-
-					glVertex3f (o0.m_x, o0.m_y, o0.m_z);
-					glVertex3f (q0.m_x, q0.m_y, q0.m_z);
-				
-					glVertex3f (q0.m_x, q0.m_y, q0.m_z);
-					glVertex3f (q1.m_x, q1.m_y, q1.m_z);
-
-					p0 = p1;
-					q0 = q1;
+				// draw second frame
+				dMatrix matrix1 (GetIdentityMatrix());
+				if (info.m_attachBody_1) {
+					NewtonBodyGetMatrix (info.m_attachBody_1, &matrix1[0][0]);
 				}
+				matrix1 = dMatrix (&info.m_attachmenMatrix_1[0][0]) * matrix1;
+				dVector o1 (matrix1.m_posit);
 
+				x = o1 + matrix1.RotateVector (dVector (size, 0.0f, 0.0f, 0.0f));
+				glColor3f (1.0f, 0.0f, 0.0f);
+				glVertex3f (o1.m_x, o1.m_y, o1.m_z);
+				glVertex3f (x.m_x, x.m_y, x.m_z);
+
+				y = o1 + matrix1.RotateVector (dVector (0.0f, size, 0.0f, 0.0f));
+				glColor3f (0.0f, 1.0f, 0.0f);
+				glVertex3f (o1.m_x, o1.m_y, o1.m_z);
+				glVertex3f (y.m_x, y.m_y, y.m_z);
+
+				z = o1 + matrix1.RotateVector (dVector (0.0f, 0.0f, size, 0.0f));
+				glColor3f (0.0f, 0.0f, 1.0f);
+				glVertex3f (o1.m_x, o1.m_y, o1.m_z);
+				glVertex3f (z.m_x, z.m_y, z.m_z);
+
+				if (!strcmp (info.m_descriptionType, "limitballsocket")) {
+					// draw the cone limit of this joint
+					int steps = 12;
+					dMatrix coneMatrix (dRollMatrix(info.m_maxAngularDof[1]));
+					dMatrix ratationStep (dPitchMatrix(2.0f * 3.14151693f / steps));
+
+					dVector p0 (coneMatrix.RotateVector(dVector (size * 0.5f, 0.0f, 0.0f, 0.0f)));
+					dVector q0 (matrix1.TransformVector(p0));
+
+					glColor3f (1.0f, 1.0f, 0.0f);
+					for (int i = 0; i < (steps + 1); i ++) {
+						dVector p1 (ratationStep.RotateVector(p0));
+						dVector q1 (matrix1.TransformVector(p1));
+
+						glVertex3f (o0.m_x, o0.m_y, o0.m_z);
+						glVertex3f (q0.m_x, q0.m_y, q0.m_z);
+				
+						glVertex3f (q0.m_x, q0.m_y, q0.m_z);
+						glVertex3f (q1.m_x, q1.m_y, q1.m_z);
+
+						p0 = p1;
+						q0 = q1;
+					}
+				}
 			}
-
-
 		}
 	}
-
 	glEnd();
 }

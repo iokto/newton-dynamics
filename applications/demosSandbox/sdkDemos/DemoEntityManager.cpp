@@ -21,7 +21,6 @@
 #include "DebugDisplay.h"
 #include "TargaToOpenGl.h"
 #include "DemoEntityManager.h"
-#include "DemoEntityManager.h"
 
 #include "DemoAIListener.h"
 #include "DemoSoundListener.h"
@@ -90,7 +89,6 @@ DemoEntityManager::DemoEntityManager(NewtonDemos* const parent)
 	,dList <DemoEntity*>() 
 	,m_mainWindow(parent)
 	,m_world(NULL)
-//	,m_aiWorld(NULL)
 	,m_sky(NULL)
 	,m_microsecunds(0)
 	,m_physicsTime(0.0f)
@@ -103,13 +101,13 @@ DemoEntityManager::DemoEntityManager(NewtonDemos* const parent)
 	,m_fontImage(0)
 	,m_soundManager(NULL)
 	,m_cameraManager(NULL)
+    ,m_tranparentHeap()
 //	,m_visualDebugger(NULL)
 	,m_profiler(60, 40)
 	,m_mainThreadGraphicsTime(0.0f)
 	,m_mainThreadPhysicsTime(0.0f)
 	,m_physThreadTime(0.0f)
 {
-
 	// initialized the physics world for the new scene
 	Cleanup ();
 
@@ -228,6 +226,14 @@ void DemoEntityManager::RemoveEntity (DemoEntity* const ent)
 			break;
 		}
 	}
+}
+
+void DemoEntityManager::PushTransparentMesh (const DemoMesh* const mesh)
+{
+    dMatrix matrix;
+    glGetFloat (GL_MODELVIEW_MATRIX, &matrix[0][0]);
+    TransparentMesh entry (matrix, mesh);
+    m_tranparentHeap.Push (entry, matrix.m_posit.m_z);
 }
 
 void DemoEntityManager::CreateOpenGlFont()
@@ -873,7 +879,7 @@ void DemoEntityManager::RenderFrame ()
 	if (m_mainWindow->m_hideVisualMeshes) {
 		if (m_sky) {
 			glPushMatrix();	
-			m_sky->Render(timestep);
+			m_sky->Render(timestep, this);
 			glPopMatrix();
 		}
 
@@ -881,10 +887,24 @@ void DemoEntityManager::RenderFrame ()
 		for (dListNode* node = dList<DemoEntity*>::GetFirst(); node; node = node->GetNext()) {
 			DemoEntity* const entity = node->GetInfo();
 			glPushMatrix();	
-			entity->Render(timestep);
+			entity->Render(timestep, this);
 			glPopMatrix();
 		}
 	}
+
+	if (m_tranparentHeap.GetCount()) {
+		dMatrix modelView;
+		glGetFloat (GL_MODELVIEW_MATRIX, &modelView[0][0]);
+		while (m_tranparentHeap.GetCount()) {
+			const TransparentMesh& transparentMesh = m_tranparentHeap[0];
+			glLoadIdentity();
+			glLoadMatrix(&transparentMesh.m_matrix[0][0]);
+			transparentMesh.m_mesh->RenderTransparency();
+			m_tranparentHeap.Pop();
+		}
+		glLoadMatrix(&modelView[0][0]);
+	}
+
 
 	m_cameraManager->RenderPickedTarget ();
 
@@ -937,7 +957,7 @@ void DemoEntityManager::RenderFrame ()
 	if (m_mainWindow->m_showStatistics) {
 		dVector color (1.0f, 1.0f, 1.0f, 0.0f);
 		Print (color, 10,  20, "render fps: %7.2f", m_mainWindow->m_fps);
-		Print (color, 10,  42, "physics time on main thread: %d micro secunds", int (GetPhysicsTime() * 1000000.0f));
+		Print (color, 10,  42, "physics time on main thread: %d ms", int (GetPhysicsTime() * 1000000.0f));
 		Print (color, 10,  64, "total memory: %d kbytes", NewtonGetMemoryUsed() / (1024));
 		Print (color, 10,  86, "number of bodies: %d", NewtonWorldGetBodyCount(GetNewton()));
 		Print (color, 10, 108, "number of threads: %d", NewtonGetThreadsCount(GetNewton()));
@@ -967,32 +987,32 @@ void DemoEntityManager::RenderFrame ()
 
 		glColor3f(1.0, 1.0, 1.0);
 
-		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
+		glMatrixMode(GL_PROJECTION);
+
 		glLoadIdentity();
-		//glOrtho(0.0f, width, 0.0f, height, 0.0, 1.0);
 		gluOrtho2D(0, width, 0, height);
+		
+			glPushMatrix();
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+
+			glDisable(GL_LIGHTING);
+			glDisable(GL_DEPTH_TEST);
+			glEnable(GL_TEXTURE_2D);	
+
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+			// render 2d display
+			m_renderHood (this, m_renderHoodContext, lineNumber);
+
+			// restore display mode
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+
 
 		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-
-		glDisable(GL_LIGHTING);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_TEXTURE_2D);	
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-		// render 2d display
-		m_renderHood (this, m_renderHoodContext, lineNumber);
-
-		// restore display mode
 		glPopMatrix();
-
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-
-		glMatrixMode(GL_MODELVIEW);
 	}
 
 

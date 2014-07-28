@@ -109,6 +109,16 @@ extern "C" {
 	#define SERIALIZE_ID_SCENE								16
 	#define SERIALIZE_ID_FRACTURED_COMPOUND					17
 
+#ifdef __cplusplus
+	class NewtonMesh;
+	class NewtonBody;
+	class NewtonWorld;
+	class NewtonJoint;
+	class NewtonMaterial;
+	class NewtonCollision;
+	class NewtonDeformableMeshSegment;
+	class NewtonFracturedCompoundMeshPart;
+#else
 	typedef struct NewtonMesh{} NewtonMesh;
 	typedef struct NewtonBody{} NewtonBody;
 	typedef struct NewtonWorld{} NewtonWorld;
@@ -117,6 +127,7 @@ extern "C" {
 	typedef struct NewtonCollision{} NewtonCollision;
 	typedef struct NewtonDeformableMeshSegment{} NewtonDeformableMeshSegment;
 	typedef struct NewtonFracturedCompoundMeshPart{} NewtonFracturedCompoundMeshPart;
+#endif
 
 
 	typedef struct NewtonBoxParam
@@ -794,8 +805,8 @@ extern "C" {
 	// transforms utility functions
 	//
 	// **********************************************************************************************
-	NEWTON_API void NewtonGetEulerAngle (const dFloat* const matrix, dFloat* const eulersAngles);
 	NEWTON_API void NewtonSetEulerAngle (const dFloat* const eulersAngles, dFloat* const matrix);
+	NEWTON_API void NewtonGetEulerAngle (const dFloat* const matrix, dFloat* const eulersAngles0, dFloat* const eulersAngles1);
 	NEWTON_API dFloat NewtonCalculateSpringDamperAcceleration (dFloat dt, dFloat ks, dFloat x, dFloat kd, dFloat s);
 
 	// **********************************************************************************************
@@ -813,8 +824,8 @@ extern "C" {
 	NEWTON_API void  NewtonBodyDisableSimulation(const NewtonBody* const body);
 
 	NEWTON_API int NewtonBodyGetType (const NewtonBody* const body);
-	NEWTON_API int NewtonKinematicBodyGetCollidable (const NewtonBody* const body);
-	NEWTON_API void NewtonKinematicBodySetCollidable (const NewtonBody* const body, int collidableState);
+	NEWTON_API int NewtonBodyGetCollidable (const NewtonBody* const body);
+	NEWTON_API void NewtonBodySetCollidable (const NewtonBody* const body, int collidableState);
 
 	NEWTON_API void  NewtonBodyAddForce (const NewtonBody* const body, const dFloat* const force);
 	NEWTON_API void  NewtonBodyAddTorque (const NewtonBody* const body, const dFloat* const torque);

@@ -42,48 +42,48 @@
 // Reverse 2.90:1 
 
 // vehicle definition for a Muscle car
-//#define VIPER_IDLE_TORQUE				 40.0f
-#define VIPER_IDLE_TORQUE				300.0f
-#define VIPER_IDLE_TORQUE_RPM			500.0f
+//#define VIPER_IDLE_TORQUE					 40.0f
+#define VIPER_IDLE_TORQUE					300.0f
+#define VIPER_IDLE_TORQUE_RPM				500.0f
 
-#define VIPER_ENGINE_MOMENT_OF_INERTIA  40.0f
+#define VIPER_ENGINE_MOMENT_OF_INERTIA		10.0f
 
-#define VIPER_PEAK_TORQUE				490.0f
-#define VIPER_PEAK_TORQUE_RPM			3700.0f
+#define VIPER_PEAK_TORQUE					490.0f
+#define VIPER_PEAK_TORQUE_RPM				3700.0f
 
-#define VIPER_PEAK_HP					450.0f
-#define VIPER_PEAK_HP_RPM				5200.0f
+#define VIPER_PEAK_HP						450.0f
+#define VIPER_PEAK_HP_RPM					5200.0f
 
 
-#define VIPER_REDLINE_TORQUE			30.0f
-#define VIPER_REDLINE_TORQUE_RPM		6000.0f
+#define VIPER_REDLINE_TORQUE				30.0f
+#define VIPER_REDLINE_TORQUE_RPM			6000.0f
 
-#define VIPER_MASS						1500.0f
-#define VIPER_TIRE_STEER_ANGLE			35.0f
+#define VIPER_MASS							1500.0f
+#define VIPER_TIRE_STEER_ANGLE				35.0f
 
 // note: tire unsprung mass (note the engine impose a limit of 1.0 / 50.0 mass ratio between connected bodies 
-//#define VIPER_TIRE_MASS				(VIPER_MASS / 50.0f)  
-#define VIPER_TIRE_MASS					40.0f  
+//#define VIPER_TIRE_MASS					(VIPER_MASS / 50.0f)  
+#define VIPER_TIRE_MASS						40.0f  
 
-//#define VIPER_TIRE_TOP_SPEED			164 mile / hours
-#define VIPER_TIRE_TOP_SPEED_KMH		(264.0f)			 
+//#define VIPER_TIRE_TOP_SPEED				164 mile / hours
+#define VIPER_TIRE_TOP_SPEED_KMH			264.0f			 
 
-#define VIPER_TIRE_SUSPENSION_SPRING	(15000.0f)
-#define VIPER_TIRE_SUSPENSION_DAMPER	(600.0f)
-#define VIPER_TIRE_SUSPENSION_LENGTH	(0.20f)
-#define VIPER_TIRE_BRAKE_TORQUE			(2000.0f)
+#define VIPER_TIRE_LATERAL_STIFFNESS		20.0f
+#define VIPER_TIRE_LONGITUDINAL_STIFFNESS	1000.0f
+#define VIPER_TIRE_ALIGNING_MOMENT_TRAIL	0.5f
+#define VIPER_TIRE_SUSPENSION_SPRING		15000.0f
+#define VIPER_TIRE_SUSPENSION_DAMPER		600.0f
+#define VIPER_TIRE_SUSPENSION_LENGTH		0.20f
+#define VIPER_TIRE_BRAKE_TORQUE				2000.0f
 
-#define VIPER_TIRE_GEAR_1				2.66f
-#define VIPER_TIRE_GEAR_2				1.78f
-#define VIPER_TIRE_GEAR_3 				1.30f
-#define VIPER_TIRE_GEAR_4 				1.00f
-#define VIPER_TIRE_GEAR_5 				0.74f
-#define VIPER_TIRE_GEAR_6 				0.50f
-#define VIPER_TIRE_GEAR_REVERSE			2.90f
-
-
-#define VIPER_COM_Y_OFFSET				-0.30f
-
+#define VIPER_TIRE_GEAR_1					2.66f
+#define VIPER_TIRE_GEAR_2					1.78f
+#define VIPER_TIRE_GEAR_3 					1.30f
+#define VIPER_TIRE_GEAR_4 					1.00f
+#define VIPER_TIRE_GEAR_5 					0.74f
+#define VIPER_TIRE_GEAR_6 					0.50f
+#define VIPER_TIRE_GEAR_REVERSE				2.90f
+#define VIPER_COM_Y_OFFSET					-0.30f
 
 #define VEHICLE_THIRD_PERSON_VIEW_HIGHT		2.0f
 #define VEHICLE_THIRD_PERSON_VIEW_DIST		10.0f
@@ -114,7 +114,11 @@ class BasicVehicleEntity: public DemoEntity
 		,m_helpKey (true)
 		,m_gearUpKey (false)
 		,m_gearDownKey (false)
+		,m_engineKeySwitch(false)
 		,m_automaticTransmission(true)
+		,m_engineKeySwitchCounter(0)
+		,m_engineOldKeyState(false)
+		,m_engineRPMOn(false)
 	{
 		// add this entity to the scene for rendering
 		scene->Append(this);
@@ -159,13 +163,11 @@ class BasicVehicleEntity: public DemoEntity
 		// destroy the collision helper shape 
 		NewtonDestroyCollision(chassisCollision);
 
-/*
 		for (int i = 0; i < int ((sizeof (m_gearMap) / sizeof (m_gearMap[0]))); i ++) {
 			m_gearMap[i] = i;
 		}
 		m_gearMap[0] = 1;
 		m_gearMap[1] = 0;
-*/
 	}
 
 	~BasicVehicleEntity ()
@@ -240,7 +242,7 @@ class BasicVehicleEntity: public DemoEntity
 	}
 
 
-	CustomVehicleControllerBodyStateTire* AddTire (const char* const tireName, const dVector& offset, dFloat width, dFloat radius, dFloat mass, dFloat suspensionLength, dFloat suspensionSpring, dFloat suspensionDamper) 
+	CustomVehicleControllerBodyStateTire* AddTire (const char* const tireName, const dVector& offset, dFloat width, dFloat radius, dFloat mass, dFloat suspensionLength, dFloat suspensionSpring, dFloat suspensionDamper, dFloat lateralStiffness, dFloat longitudinalStiffness, dFloat aligningMOmentTrail) 
 	{
 		NewtonBody* const body = m_controller->GetBody();
 		DemoEntity* const entity = (DemoEntity*) NewtonBodyGetUserData(body);
@@ -272,6 +274,9 @@ class BasicVehicleEntity: public DemoEntity
 		tireInfo.m_dampingRatio = suspensionDamper;
 		tireInfo.m_springStrength = suspensionSpring;
 		tireInfo.m_suspesionlenght = suspensionLength;
+		tireInfo.m_lateralStiffness = lateralStiffness;
+		tireInfo.m_longitudialStiffness = longitudinalStiffness;
+		tireInfo.m_aligningMomentTrail =  aligningMOmentTrail;
 		tireInfo.m_userData = tirePart;
 
 		return m_controller->AddTire (tireInfo);
@@ -319,14 +324,14 @@ class BasicVehicleEntity: public DemoEntity
 		// a car may have different size front an rear tire, therefore we do this separate for front and rear tires
 		CalculateTireDimensions ("fl_tire", width, radius);
 		dVector offset (0.0f, 0.0f, 0.0f, 0.0f);
-		CustomVehicleControllerBodyStateTire* const leftFrontTire = AddTire ("fl_tire", offset, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER);
-		CustomVehicleControllerBodyStateTire* const rightFrontTire = AddTire ("fr_tire", offset, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER);
+		CustomVehicleControllerBodyStateTire* const leftFrontTire = AddTire ("fl_tire", offset, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER, VIPER_TIRE_LATERAL_STIFFNESS, VIPER_TIRE_LONGITUDINAL_STIFFNESS, VIPER_TIRE_ALIGNING_MOMENT_TRAIL);
+		CustomVehicleControllerBodyStateTire* const rightFrontTire = AddTire ("fr_tire", offset, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER, VIPER_TIRE_LATERAL_STIFFNESS, VIPER_TIRE_LONGITUDINAL_STIFFNESS, VIPER_TIRE_ALIGNING_MOMENT_TRAIL);
 
 		// add real tires
 		CalculateTireDimensions ("rl_tire", width, radius);
 		dVector offset1 (0.0f, 0.05f, 0.0f, 0.0f);
-		CustomVehicleControllerBodyStateTire* const leftRearTire = AddTire ("rl_tire", offset1, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER);
-		CustomVehicleControllerBodyStateTire* const rightRearTire = AddTire ("rr_tire", offset1, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER);
+		CustomVehicleControllerBodyStateTire* const leftRearTire = AddTire ("rl_tire", offset1, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER, VIPER_TIRE_LATERAL_STIFFNESS, VIPER_TIRE_LONGITUDINAL_STIFFNESS, VIPER_TIRE_ALIGNING_MOMENT_TRAIL);
+		CustomVehicleControllerBodyStateTire* const rightRearTire = AddTire ("rr_tire", offset1, width, radius, VIPER_TIRE_MASS, VIPER_TIRE_SUSPENSION_LENGTH, VIPER_TIRE_SUSPENSION_SPRING, VIPER_TIRE_SUSPENSION_DAMPER, VIPER_TIRE_LATERAL_STIFFNESS, VIPER_TIRE_LONGITUDINAL_STIFFNESS, VIPER_TIRE_ALIGNING_MOMENT_TRAIL);
 
 		// add an steering Wheel
 		CustomVehicleControllerComponentSteering* const steering = new CustomVehicleControllerComponentSteering (m_controller, VIPER_TIRE_STEER_ANGLE * 3.141592f / 180.0f);
@@ -348,12 +353,16 @@ class BasicVehicleEntity: public DemoEntity
 		handBrakes->AddBrakeTire (rightRearTire);
 		m_controller->SetHandBrakes(handBrakes);
 
-/*
 		// add an engine
 		// first make the gear Box
 		dFloat fowardSpeedGearsBoxRatios[] = {VIPER_TIRE_GEAR_1, VIPER_TIRE_GEAR_2, VIPER_TIRE_GEAR_3, VIPER_TIRE_GEAR_4, VIPER_TIRE_GEAR_5, VIPER_TIRE_GEAR_6};
 		CustomVehicleControllerComponentEngine::dGearBox* const gearBox = new CustomVehicleControllerComponentEngine::dGearBox(m_controller, VIPER_TIRE_GEAR_REVERSE, sizeof (fowardSpeedGearsBoxRatios) / sizeof (fowardSpeedGearsBoxRatios[0]), fowardSpeedGearsBoxRatios); 
 		CustomVehicleControllerComponentEngine* const engine = new CustomVehicleControllerComponentEngine (m_controller, gearBox, leftRearTire, rightRearTire);
+
+		// the the default transmission type
+		engine->SetTransmissionMode(m_automaticTransmission.GetPushButtonState());
+
+		m_controller->SetEngine(engine);
 
 
 		dFloat viperIdleRPM = VIPER_IDLE_TORQUE_RPM;
@@ -372,11 +381,8 @@ class BasicVehicleEntity: public DemoEntity
         dFloat vehicleMomentOfInteria  = VIPER_ENGINE_MOMENT_OF_INERTIA;
 		engine->InitEngineTorqueCurve (vehicleTopSpeedKPH, vehicleMomentOfInteria, viperIdleTorquePoundPerFoot, viperIdleRPM, viperPeakTorquePoundPerFoot, viperPeakTorqueRPM, viperPeakHorsePower, viperPeakHorsePowerRPM, viperRedLineTorquePoundPerFoot, viperRedLineRPM);
 
-		m_controller->SetEngine(engine);
-
-        // the the default transmission type
-		engine->SetTransmissionMode(m_automaticTransmission.GetPushButtonState());
-*/
+		// do not forget to call finalize after all components are added or after any change is made to the vehicle
+		m_controller->Finalize();
 	}
 
 
@@ -474,7 +480,7 @@ class BasicVehicleEntity: public DemoEntity
 		dFloat engineGasPedal = 0.0f;
 		dFloat brakePedal = 0.0f;
 		dFloat handBrakePedal = 0.0f;
-
+	
 		bool hasJopytick = mainWindow->GetJoytickPosition (joyPosX, joyPosY, joyButtons);
 		if (hasJopytick) {
 			dAssert (0);
@@ -492,6 +498,7 @@ class BasicVehicleEntity: public DemoEntity
 */			
 		} else {
 
+	
 			// get keyboard controls
 			if (mainWindow->GetKeyState ('W')) {
 				engineGasPedal = 1.0f;
@@ -527,6 +534,10 @@ class BasicVehicleEntity: public DemoEntity
 		// set the help key
 		m_helpKey.UpdatePushButton (mainWindow, 'H');
 
+		// count the engine key switch
+		m_engineKeySwitchCounter += m_engineKeySwitch.UpdateTriggerButton(mainWindow, 'Y');
+		
+
 		// check transmission type
 		int toggleTransmission = m_automaticTransmission.UpdateTriggerButton (mainWindow, 0x0d) ? 1 : 0;
 
@@ -534,6 +545,7 @@ class BasicVehicleEntity: public DemoEntity
 	#if 0
 		static FILE* file = fopen ("log.bin", "wb");
 		if (file) {
+			fwrite (&m_engineKeySwitchCounter, sizeof (int), 1, file);
 			fwrite (&toggleTransmission, sizeof (int), 1, file);
 			fwrite (&gear, sizeof (int), 1, file);
 			fwrite (&steeringVal, sizeof (dFloat), 1, file);
@@ -545,6 +557,7 @@ class BasicVehicleEntity: public DemoEntity
 	#else 
 		static FILE* file = fopen ("log.bin", "rb");
 		if (file) {		
+			fread (&m_engineKeySwitchCounter, sizeof (int), 1, file);
 			fread (&toggleTransmission, sizeof (int), 1, file);
 			fread (&gear, sizeof (int), 1, file);
 			fread (&steeringVal, sizeof (dFloat), 1, file);
@@ -556,13 +569,16 @@ class BasicVehicleEntity: public DemoEntity
 #endif
 
 		if (engine) {
-//			if (toggleTransmission) {
-//				engine->SetTransmissionMode (!engine->GetTransmissionMode());
-//			}
-//			if (!engine->GetTransmissionMode()) {
-//				engine->SetGear(gear);
-//			}
-//			engine->SetParam(engineGasPedal);
+			m_engineOldKeyState = engine->GetKey();
+			engine->SetKey ((m_engineKeySwitchCounter & 1) ? true : false);
+
+			if (toggleTransmission) {
+				engine->SetTransmissionMode (!engine->GetTransmissionMode());
+			}
+			if (!engine->GetTransmissionMode()) {
+				engine->SetGear(gear);
+			}
+			engine->SetParam(engineGasPedal);
 		}
 		if (steering) {
 			steering->SetParam(steeringVal);
@@ -614,9 +630,9 @@ class BasicVehicleEntity: public DemoEntity
 		// draw the velocity vector, a little higher so that is not hidden by the vehicle mesh 
 		dVector veloc;
 		NewtonBodyGetVelocity(body, &veloc[0]);
-		dVector q0 (p0 + chassis.GetMatrix()[1].Scale (0.5f));
+		dVector q0 (p0 + chassis.GetMatrix()[1].Scale (1.0f));
 		dVector q1 (q0 + veloc.Scale (0.25f));
-		glColor3f(0.0f, 1.0f, 1.0f);
+		glColor3f(1.0f, 1.0f, 0.0f);
 		glVertex3f (q0.m_x, q0.m_y, q0.m_z);
 		glVertex3f (q1.m_x, q1.m_y, q1.m_z);
 		
@@ -656,12 +672,13 @@ p0 += chassis.GetMatrix()[2].Scale ((tireMatrix.m_posit.m_z > 0.0f ? 1.0f : -1.0
 	DemoEntityManager::ButtonKey m_helpKey;
 	DemoEntityManager::ButtonKey m_gearUpKey;
 	DemoEntityManager::ButtonKey m_gearDownKey;
+	DemoEntityManager::ButtonKey m_engineKeySwitch;
 	DemoEntityManager::ButtonKey m_automaticTransmission;
-
 	int m_gearMap[10];
+	int m_engineKeySwitchCounter;
+	bool m_engineOldKeyState;
+	bool m_engineRPMOn;
 };
-
-
 
 
 class BasicVehicleControllerManager: public CustomVehicleControllerManager
@@ -672,6 +689,7 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 		:CustomVehicleControllerManager (world)
 		,m_externalView(true)
 		,m_player (NULL) 
+		,m_soundsCount(0)
 	{
 		// hook a callback for 2d help display
 		DemoEntityManager* const scene = (DemoEntityManager*) NewtonWorldGetUserData(world);
@@ -684,25 +702,15 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 		m_redNeedle = LoadTexture ("needle_red.tga");
 		m_greenNeedle = LoadTexture ("needle_green.tga");
 
-/*		// create the vehicle sound 
-		const char* engineSounds[] = {"engine_start.wav", "engine_rpm.wav", "tire_skid.wav"};
+		// create the vehicle sound 
+		const char* engineSounds[] = {"starter.wav", "tire_skid.wav", "revLow.wav", "revMiddle.wav", "revHigh.wav"};
 		dSoundManager* const soundManager = scene->GetSoundManager();
 		for (int i = 0; i < int (sizeof (engineSounds) / sizeof (engineSounds[0])); i ++) {
 			void* const sound = soundManager->CreateSound(engineSounds[i]);
 			void* const channel = soundManager->CreatePlayChannel(sound);
 			m_engineSounds[i] = channel;
+			m_soundsCount ++;
 		}
-
-		// play start engine sound
-		void* const startEngine = m_engineSounds[0];
-		soundManager->PlayChannel(startEngine);
-
-		// play engine RPM sound
-		void* const rpmEngine = m_engineSounds[1];
-		soundManager->PlayChannel(rpmEngine);
-		soundManager->SetChannelPitch (rpmEngine, 0.2f);
-		soundManager->SetChannelLoopMode(rpmEngine, true);
-*/
 	}
 
 	~BasicVehicleControllerManager ()
@@ -783,6 +791,8 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 		glTexCoord2f(u1, 0.0f); glVertex3f( x1, -y1, 0.0f);
 		glTexCoord2f(u1, 1.0f); glVertex3f( x1,  y1, 0.0f);
 		glEnd();
+
+		glPopMatrix();
 	}
 
 	void DrawHelp(DemoEntityManager* const scene, int lineNumber) const
@@ -790,6 +800,7 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 		if (m_player->m_helpKey.GetPushButtonState()) {
 			dVector color(1.0f, 1.0f, 0.0f, 0.0f);
 			lineNumber = scene->Print (color, 10, lineNumber + 20, "Vehicle driving keyboard control:   Joystick control");
+			lineNumber = scene->Print (color, 10, lineNumber + 20, "keySwich			: 'Y'           start engine");
 			lineNumber = scene->Print (color, 10, lineNumber + 20, "accelerator         : 'W'           stick forward");
 			lineNumber = scene->Print (color, 10, lineNumber + 20, "brakes              : 'S'           stick back");
 			lineNumber = scene->Print (color, 10, lineNumber + 20, "turn right          : 'D'           stick right");
@@ -808,7 +819,7 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 		// set to transparent color
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+        
 		CustomVehicleControllerComponentEngine* const engine = m_player->m_controller->GetEngine();
 		if (engine) {
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -821,7 +832,7 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 
 			// draw the tachometer
 			dFloat x = gageSize / 2 + 80.0f;
-			dFloat rpm = engine->GetRPM () / VIPER_REDLINE_TORQUE_RPM;
+			dFloat rpm = engine->GetRPM () / engine->GetRedLineRPM();
 			DrawGage(m_tachometer, m_redNeedle, rpm, x, y, gageSize);
 
 			// draw the odometer
@@ -848,29 +859,16 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 	virtual void PreUpdate (dFloat timestep)
 	{
 		// apply the vehicle controls, and all simulation time effect
-//		NewtonWorld* const world = GetWorld(); 
-//		DemoEntityManager* const scene = (DemoEntityManager*) NewtonWorldGetUserData(world);
-//		dSoundManager* const soundManager = scene->GetSoundManager();
+		NewtonWorld* const world = GetWorld(); 
+		DemoEntityManager* const scene = (DemoEntityManager*) NewtonWorldGetUserData(world);
+		dSoundManager* const soundManager = scene->GetSoundManager();
 		for (dListNode* ptr = GetFirst(); ptr; ptr = ptr->GetNext()) {
 			CustomVehicleController* const controller = &ptr->GetInfo();
-			
+		
 			NewtonBody* const body = controller->GetBody();
 			BasicVehicleEntity* const vehicleEntity = (BasicVehicleEntity*) NewtonBodyGetUserData(body);
 
 			if (vehicleEntity == m_player) {
-/*
-				// player need to check if the start engine sound is still on
-				void* const starEngine = m_engineSounds[0];
-				void* const startEngineSoundAsset = soundManager->GetAsset(starEngine);
-				dFloat length = soundManager->GetSoundlength (startEngineSoundAsset);
-				dFloat posit = soundManager->GetChannelSecPosition(starEngine);
-				if (posit >= length * 0.5f) {
-					// attenuate star engine volume 
-					dFloat volume = soundManager->GetChannelVolume(starEngine);
-					soundManager->SetChannelVolume(starEngine, volume * 0.98f);
-				}
-*/
-
 				// do player control
 				vehicleEntity->ApplyPlayerControl ();
 			} else {
@@ -878,16 +876,66 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 				vehicleEntity->ApplyNPCControl ();
 			}
 
-/*
-			// update engine rpm sound for all vehicles
 			CustomVehicleControllerComponentEngine* const engine = vehicleEntity->m_controller->GetEngine();
-			dFloat rpm = 2.0f * engine->GetRPM () / VIPER_REDLINE_TORQUE_RPM;
-//rpm = 0.0f;
-			void* const rpmEngine = m_engineSounds[1];
-			soundManager->SetChannelPitch (rpmEngine, rpm);
-*/
-		}
+			if (engine->GetKey()) {
+				// see if the player started the engine
+				void* const startEngine = m_engineSounds[0];
 
+				if (!vehicleEntity->m_engineOldKeyState) {
+					// play engine start sound;
+					soundManager->PlayChannel(startEngine);
+
+					for (int i = 2; i < m_soundsCount; i ++) {
+						void* const rpmEngine = m_engineSounds[i];
+						soundManager->PlayChannel(rpmEngine);
+						soundManager->SetChannelPitch (rpmEngine, 1.0f);
+						soundManager->SetChannelVolume(rpmEngine, 0.0f);
+						soundManager->SetChannelLoopMode(rpmEngine, true);
+					}
+				} 
+
+				// player need to check if the start engine sound is still on
+				void* const startEngineSoundAsset = soundManager->GetAsset(startEngine);
+				dFloat length = soundManager->GetSoundlength (startEngineSoundAsset);
+				dFloat posit = soundManager->GetChannelSecPosition(startEngine);
+				
+				if (posit >= length * 0.5f) {
+					// attenuate star engine volume 
+					dFloat volume = soundManager->GetChannelVolume(startEngine);
+					if (volume < 1.0e-3f) {
+						volume = 0.0f;
+					}
+					soundManager->SetChannelVolume(startEngine, volume * 0.98f);
+					vehicleEntity->m_engineRPMOn = true;
+				}
+
+				// update engine rpm sound for all vehicles
+				if (vehicleEntity->m_engineRPMOn) {
+					int count = m_soundsCount - 3;
+					//dFloat rpm = engine->GetRPM () / engine->GetRedLineRPM();
+					dFloat rpm = count * (dClamp (engine->GetRPM () / engine->GetRedLineRPM(), 0.0f, 0.999f));
+
+					int index = dFloor(rpm);
+					rpm = dClamp (rpm - dFloat(index), 0.0f, 1.0f);
+					dAssert (index >= 0);
+					dAssert (index < count);
+					soundManager->SetChannelVolume(m_engineSounds[index + 2], 1.0f - rpm);
+					soundManager->SetChannelPitch (m_engineSounds[index + 2], rpm + 1.0f);
+
+					soundManager->SetChannelVolume(m_engineSounds[index + 3], rpm);
+					soundManager->SetChannelPitch (m_engineSounds[index + 3], rpm * 0.5f + 0.5f);
+				}
+			} else {
+				vehicleEntity->m_engineRPMOn = false;
+				if (vehicleEntity->m_engineOldKeyState) {
+					for (int i = 0; i < m_soundsCount; i ++) {
+						soundManager->SetChannelVolume(m_engineSounds[i], 0.0f);
+						soundManager->StopChannel(m_engineSounds[i]);
+					}
+				}
+			}
+
+		}
 
 		// do the base class post update
 		CustomVehicleControllerManager::PreUpdate(timestep);
@@ -920,7 +968,6 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 		dVector frontDir (camMatrix[0]);
 		dVector camOrigin; 
 		if (m_externalView) {
-//			camOrigin = playerMatrix.TransformVector( dVector(0.0f, VEHICLE_THIRD_PERSON_VIEW_HIGHT, 0.0f, 0.0f));
 			camOrigin = playerMatrix.m_posit + dVector(0.0f, VEHICLE_THIRD_PERSON_VIEW_HIGHT, 0.0f, 0.0f);
 			camOrigin -= frontDir.Scale(VEHICLE_THIRD_PERSON_VIEW_DIST);
 		} else {
@@ -951,7 +998,8 @@ class BasicVehicleControllerManager: public CustomVehicleControllerManager
 	GLuint m_odometer;
 	GLuint m_tachometer;
 	GLuint m_needle;
-	void* m_engineSounds[10];
+	int m_soundsCount;
+	void* m_engineSounds[16];
 };
 
 
@@ -989,6 +1037,7 @@ void BasicCar (DemoEntityManager* const scene)
 
 dMatrix location (GetIdentityMatrix());
 location.m_posit.m_y = 50.0f;
+location.m_posit.m_x = -150.0f;
 
 	location.m_posit = FindFloor (scene->GetNewton(), location.m_posit, 100.0f);
 	location.m_posit.m_y += 0.5f;
