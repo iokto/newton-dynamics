@@ -189,27 +189,43 @@
 #endif
 
 
+#if ((defined (_WIN_32_VER) || defined (_WIN_64_VER)) && (_MSC_VER  >= 1600))
 #include <stdint.h>
+	typedef int8_t dgInt8;
+	typedef uint8_t dgUnsigned8;
 
-typedef int8_t dgInt8;
-typedef uint8_t dgUnsigned8;
+	typedef int16_t dgInt16;
+	typedef uint16_t dgUnsigned16;
 
-typedef int16_t dgInt16;
-typedef uint16_t dgUnsigned16;
+	typedef int32_t dgInt32;
+	typedef uint32_t dgUnsigned32;
 
-typedef int32_t dgInt32;
-typedef uint32_t dgUnsigned32;
+	typedef int64_t dgInt64;
+	typedef uint64_t dgUnsigned64;
 
-typedef int64_t dgInt64;
-typedef uint64_t dgUnsigned64;
+#else
+	typedef char dgInt8;
+	typedef unsigned char dgUnsigned8;
+
+	typedef short dgInt16;
+	typedef unsigned short dgUnsigned16;
+
+	typedef int dgInt32;
+	typedef unsigned dgUnsigned32;
+	typedef unsigned int dgUnsigned32;
+
+	typedef long long dgInt64;
+	typedef unsigned long long dgUnsigned64;
+	typedef double dgFloat64;
+#endif
 
 typedef double dgFloat64;
-
 #ifdef _NEWTON_USE_DOUBLE
 	typedef double dgFloat32;
 #else
 	typedef float dgFloat32;
 #endif
+
 
 
 class dgTriplex
