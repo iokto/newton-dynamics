@@ -760,6 +760,20 @@ void dgBroadPhase::ImproveNodeFitness (dgNode* const node)
 	dgAssert (!m_rootNode->m_parent);
 }
 
+dgInt32 dgBroadPhase::CompareNodes (const dgNode* const nodeA, const dgNode* const nodeB, void* )
+{
+	dgFloat32 areaA = nodeA->m_surfaceArea;
+	dgFloat32 areaB = nodeB->m_surfaceArea;
+	if (areaA < areaB) {
+		return -1;
+	}
+	if (areaA > areaB) {
+		return 1;
+	}
+
+	return 0;
+}
+
 
 dgBroadPhase::dgNode* dgBroadPhase::BuildTopDown (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode)
 {
@@ -818,6 +832,7 @@ void dgBroadPhase::ImproveFitness()
 			}
 
 			dgFitnessList::dgListNode* nodePtr = m_fitness.GetFirst();
+
 			m_rootNode = BuildTopDown (leafArray, 0, leafNodesCount - 1, &nodePtr);
 			m_treeEntropy = CalculateEmptropy();
 		} else {
