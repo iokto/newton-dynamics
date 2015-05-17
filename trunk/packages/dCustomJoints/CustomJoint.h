@@ -74,14 +74,14 @@ class CustomJoint: public CustomAlloc
 			dFloat sin_da = angle.m_sinJointAngle * m_cosJointAngle - angle.m_cosJointAngle * m_sinJointAngle; 
 			dFloat cos_da = angle.m_cosJointAngle * m_cosJointAngle + angle.m_sinJointAngle * m_sinJointAngle; 
 			dFloat angle_da = dAtan2 (sin_da, cos_da);
-			return AngularIntegration (angle_da);
+			return AngularIntegration (m_angle + angle_da);
 		}
-
 
 		dFloat CalculateJointAngle (dFloat angle)
 		{
 			return CalculateJointAngle (dCos (angle), dSin (angle));
 		}
+
 		dFloat m_angle;
 		dFloat m_sinJointAngle;
 		dFloat m_cosJointAngle;
