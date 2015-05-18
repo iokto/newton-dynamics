@@ -304,6 +304,11 @@ void dgContact::JointAccelerations(dgJointAccelerationDecriptor* const params)
 						dgFloat32 penetrationCorrection = vRel * timestep;
 						dgAssert (penetrationCorrection >= dgFloat32 (0.0f));
 						row->m_penetration = dgMax (dgFloat32 (0.0f), row->m_penetration - penetrationCorrection);
+					} else {
+						dgFloat32 penetrationCorrection = -vRel * timestep * row->m_restitution * dgFloat32 (8.0f);
+						if (penetrationCorrection > row->m_penetration) {
+							row->m_penetration = dgFloat32 (0.001f);
+						}
 					}
 					penetrationVeloc = -(row->m_penetration * row->m_penetrationStiffness);
 				}
