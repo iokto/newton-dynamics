@@ -32,6 +32,13 @@ CustomBallAndSocket::CustomBallAndSocket(const dMatrix& pinAndPivotFrame, Newton
 	CalculateLocalMatrix (pinAndPivotFrame, m_localMatrix0, m_localMatrix1);
 }
 
+CustomBallAndSocket::CustomBallAndSocket(const dMatrix& pinAndPivotFrame0, const dMatrix& pinAndPivotFrame1, NewtonBody* const child, NewtonBody* const parent)
+	:CustomJoint(6, child, parent)
+{
+	dMatrix	dummy;
+	CalculateLocalMatrix (pinAndPivotFrame0, m_localMatrix0, dummy);
+	CalculateLocalMatrix (pinAndPivotFrame1, dummy, m_localMatrix1);
+}
 
 
 CustomBallAndSocket::~CustomBallAndSocket()
