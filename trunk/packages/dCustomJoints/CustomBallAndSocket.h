@@ -22,6 +22,7 @@ class CustomBallAndSocket: public CustomJoint
 {
 	public:
 	CUSTOM_JOINTS_API CustomBallAndSocket(const dMatrix& pinAndPivotFrame, NewtonBody* const child, NewtonBody* const parent = NULL);
+	CUSTOM_JOINTS_API CustomBallAndSocket(const dMatrix& pinAndPivotFrame0, const dMatrix& pinAndPivotFrame1, NewtonBody* const child, NewtonBody* const parent = NULL);
 	CUSTOM_JOINTS_API virtual ~CustomBallAndSocket();
 
 	protected:
