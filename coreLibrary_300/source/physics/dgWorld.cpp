@@ -1042,12 +1042,66 @@ void dgWorld::SerializeToFile (const char* const fileName) const
 			dgAssert (count <= GetBodiesCount());
 		}
 		SerializeBodyArray (array, count, OnBodySerializeToFile, OnSerializeToFile, file);
+		SerializeJointArray (array, count, OnSerializeToFile, file);
 
 		delete[] array;
 		fclose (file);
 	}
 }
 
+void dgWorld::SerializeJointArray (dgBody** const bodyArray, dgInt32 bodyCount, dgSerialize serializeCallback, void* const userData) const
+{
+	dgInt32 count = 0;
+	const dgBodyMasterList* me = this;
+	for (dgBodyMasterList::dgListNode* node = me->GetFirst(); node; node = node->GetNext()) {
+		const dgBodyMasterListRow& info = node->GetInfo();
+		for (dgBodyMasterListRow::dgListNode *jointNode = info.GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
+			const dgBodyMasterListCell& cell = jointNode->GetInfo();
+			
+			dgConstraint* const joint = cell.m_joint;
+			count += joint->IsBilateral() ? 1 : 0;
+		}
+	}
+
+	dgTree<int, dgBody*> bodyMap (GetAllocator());
+	for (dgInt32 i = 0; i < bodyCount; i ++) {
+		bodyMap.Insert (i, bodyArray[i]);
+	}
+
+	count /= 2;
+	dgSerializeMarker (serializeCallback, userData);
+	serializeCallback(userData, &count, sizeof (count));	
+
+	dgTree<int, dgConstraint*> map (GetAllocator());
+	for (dgBodyMasterList::dgListNode* node = me->GetFirst(); node; node = node->GetNext()) {
+		dgBodyMasterListRow& info = node->GetInfo();
+		for (dgBodyMasterListRow::dgListNode *jointNode = info.GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
+			const dgBodyMasterListCell& cell = jointNode->GetInfo();
+			dgConstraint* const joint = cell.m_joint;
+			if (joint->IsBilateral()) {
+				if (!map.Find(joint)) {
+					map.Insert (0, joint);
+					dgInt32 body0; 
+					dgInt32 body1; 
+					dgAssert (joint->GetBody0());
+					dgAssert (joint->GetBody1());
+					body0 = (joint->GetBody0() != m_sentinel) ? bodyMap.Find (joint->GetBody0())->GetInfo() : -1;
+					body1 = (joint->GetBody1() != m_sentinel) ? bodyMap.Find (joint->GetBody1())->GetInfo() : -1;
+
+					serializeCallback(userData, &body0, sizeof (body0));
+					serializeCallback(userData, &body1, sizeof (body0));
+
+					dgBilateralConstraint* const bilateralJoint = (dgBilateralConstraint*) joint;
+					bilateralJoint->Serialize (serializeCallback, userData);
+
+					dgSerializeMarker(serializeCallback, userData);
+				}
+			}
+		}
+	}
+
+	dgSerializeMarker(serializeCallback, userData);
+}
 
 void dgWorld::SerializeBodyArray (dgBody** const array, dgInt32 count, OnBodySerialize bodyCallback, dgSerialize serializeCallback, void* const userData) const
 {

@@ -18,6 +18,8 @@
 
 //dInitRtti(Custom6DOF);
 
+IMPLEMENT_CUSTON_JOINT(Custom6DOF);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -438,7 +440,11 @@ dMatrix Custom6DOF::CalculateUniversal_Angles (const dMatrix& matrix0, const dMa
 }
 
 
+void Custom6DOF::Serialize (NewtonSerializeCallback callback, void* const userData) const
+{
+	SerializeBase (callback, userData);
 
+}
 
 
 

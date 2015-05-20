@@ -29,11 +29,48 @@ typedef void (*JointUserDestructorCallback) (const NewtonUserJoint* const me);
 typedef void (*JointUserSubmitConstraintCallback) (const NewtonUserJoint* const me, dFloat timestep, int threadIndex);
 
 
+#define DECLARE_CUSTON_JOINT(className,baseClass)																			\
+	virtual dCRCTYPE GetSerializeKey() const {return dCRC64(#className);}													\
+	public:																													\
+	class SerializeMetaData: public baseClass::SerializeMetaData															\
+	{																														\
+		public:																												\
+		SerializeMetaData()																									\
+		{																													\
+			GetDictionary().Insert(this, dCRC64(#className));																\
+		}																													\
+		virtual void SerializeJoint (CustomJoint* const joint, NewtonSerializeCallback callback, void* const userData)		\
+		{																													\
+			joint->Serialize(callback, userData);																			\
+		}																													\
+	};																														\
+	static SerializeMetaData m_metaData;
+
+#define IMPLEMENT_CUSTON_JOINT(className)																			\
+	className::SerializeMetaData m_mataData;																		\
+
 // this is the base class to implement custom joints, it is not a joint it just provide functionality
 // for the user to implement it own joints
 class CustomJoint: public CustomAlloc  
 {
 	public:
+	class SerializeMetaData
+	{
+		public:
+		CUSTOM_JOINTS_API SerializeMetaData();
+		CUSTOM_JOINTS_API virtual void SerializeJoint (CustomJoint* const joint, NewtonSerializeCallback callback, void* const userData);
+		CUSTOM_JOINTS_API virtual CustomJoint* DeserializeJoint (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData);
+	};
+
+	class SerializeMetaDataDictionary: public dTree<SerializeMetaData*, dCRCTYPE>
+	{
+		public:
+		SerializeMetaDataDictionary()
+			:dTree<SerializeMetaData*, dCRCTYPE>()
+		{
+		}
+	};
+
 	struct AngularIntegration
 	{
 		AngularIntegration()
@@ -89,8 +126,14 @@ class CustomJoint: public CustomAlloc
 
 	CUSTOM_JOINTS_API CustomJoint();
 	CUSTOM_JOINTS_API CustomJoint(int maxDOF, NewtonBody* const body0, NewtonBody* const body1);
+	CUSTOM_JOINTS_API CustomJoint (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData);
 	CUSTOM_JOINTS_API virtual ~CustomJoint();
 
+	CUSTOM_JOINTS_API void SerializeBase (NewtonSerializeCallback callback, void* const userData) const;
+
+	CUSTOM_JOINTS_API void SerializeData (NewtonSerializeCallback callback, void* const userData);
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const = 0;
+	
 	CUSTOM_JOINTS_API void SetBodiesCollisionState (int state);
 	CUSTOM_JOINTS_API int GetBodiesCollisionState () const;
 
@@ -115,11 +158,12 @@ class CustomJoint: public CustomAlloc
 
 	private:
 	// this are the callback needed to have transparent c++ method interfaces 
-	static void Destructor (const NewtonJoint* me);	
-	static void SubmitConstraints (const NewtonJoint* const me, dFloat timestep, int threadIndex);
-	static void GetInfo (const NewtonJoint* const me, NewtonJointRecord* info);
+	CUSTOM_JOINTS_API static void Destructor (const NewtonJoint* me);	
+	CUSTOM_JOINTS_API static void SubmitConstraints (const NewtonJoint* const me, dFloat timestep, int threadIndex);
+	CUSTOM_JOINTS_API static void GetInfo (const NewtonJoint* const me, NewtonJointRecord* const info);
+	CUSTOM_JOINTS_API static void Serialize (const NewtonJoint* const me, NewtonSerializeCallback callback, void* const userData);
+	CUSTOM_JOINTS_API static void Deserialize (const NewtonJoint* const me, NewtonDeserializeCallback callback, void* const userData);
 	
-
 	protected:
 	CUSTOM_JOINTS_API void Init (int maxDOF, NewtonBody* const body0, NewtonBody* const body1);
 
@@ -128,7 +172,13 @@ class CustomJoint: public CustomAlloc
 	CUSTOM_JOINTS_API void CalculateGlobalMatrix (const dMatrix& localMatrix0, const dMatrix& localMatrix1, dMatrix& matrix0, dMatrix& matrix1) const;
 	CUSTOM_JOINTS_API void CalculateLocalMatrix (const dMatrix& pinsAndPivotFrame, dMatrix& localMatrix0, dMatrix& localMatrix1) const;
 
+	CUSTOM_JOINTS_API virtual dCRCTYPE GetSerializeKey() const;
 
+	CUSTOM_JOINTS_API static SerializeMetaDataDictionary& GetDictionary();
+
+
+	dMatrix m_localMatrix0;
+	dMatrix m_localMatrix1;
 	void* m_userData;
 	NewtonBody* m_body0;
 	NewtonBody* m_body1;
@@ -138,6 +188,7 @@ class CustomJoint: public CustomAlloc
 	JointUserSubmitConstraintCallback m_userConstrationCallback;
 	int m_maxDof;
 	int m_autoDestroy;
+	static SerializeMetaData m_metaData;
 };
 
 

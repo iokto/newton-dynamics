@@ -35,6 +35,7 @@ class CustomPulley: public CustomJoint
 	protected:
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const {dAssert (0);} 
 
 	dMatrix m_localMatrix0;
 	dMatrix m_localMatrix1;
@@ -52,9 +53,6 @@ class CustomPulleyAndTwist: public CustomPulley
 	protected:
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
-
-	dMatrix m_localMatrix0;
-	dMatrix m_localMatrix1;
 
 	dFloat m_gearRatio;
 };

@@ -41,9 +41,7 @@ class CustomSlider: public CustomJoint
 	protected:
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
-
-	dMatrix m_localMatrix0;
-	dMatrix m_localMatrix1;
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const {dAssert (0);} 
 
 	dFloat m_speed;
 	dFloat m_posit;

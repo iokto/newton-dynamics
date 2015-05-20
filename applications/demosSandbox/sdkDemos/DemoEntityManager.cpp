@@ -468,6 +468,7 @@ void DemoEntityManager::BodyDeserialization (NewtonBody* const body, NewtonDeser
 
 void DemoEntityManager::SerializedPhysicScene (const char* const name)
 {
+/*
 	FILE* const file = fopen (name, "wb");
 
 	// we can save anything we want with the serialized data,
@@ -488,10 +489,14 @@ void DemoEntityManager::SerializedPhysicScene (const char* const name)
 
 	delete[] array;
 	fclose (file);
+*/
+	NewtonSerializeToFile (m_world, name);
 }
 
 void DemoEntityManager::DeserializedPhysicScene (const char* const name)
 {
+	dAssert (0);
+/*
 	// add the sky
 	CreateSkyBox();
 
@@ -505,6 +510,7 @@ void DemoEntityManager::DeserializedPhysicScene (const char* const name)
 		NewtonDeserializeBodyArray(m_world, BodyDeserialization, DeserializeFile, file);
 		fclose (file);
 	}
+*/
 }
 
 
