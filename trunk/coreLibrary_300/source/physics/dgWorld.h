@@ -302,6 +302,7 @@ class dgWorld
 	static void OnBodySerializeToFile (dgBody& body, dgSerialize serializeCallback, void* const userData);
 
 	void SerializeToFile (const char* const fileName) const;
+	void SerializeJointArray (dgBody** const array, dgInt32 count, dgSerialize serializeCallback, void* const userData) const;
 	void SerializeBodyArray (dgBody** const array, dgInt32 count, OnBodySerialize bodyCallback, dgSerialize serializeCallback, void* const userData) const;
 	void DeserializeBodyArray (OnBodyDeserialize bodyCallback, dgDeserialize deserializeCallback, void* const userData);
 

@@ -16,13 +16,11 @@
 #include "CustomJointLibraryStdAfx.h"
 #include "CustomJoint.h"
 
+CustomJoint::SerializeMetaData m_metaData;
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-
-
-
 CustomJoint::CustomJoint ()
 	:m_userData(NULL)
 	,m_body0(NULL)
@@ -39,6 +37,25 @@ CustomJoint::CustomJoint ()
 CustomJoint::CustomJoint (int maxDOF, NewtonBody* const body0, NewtonBody* const body1)
 {
 	Init (maxDOF, body0, body1);
+}
+
+CustomJoint::CustomJoint (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData)
+	:m_userData(NULL)
+	,m_body0(body0)
+	,m_body1(body1)
+	,m_joint(NULL)
+	,m_world(NULL)
+	,m_userDestructor(NULL)
+	,m_userConstrationCallback(NULL)
+	,m_maxDof(0)
+	,m_autoDestroy(0)
+{
+	dAssert (0);
+}
+
+void CustomJoint::SerializeBase (NewtonSerializeCallback callback, void* const userData) const
+{
+	dAssert (0);
 }
 
 CustomJoint::~CustomJoint()
@@ -73,16 +90,22 @@ void CustomJoint::Init (int maxDOF, NewtonBody* const body0, NewtonBody* const b
 	m_body0 = body0;
 	m_body1 = body1;
 	m_maxDof = maxDOF;
-	m_world	= NewtonBodyGetWorld (body0);
+	m_world	= body0 ? NewtonBodyGetWorld (body0) : NewtonBodyGetWorld (body1);
 	m_joint = NewtonConstraintCreateUserJoint (m_world, maxDOF, SubmitConstraints, GetInfo, m_body0, m_body1); 
 
 	NewtonJointSetUserData (m_joint, this);
 	NewtonJointSetDestructor (m_joint, Destructor);
 
+	NewtonOnJointSerializationCallback searializeTmp;
+	NewtonOnJointDeserializationCallback desearializeTmp;
+	NewtonGetJointSerializationCallbacks (m_world, &searializeTmp, &desearializeTmp);
+	if (!(searializeTmp && desearializeTmp)) {
+		NewtonSetJointSerializationCallbacks (m_world, Serialize, Deserialize);
+	}
+
 	m_userData = NULL;
 	m_userDestructor = NULL;
 	m_userConstrationCallback = NULL;
-
 }
 
 
@@ -126,7 +149,6 @@ void  CustomJoint::SubmitConstraints (const NewtonJoint* const me, dFloat timest
 	if (joint->m_userConstrationCallback) {
 		joint->m_userConstrationCallback ((const NewtonUserJoint*) joint, timestep, threadIndex);
 	}
-
 }
 
 void CustomJoint::GetInfo (const NewtonJoint* const me, NewtonJointRecord* info)
@@ -136,6 +158,25 @@ void CustomJoint::GetInfo (const NewtonJoint* const me, NewtonJointRecord* info)
 	joint->GetInfo(info);
 }
 
+void CustomJoint::Serialize (const NewtonJoint* const me, NewtonSerializeCallback callback, void* const userData)
+{
+	CustomJoint* const joint = (CustomJoint*) NewtonJointGetUserData (me);  
+
+	dCRCTYPE key = joint->GetSerializeKey();
+	callback (userData, &key, sizeof (key));
+
+	const SerializeMetaDataDictionary& dictionary = GetDictionary();
+	SerializeMetaDataDictionary::dTreeNode* const node = dictionary.Find(key); 
+	if (node) {
+//		joint->Serialize (callback, userData);
+		node->GetInfo()->SerializeJoint(joint, callback, userData);
+	}
+}
+
+void CustomJoint::Deserialize (const NewtonJoint* const me, NewtonDeserializeCallback callback, void* const userData)
+{
+	dAssert (0);
+}
 
 void CustomJoint::CalculateLocalMatrix (const dMatrix& pinsAndPivotFrame, dMatrix& localMatrix0, dMatrix& localMatrix1) const
 {
@@ -201,4 +242,37 @@ void CustomJoint::SubmitConstraints (dFloat timestep, int threadIndex)
 {
 }
 
+dCRCTYPE CustomJoint::GetSerializeKey() const
+{
+	return dCRC64("CustomJoint");
+}
 
+
+CustomJoint::SerializeMetaData::SerializeMetaData()
+{
+	CustomJoint::GetDictionary().Insert(this, dCRC64("CustomJoint"));
+}
+
+
+void CustomJoint::SerializeMetaData::SerializeJoint (CustomJoint* const joint, NewtonSerializeCallback callback, void* const userData)
+{
+	dAssert (0);
+}
+
+CustomJoint* CustomJoint::SerializeMetaData::DeserializeJoint (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData)
+{
+	dAssert (0);
+	return NULL;
+}
+
+CustomJoint::SerializeMetaDataDictionary& CustomJoint::GetDictionary()
+{
+	static SerializeMetaDataDictionary dictionary;
+	return dictionary;
+}
+
+
+void CustomJoint::SerializeData (NewtonSerializeCallback callback, void* const userData)
+{
+
+}

@@ -74,6 +74,9 @@ class CustomDistance: public CustomJoint
 		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
 	}
 
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const {dAssert (0);} 
+
+
 	dMatrix m_localPivot;
 	dMatrix m_parentPivot;
 	dFloat m_distance;
