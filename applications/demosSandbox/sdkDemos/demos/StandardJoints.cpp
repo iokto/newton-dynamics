@@ -518,7 +518,7 @@ void StandardJoints (DemoEntityManager* const scene)
 //	AddBallAndSockect (scene, dVector (-20.0f, 0.0f, -15.0f));
 	Add6DOF (scene, dVector (-20.0f, 0.0f, -10.0f));
 
-//	AddHinge (scene, dVector (-20.0f, 0.0f, -5.0f));
+	AddHinge (scene, dVector (-20.0f, 0.0f, -5.0f));
 //	AddSlider (scene, dVector (-20.0f, 0.0f, -0.0f));
 //	AddCylindrical (scene, dVector (-20.0f, 0.0f, 5.0f));
 

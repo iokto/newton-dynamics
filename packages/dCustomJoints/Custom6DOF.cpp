@@ -51,6 +51,10 @@ Custom6DOF::Custom6DOF (const dMatrix& pinsAndPivotChildFrame, const dMatrix& pi
 	m_maxMaxAngularErrorRamp = dVector (1.0f * 3.141592f / 180.0f, 1.0f * 3.141592f / 180.0f, 1.0f * 3.141592f / 180.0f, 0.0f);;
 }
 
+Custom6DOF::~Custom6DOF()
+{
+}
+
 Custom6DOF::Custom6DOF (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData)
 	:CustomJoint(child, parent, callback, userData)
 {
@@ -63,10 +67,6 @@ Custom6DOF::Custom6DOF (NewtonBody* const child, NewtonBody* const parent, Newto
 	int tmp;
 	callback (userData, &tmp, sizeof (int));
 	m_reverseUniversal = tmp ? true : false;
-}
-
-Custom6DOF::~Custom6DOF()
-{
 }
 
 void Custom6DOF::Serialize (NewtonSerializeCallback callback, void* const userData) const

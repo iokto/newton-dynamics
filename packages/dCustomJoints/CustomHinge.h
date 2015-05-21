@@ -29,8 +29,6 @@ class CustomHinge: public CustomJoint
 	CUSTOM_JOINTS_API CustomHinge (const dMatrix& pinAndPivotFrameChild, const dMatrix& pinAndPivotFrameParent, NewtonBody* const child, NewtonBody* const parent = NULL);
 	CUSTOM_JOINTS_API virtual ~CustomHinge();
 
-	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const {dAssert (0);} 
-
 	CUSTOM_JOINTS_API void EnableLimits(bool state);
 	CUSTOM_JOINTS_API void SetLimis(dFloat minAngle, dFloat maxAngle);
 	CUSTOM_JOINTS_API dFloat GetJointAngle () const;
@@ -46,6 +44,9 @@ class CustomHinge: public CustomJoint
 	}
 
 	protected:
+	CUSTOM_JOINTS_API CustomHinge (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData);
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const; 
+
 	void CalculatePitchAngle (const dMatrix& matrix0, const dMatrix& matrix1, dFloat& sinAngle, dFloat& cosAngle) const;
 	CUSTOM_JOINTS_API virtual void ProjectError () const;
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
@@ -56,8 +57,8 @@ class CustomHinge: public CustomJoint
 	dFloat m_friction;
 	dFloat m_jointOmega;
 	AngularIntegration m_curJointAngle;
-	
 	bool m_limitsOn;
+	DECLARE_CUSTON_JOINT(CustomHinge, CustomJoint)
 };
 
 #endif 
