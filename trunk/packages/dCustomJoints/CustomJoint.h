@@ -49,6 +49,7 @@ typedef void (*JointUserSubmitConstraintCallback) (const NewtonUserJoint* const 
 			return new className (body0, body1, callback, userData);														\
 		}																													\
 	};																														\
+	friend class SerializeMetaData;																							\
 	static SerializeMetaData m_metaData;
 
 #define IMPLEMENT_CUSTON_JOINT(className)																					\
