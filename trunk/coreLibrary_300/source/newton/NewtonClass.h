@@ -64,10 +64,6 @@ class Newton:
 	void DestroyBody(dgBody* const body);
 	void DestroyJoint(dgConstraint* const joint);
 
-	void SetJointSerializationCallbacks (NewtonOnJointSerializationCallback serializeJoint, NewtonOnJointDeserializationCallback deserializeJoint);
-	void GetJointSerializationCallbacks (NewtonOnJointSerializationCallback* const serializeJoint, NewtonOnJointDeserializationCallback* const deserializeJoint) const;
-
-
 	void UpdatePhysics (dgFloat32 timestep);
 	void UpdatePhysicsAsync (dgFloat32 timestep);
 	static void* DefaultAllocMemory (dgInt32 size);
@@ -76,8 +72,6 @@ class Newton:
 	dgFloat32 m_maxTimeStep;
 
 	NewtonWorldDestructorCallback m_destructor;
-	NewtonOnJointSerializationCallback m_serializedCallback;	
-	NewtonOnJointDeserializationCallback m_deserializedCallback;	
 };
 
 

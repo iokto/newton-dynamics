@@ -35,19 +35,24 @@ typedef void (*JointUserSubmitConstraintCallback) (const NewtonUserJoint* const 
 	class SerializeMetaData: public baseClass::SerializeMetaData															\
 	{																														\
 		public:																												\
-		SerializeMetaData()																									\
+		SerializeMetaData(const char* const name)																			\
+			:baseClass::SerializeMetaData(name)																				\
 		{																													\
-			GetDictionary().Insert(this, dCRC64(#className));																\
 		}																													\
 		virtual void SerializeJoint (CustomJoint* const joint, NewtonSerializeCallback callback, void* const userData)		\
 		{																													\
 			joint->Serialize(callback, userData);																			\
 		}																													\
+		virtual CustomJoint* DeserializeJoint (NewtonBody* const body0, NewtonBody* const body1,							\
+											   NewtonDeserializeCallback callback, void* const userData)					\
+		{																													\
+			return new className (body0, body1, callback, userData);														\
+		}																													\
 	};																														\
 	static SerializeMetaData m_metaData;
 
-#define IMPLEMENT_CUSTON_JOINT(className)																			\
-	className::SerializeMetaData m_mataData;																		\
+#define IMPLEMENT_CUSTON_JOINT(className)																					\
+	className::SerializeMetaData m_mataData(#className);																	\
 
 // this is the base class to implement custom joints, it is not a joint it just provide functionality
 // for the user to implement it own joints
@@ -57,7 +62,7 @@ class CustomJoint: public CustomAlloc
 	class SerializeMetaData
 	{
 		public:
-		CUSTOM_JOINTS_API SerializeMetaData();
+		CUSTOM_JOINTS_API SerializeMetaData(const char* const name);
 		CUSTOM_JOINTS_API virtual void SerializeJoint (CustomJoint* const joint, NewtonSerializeCallback callback, void* const userData);
 		CUSTOM_JOINTS_API virtual CustomJoint* DeserializeJoint (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData);
 	};
@@ -129,10 +134,7 @@ class CustomJoint: public CustomAlloc
 	CUSTOM_JOINTS_API CustomJoint (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData);
 	CUSTOM_JOINTS_API virtual ~CustomJoint();
 
-	CUSTOM_JOINTS_API void SerializeBase (NewtonSerializeCallback callback, void* const userData) const;
-
-	CUSTOM_JOINTS_API void SerializeData (NewtonSerializeCallback callback, void* const userData);
-	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const = 0;
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const;
 	
 	CUSTOM_JOINTS_API void SetBodiesCollisionState (int state);
 	CUSTOM_JOINTS_API int GetBodiesCollisionState () const;
@@ -162,7 +164,7 @@ class CustomJoint: public CustomAlloc
 	CUSTOM_JOINTS_API static void SubmitConstraints (const NewtonJoint* const me, dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API static void GetInfo (const NewtonJoint* const me, NewtonJointRecord* const info);
 	CUSTOM_JOINTS_API static void Serialize (const NewtonJoint* const me, NewtonSerializeCallback callback, void* const userData);
-	CUSTOM_JOINTS_API static void Deserialize (const NewtonJoint* const me, NewtonDeserializeCallback callback, void* const userData);
+	CUSTOM_JOINTS_API static void Deserialize (NewtonBody* const body0, NewtonBody* const body1, NewtonDeserializeCallback callback, void* const userData);
 	
 	protected:
 	CUSTOM_JOINTS_API void Init (int maxDOF, NewtonBody* const body0, NewtonBody* const body1);

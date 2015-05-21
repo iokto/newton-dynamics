@@ -248,22 +248,29 @@ void NewtonSetJointSerializationCallbacks (const NewtonWorld* const newtonWorld,
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
-	world->SetJointSerializationCallbacks (serializeJoint, deserializeJoint);
+	world->SetJointSerializationCallbacks (dgWorld::OnJointSerializationCallback(serializeJoint), dgWorld::OnJointDeserializationCallback(deserializeJoint));
 }
 
 void NewtonGetJointSerializationCallbacks (const NewtonWorld* const newtonWorld, NewtonOnJointSerializationCallback* const serializeJoint, NewtonOnJointDeserializationCallback* const deserializeJoint)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
-	world->GetJointSerializationCallbacks (serializeJoint, deserializeJoint);
+	world->GetJointSerializationCallbacks ((dgWorld::OnJointSerializationCallback*)serializeJoint, (dgWorld::OnJointDeserializationCallback*)deserializeJoint);
 }
 
 
-void NewtonSerializeToFile (const NewtonWorld* const newtonWorld, const char* const filename)
+void NewtonSerializeToFile (const NewtonWorld* const newtonWorld, const char* const filename, NewtonOnBodySerializationCallback bodyCallback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
-	world->SerializeToFile (filename);
+	world->SerializeToFile (filename, dgWorld::OnBodySerialize (bodyCallback));
+}
+
+void NewtonDeserializeFromFile (const NewtonWorld* const newtonWorld, const char* const filename, NewtonOnBodyDeserializationCallback bodyCallback)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *) newtonWorld;
+	world->DeserializeFromFile (filename, dgWorld::OnBodyDeserialize (bodyCallback));
 }
 
 /*

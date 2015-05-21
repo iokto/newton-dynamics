@@ -53,6 +53,7 @@ class CustomUniversal: public CustomJoint
 	CUSTOM_JOINTS_API virtual void ProjectError () const;
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const {dAssert (0);} 
 
 	bool m_limit_0_On;
 	bool m_limit_1_On;

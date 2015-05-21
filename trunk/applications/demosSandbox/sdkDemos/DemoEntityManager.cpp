@@ -155,8 +155,13 @@ void DemoEntityManager::Cleanup ()
 
 	m_sky = NULL;
 
+	NewtonOnJointSerializationCallback serializeJoint = NULL;
+	NewtonOnJointDeserializationCallback deserializeJoint = NULL;
+
 	// destroy the Newton world
 	if (m_world) {
+		// get serialization call back before destroying the world
+		NewtonGetJointSerializationCallbacks (m_world, &serializeJoint, &deserializeJoint);
 		NewtonDestroy (m_world);
 		m_world = NULL;
 	}
@@ -165,12 +170,14 @@ void DemoEntityManager::Cleanup ()
 	// check that there are no memory leak on exit
 	dAssert (NewtonGetMemoryUsed () == 0);
 
-
 	// create the newton world
 	m_world = NewtonCreate();
 
 	// link the work with this user data
 	NewtonWorldSetUserData(m_world, this);
+
+	// set serialization call back
+	NewtonSetJointSerializationCallbacks (m_world, serializeJoint, deserializeJoint);
 
 	// add all physics pre and post listeners
 	//	m_preListenerManager.Append(new DemoVisualDebugerListener("visualDebuger", m_world));
@@ -490,16 +497,15 @@ void DemoEntityManager::SerializedPhysicScene (const char* const name)
 	delete[] array;
 	fclose (file);
 */
-	NewtonSerializeToFile (m_world, name);
+	NewtonSerializeToFile (m_world, name, BodySerialization);
 }
 
 void DemoEntityManager::DeserializedPhysicScene (const char* const name)
 {
-	dAssert (0);
-/*
+
 	// add the sky
 	CreateSkyBox();
-
+/*
 	FILE* const file = fopen (name, "rb");
 
 	if (file) {
@@ -511,6 +517,7 @@ void DemoEntityManager::DeserializedPhysicScene (const char* const name)
 		fclose (file);
 	}
 */
+	NewtonDeserializeFromFile (m_world, name, BodyDeserialization);
 }
 
 
