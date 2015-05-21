@@ -26,6 +26,7 @@
 class Custom6DOF: public CustomJoint  
 {
 	public:
+	CUSTOM_JOINTS_API Custom6DOF (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData);
 	CUSTOM_JOINTS_API Custom6DOF (const dMatrix& pinsAndPivotChildFrame, const dMatrix& pinsAndPivotParentFrame, NewtonBody* const child, NewtonBody* const parent = NULL);
 	CUSTOM_JOINTS_API virtual ~Custom6DOF();
 

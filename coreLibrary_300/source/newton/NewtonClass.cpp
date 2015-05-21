@@ -93,8 +93,6 @@ Newton::Newton (dgFloat32 scale, dgMemoryAllocator* const allocator)
 	,NewtonDeadJoints(allocator)
 	,m_maxTimeStep(DG_TIMESTEP)
 	,m_destructor(NULL)
-	,m_serializedCallback (NULL)	
-	,m_deserializedCallback (NULL)	
 {
 }
 
@@ -153,19 +151,6 @@ void Newton::DestroyBody(dgBody* const body)
 }
 
 
-void Newton::SetJointSerializationCallbacks (NewtonOnJointSerializationCallback serializeJoint, NewtonOnJointDeserializationCallback deserializeJoint) 
-{
-	m_serializedCallback = serializeJoint;
-	m_deserializedCallback = deserializeJoint;
-}
-
-void Newton::GetJointSerializationCallbacks (NewtonOnJointSerializationCallback* const serializeJoint, NewtonOnJointDeserializationCallback* const deserializeJoint) const
-{
-	*serializeJoint = m_serializedCallback;
-	*deserializeJoint = m_deserializedCallback;
-}
-
-
 NewtonUserJoint::NewtonUserJoint (dgWorld* const world, dgInt32 maxDof, NewtonUserBilateralCallback callback, NewtonUserBilateralGetInfoCallback getInfo, dgBody* const dyn0, dgBody* const dyn1)
 	:dgUserConstraint (world, dyn0, dyn1, 1)
 {
@@ -201,9 +186,13 @@ dgUnsigned32 NewtonUserJoint::JacobianDerivative (dgContraintDescritor& params)
 
 void NewtonUserJoint::Serialize (dgSerialize serializeCallback, void* const userData)
 {
+	dgWorld::OnJointSerializationCallback serializeJoint;
+	dgWorld::OnJointDeserializationCallback deserializeJoint;
+
 	Newton* const world = m_body0 ? (Newton*)m_body0->GetWorld() : (Newton*)m_body1->GetWorld();
-	if (world->m_serializedCallback) {
-		world->m_serializedCallback ((NewtonJoint*)this, (NewtonSerializeCallback)serializeCallback, userData);
+	world->GetJointSerializationCallbacks (&serializeJoint, &deserializeJoint);
+	if (serializeJoint) {
+		((NewtonOnJointSerializationCallback)serializeJoint) ((NewtonJoint*)this, (NewtonSerializeCallback)serializeCallback, userData);
 	}
 }
 

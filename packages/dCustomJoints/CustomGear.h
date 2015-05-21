@@ -32,7 +32,6 @@ class CustomGear: public CustomJoint
 	CUSTOM_JOINTS_API CustomGear(int dof, NewtonBody* const child, NewtonBody* const parent);
 	CUSTOM_JOINTS_API virtual ~CustomGear();
 
-
 	protected:
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
