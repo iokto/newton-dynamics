@@ -49,29 +49,10 @@ class CustomVehicleControllerJoint: public dComplemtaritySolver::dBilateralJoint
 	friend class CustomVehicleControllerTireJoint;
 	friend class CustomVehicleControllerBodyStateTire;
 	friend class CustomVehicleControllerBodyStateChassis;
-	friend class CustomVehicleControllerContactJoint;
+	friend class CustomVehicleControllerTireContactJoint;
 	friend class CustomVehicleControllerComponentBrake;
 	friend class CustomVehicleControllerComponentEngine;
 	friend class CustomVehicleControllerComponentSteering;
-};
-
-class CustomVehicleControllerEngineGearJoint: public CustomVehicleControllerJoint
-{
-	public:
-	CUSTOM_JOINTS_API virtual void JacobianDerivative (dComplemtaritySolver::dParamInfo* const constraintParams); 
-	CUSTOM_JOINTS_API virtual void UpdateSolverForces (const dComplemtaritySolver::dJacobianPair* const jacobians) const;
-
-	dFloat m_powerTrainGain;
-};
-
-class CustomVehicleControllerEngineIdleJoint: public CustomVehicleControllerJoint
-{
-	public:
-	CUSTOM_JOINTS_API virtual void JacobianDerivative (dComplemtaritySolver::dParamInfo* const constraintParams); 
-	CUSTOM_JOINTS_API virtual void UpdateSolverForces (const dComplemtaritySolver::dJacobianPair* const jacobians) const;
-
-	dFloat m_omega;
-	dFloat m_friction;
 };
 
 
@@ -82,16 +63,30 @@ class CustomVehicleControllerTireJoint: public CustomVehicleControllerJoint
 	CUSTOM_JOINTS_API virtual void UpdateSolverForces (const dComplemtaritySolver::dJacobianPair* const jacobians) const; 
 };
 
-class CustomVehicleControllerContactJoint: public CustomVehicleControllerJoint
+class CustomVehicleControllerTireContactJoint: public CustomVehicleControllerJoint
 {
 	public:
-	CUSTOM_JOINTS_API CustomVehicleControllerContactJoint ();
+	CUSTOM_JOINTS_API CustomVehicleControllerTireContactJoint ();
+
+	CUSTOM_JOINTS_API virtual void SetContacts (int count, const NewtonWorldConvexCastReturnInfo* const contacts);
 	CUSTOM_JOINTS_API virtual void UpdateSolverForces (const dComplemtaritySolver::dJacobianPair* const jacobians) const; 
 	CUSTOM_JOINTS_API virtual void JacobianDerivative (dComplemtaritySolver::dParamInfo* const constraintParams); 
 	CUSTOM_JOINTS_API virtual void JointAccelerations (dComplemtaritySolver::dJointAccelerationDecriptor* const accelParam);
 
+	dVector m_contactsPoint[8];
+	dVector m_contactsNormal[8];
+	dFloat m_contactFriction[8];
 	int m_contactCount;
-	NewtonWorldConvexCastReturnInfo m_contacts[4];
+//	dContact m_contacts[8];
+};
+
+class CustomVehicleControllerEngineDifferencialJoint: public CustomVehicleControllerJoint
+{
+	public:
+	CUSTOM_JOINTS_API virtual void JacobianDerivative (dComplemtaritySolver::dParamInfo* const constraintParams); 
+	CUSTOM_JOINTS_API virtual void UpdateSolverForces (const dComplemtaritySolver::dJacobianPair* const jacobians) const;
+	dFloat m_radio0;
+	dFloat m_radio1;
 };
 
 

@@ -37,22 +37,19 @@ class DemoEntityManager: public wxGLCanvas, public dList <DemoEntity*>
     {
         public: 
         TransparentMesh()
-            :m_matrix(GetIdentityMatrix())
+            :m_matrix(dGetIdentityMatrix())
             ,m_mesh(NULL)
-//            ,m_subMesh (NULL)
         {
         }
 
         TransparentMesh(const dMatrix& matrix, const DemoMesh* const mesh)
             :m_matrix(matrix)
             ,m_mesh(mesh)
-//            ,m_subMesh (subMesh)
         {
         }
 
         dMatrix m_matrix;
         const DemoMesh* m_mesh;
-//        const DemoSubMesh* m_subMesh;
     };
 
     class TransparentHeap: public dUpHeap <TransparentMesh, dFloat>
@@ -109,7 +106,7 @@ class DemoEntityManager: public wxGLCanvas, public dList <DemoEntity*>
 	void SetCameraMouseLock (bool state);
 	void SetCameraMatrix (const dQuaternion& rotation, const dVector& position);
 
-    void PushTransparentMesh (const DemoMesh* const mesh); 
+    void PushTransparentMesh (const DemoMeshInterface* const mesh); 
 
 	void Set2DDisplayRenderFunction (RenderHoodCallback callback, void* const context);
 
@@ -152,6 +149,7 @@ class DemoEntityManager: public wxGLCanvas, public dList <DemoEntity*>
 
 	void CreateOpenGlFont();
 
+	wxGLContext* m_context;	
 
 	NewtonDemos* m_mainWindow;
 	NewtonWorld* m_world;

@@ -76,17 +76,6 @@ class NewtonDemos: public wxFrame
 		LaunchSDKDemoCallback m_launchDemoCallback;
 	};
 
-/*
-	class SDKJoystick: public wxJoystick
-	{
-		public:
-		SDKJoystick ()
-			:wxJoystick(wxJOYSTICK1)
-		{
-
-		}
-	};
-*/
 	
 	wxMenuBar* CreateMainMenu();
 	void LoadDemo (int index);
@@ -107,7 +96,8 @@ class NewtonDemos: public wxFrame
 	bool GetMousePosition (int& posX, int& posY) const;
 	bool GetJoytickPosition (dFloat& posX, dFloat& posY, int& buttonsMask) const;
 
-
+	bool IsShiftKeyDown () const;
+	bool IsControlKeyDown () const;
 
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
@@ -136,11 +126,13 @@ class NewtonDemos: public wxFrame
 	void OnSerializeWorld(wxCommandEvent& event);
 	void OnDeserializeWorld(wxCommandEvent& event);
 
+	void OnJoystickEvent(wxJoystickEvent& event);
+
 //	long onLoad(FXObject* sender, FXSelector id, void* eventPtr); 
 //	long onSave(FXObject* sender, FXSelector id, void* eventPtr); 
 
-//	SDKJoystick m_joystick;
 	wxMenuBar* m_mainMenu;
+	wxJoystick* m_joystick;
 	wxStatusBar* m_statusbar;
 	DemoEntityManager* m_scene;
 
@@ -160,6 +152,9 @@ class NewtonDemos: public wxFrame
 	bool m_concurrentProfilerState;
 	bool m_threadProfilerState;
 	bool m_hasJoysticController;
+	bool m_shiftKey;
+	bool m_controlKey;
+
 
 	int m_solverModeIndex;
 	int m_debugDisplayMode;

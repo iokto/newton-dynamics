@@ -31,6 +31,8 @@ class CustomVehicleControllerBodyState: public dComplemtaritySolver::dBodyState
 	CUSTOM_JOINTS_API const dMatrix& GetLocalMatrix () const;
 	CUSTOM_JOINTS_API const dVector& GetCenterOfMass () const;
 
+	CUSTOM_JOINTS_API CustomVehicleController* GetController() const;
+
 	protected:
 	CUSTOM_JOINTS_API CustomVehicleControllerBodyState();
 	CUSTOM_JOINTS_API virtual ~CustomVehicleControllerBodyState() {}
@@ -45,14 +47,41 @@ class CustomVehicleControllerBodyState: public dComplemtaritySolver::dBodyState
 	friend class CustomVehicleController;
 	friend class CustomVehicleControllerJoint;
 	friend class CustomVehicleControllerTireJoint;
-	friend class CustomVehicleControllerContactJoint;
-	friend class CustomVehicleControllerEngineGearJoint;
-	friend class CustomVehicleControllerEngineIdleJoint;
 	friend class CustomVehicleControllerBodyStateTire;
+	friend class CustomVehicleControllerComponentBrake;
+	friend class CustomVehicleControllerEngineIdleJoint;
+	friend class CustomVehicleControllerComponentEngine;
 	friend class CustomVehicleControllerBodyStateChassis;
-	friend class CustomVehicleControllerBodyStateEngine;
+	friend class CustomVehicleControllerTireContactJoint;
+	friend class CustomVehicleControllerComponentSteering;
+	friend class CustomVehicleControllerEngineDifferencialJoint;
+};
+
+
+
+class CustomVehicleControllerBodyStateContact: public CustomVehicleControllerBodyState
+{
+	public:
+	CUSTOM_JOINTS_API void Init (CustomVehicleController* const controller, const NewtonBody* const body);
+	CUSTOM_JOINTS_API const NewtonBody* GetNewtonBody() const
+	{
+		return m_newtonBody;
+	}
+
+	private:
+	CUSTOM_JOINTS_API virtual void ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega);
+	CUSTOM_JOINTS_API void UpdateDynamicInputs();
+
+	NewtonBody* m_newtonBody;
+	dFloat m_maxExternalAccel2;
+	dFloat m_maxExternalAlpha2;
+
+	friend class CustomVehicleController;
+	friend class CustomVehicleControllerTireJoint;
+	friend class CustomVehicleControllerBodyStateTire;
 	friend class CustomVehicleControllerComponentBrake;
 	friend class CustomVehicleControllerComponentEngine;
+	friend class CustomVehicleControllerTireContactJoint;
 	friend class CustomVehicleControllerComponentSteering;
 };
 
@@ -65,6 +94,10 @@ class CustomVehicleControllerBodyStateChassis: public CustomVehicleControllerBod
 
 	CUSTOM_JOINTS_API void SetDryRollingFrictionTorque (dFloat torque);
 	CUSTOM_JOINTS_API dFloat GetDryRollingFrictionTorque () const;
+
+	void PutToSleep(); 
+	bool IsSleeping () const;
+	
 
 	private:
 	CUSTOM_JOINTS_API void Init (CustomVehicleController* const controller, const dMatrix& localframe);
@@ -81,39 +114,12 @@ class CustomVehicleControllerBodyStateChassis: public CustomVehicleControllerBod
 
 	friend class CustomVehicleController;
 	friend class CustomVehicleControllerTireJoint;
-	friend class CustomVehicleControllerContactJoint;
+	friend class CustomVehicleControllerTireContactJoint;
 	friend class CustomVehicleControllerBodyStateTire;
-	friend class CustomVehicleControllerBodyStateEngine;
 	friend class CustomVehicleControllerComponentBrake;
 	friend class CustomVehicleControllerComponentEngine;
 	friend class CustomVehicleControllerComponentSteering;
-};
-
-
-class CustomVehicleControllerBodyStateEngine: public CustomVehicleControllerBodyState
-{
-	public:
-	CUSTOM_JOINTS_API void Init (CustomVehicleController* const controller);
-
-	CUSTOM_JOINTS_API void Update (dFloat timestep, CustomVehicleController* const controller);
-	CUSTOM_JOINTS_API void ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega);
-	CUSTOM_JOINTS_API int CalculateActiveJoints (CustomVehicleController* const controller, CustomVehicleControllerJoint** const jointArray);
-
-	CustomVehicleControllerEngineGearJoint m_leftTire;
-	CustomVehicleControllerEngineGearJoint m_rightTire;
-	CustomVehicleControllerEngineIdleJoint m_idleFriction;
-	dFloat m_radianPerSecund;
-
-	friend class CustomVehicleController;
-	friend class CustomVehicleControllerTireJoint;
-	friend class CustomVehicleControllerEngineGearJoint;
-	friend class CustomVehicleControllerEngineIdleJoint;
-	friend class CustomVehicleControllerBodyStateTire;
-	friend class CustomVehicleControllerBodyStateChassis;
-	friend class CustomVehicleControllerContactJoint;
-	friend class CustomVehicleControllerComponentBrake;
-	friend class CustomVehicleControllerComponentEngine;
-	friend class CustomVehicleControllerComponentSteering;
+	friend class CustomVehicleControllerComponentTrackSkidSteering;
 };
 
 
@@ -138,81 +144,125 @@ class CustomVehicleControllerBodyStateTire: public CustomVehicleControllerBodySt
 
 	CUSTOM_JOINTS_API void Init (CustomVehicleController* const controller, const TireCreationInfo& tireInfo);
 
+	CUSTOM_JOINTS_API void GetInfo(TireCreationInfo& tireInfo) const;
+	CUSTOM_JOINTS_API void UpdateInfo(const TireCreationInfo& tireInfo);
+
 	CUSTOM_JOINTS_API void* GetUserData() const;
 	CUSTOM_JOINTS_API dMatrix CalculateLocalMatrix () const;
 	CUSTOM_JOINTS_API dMatrix CalculateGlobalMatrix () const;
 
-	CUSTOM_JOINTS_API dMatrix CalculateSteeringMatrix () const;
-	CUSTOM_JOINTS_API dMatrix CalculateSuspensionMatrix () const;
+	CUSTOM_JOINTS_API dFloat GetTireRadio () const
+	{
+		return m_radio;
+	}
 
-	const dVector& GetTireLoad () const
+	CUSTOM_JOINTS_API dFloat GetTireRotationSpeed () const
+	{
+		return m_rotationalSpeed;
+	}
+
+	CUSTOM_JOINTS_API const dVector& GetTireLoad () const
 	{
 		return m_tireLoad;
 	}
 
-	const dVector& GetLateralForce () const
+	CUSTOM_JOINTS_API const dVector& GetLateralForce () const
 	{
 		return m_lateralForce;
 	}
 
-	const dVector& GetLongitudinalForce () const
+	CUSTOM_JOINTS_API const dVector& GetLongitudinalForce () const
 	{
 		return m_longitudinalForce;
 	}
 
+	CUSTOM_JOINTS_API dFloat GetLateralSlip () const
+	{
+		return m_lateralSlip;
+	}
+
+	CUSTOM_JOINTS_API dFloat GetLongitudinalSlip () const
+	{
+		return m_longitudinalSlip;
+	}
+
+	CUSTOM_JOINTS_API dFloat GetAligningTorque () const
+	{
+		return m_aligningTorque;
+	}
+	
+	CUSTOM_JOINTS_API int GetContactCount() const
+	{
+		return m_contactCount;
+	}
+
+
+	CUSTOM_JOINTS_API const CustomVehicleControllerTireContactJoint* GetContactJoint(int index) const
+	{
+		return &m_contactJoint[index];
+	}
+
+	CUSTOM_JOINTS_API const CustomVehicleControllerBodyStateContact* GetContactBody(int index) const	
+	{
+		const CustomVehicleControllerTireContactJoint* const joint = GetContactJoint(index);
+		dAssert (index < m_contactCount);
+		dAssert (joint->m_state0 != this);
+		return (CustomVehicleControllerBodyStateContact*) joint->m_state0;
+	}
+
 
 	private:
-	CUSTOM_JOINTS_API void UpdateDynamicInputs(dFloat timestep);
-	CUSTOM_JOINTS_API void Collide (CustomControllerConvexCastPreFilter& filter, dFloat timestepInv);
 	CUSTOM_JOINTS_API void UpdateTransform ();
-/*
-	CUSTOM_JOINTS_API dFloat GetAdhesionCoefficient() const;
-	CUSTOM_JOINTS_API void SetAdhesionCoefficient(dFloat Coefficient);
-	CUSTOM_JOINTS_API virtual void IntegrateForce (dFloat timestep, const dVector& force, const dVector& torque);
-*/
+	CUSTOM_JOINTS_API dMatrix CalculateSteeringMatrix () const;
+	CUSTOM_JOINTS_API dMatrix CalculateSuspensionMatrix () const;
+	CUSTOM_JOINTS_API void UpdateDynamicInputs(dFloat timestep);
+	CUSTOM_JOINTS_API void Collide (CustomControllerConvexCastPreFilter& filter, dFloat timestepInv, int threadId);
 	CUSTOM_JOINTS_API virtual void ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega);
+	CUSTOM_JOINTS_API void CalculateRollingResistance (dFloat topSpeed);
+
 
 	dVector m_tireLoad;
 	dVector m_lateralForce;
 	dVector m_longitudinalForce;
+	CustomVehicleControllerTireJoint m_chassisJoint;
+	CustomVehicleControllerTireContactJoint m_contactJoint[2];
+	int m_contactCount;
+
 	dFloat m_radio;
 	dFloat m_width;
 	dFloat m_posit;
 	dFloat m_speed;
-	
-	dFloat m_breakTorque;
+	dFloat m_locationSign;
+	dFloat m_brakeTorque;
 	dFloat m_engineTorque;
-	dFloat m_rotatonSpeed;
+	dFloat m_rotationalSpeed;
+	dFloat m_dampingRatio;
 	dFloat m_rotationAngle;
 	dFloat m_steeringAngle;
 	dFloat m_restSprunMass;
-	dFloat m_dampingRatio;
 	dFloat m_springStrength;
-	dFloat m_suspensionlenght;
+	dFloat m_suspensionLenght;
 	dFloat m_lateralStiffness;
-	dFloat m_longitudialStiffness;
+	dFloat m_maxAngularVelocity;
 	dFloat m_aligningMomentTrail;
-	
-	//dFloat m_adhesionCoefficient; 
-	//dFloat m_idleRollingResistance;
-	//dFloat m_dryFrictionTorque;
-	//dFloat m_engineTorqueResistance;
+	dFloat m_longitudialStiffness;
 
+	dFloat m_lateralSlip;
+	dFloat m_longitudinalSlip;
+	dFloat m_aligningTorque;
+	
 	void* m_userData;
 	NewtonCollision* m_shape;
-	CustomVehicleControllerTireJoint m_chassisJoint;
-	CustomVehicleControllerContactJoint m_contactJoint;
 
 	friend class CustomVehicleController;
 	friend class CustomVehicleControllerTireJoint;
-	friend class CustomVehicleControllerContactJoint;
-	friend class CustomVehicleControllerEngineGearJoint;
-	friend class CustomVehicleControllerEngineIdleJoint;
 	friend class CustomVehicleControllerComponentBrake;
 	friend class CustomVehicleControllerComponentEngine;
-	friend class CustomVehicleControllerComponentSteering;
-	friend class CustomVehicleControllerBodyStateEngine;
+	friend class CustomVehicleControllerEngineIdleJoint;
+	friend class CustomVehicleControllerTireContactJoint;
 	friend class CustomVehicleControllerBodyStateChassis;
+	friend class CustomVehicleControllerComponentSteering;
+	friend class CustomVehicleControllerEngineDifferencialJoint;
 };
 
 

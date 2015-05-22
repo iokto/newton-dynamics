@@ -26,7 +26,7 @@ static NewtonBody* CreatePlaneCollision (DemoEntityManager* const scene, const d
 	NewtonCollision* const planeCollision = CreateInfinitePlane (scene->GetNewton(), planeEquation);
 
 	// create the the rigid body for
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	NewtonBody* const body = NewtonCreateDynamicBody(scene->GetNewton(), planeCollision, &matrix[0][0]);
 
 	// create a visual mesh
@@ -88,16 +88,14 @@ void UserHeightFieldCollision (DemoEntityManager* const scene)
 	// load the sky box
 	scene->CreateSkyBox();
 
-//	CreateHeightFieldTerrain (scene, 10, 8.0f, 1.5f, 0.2f, 200.0f, -50.0f);
-	// in 32 build 2 gbyte is no enough memory to make a 1000000 vertex mesh, we will make a 256k vertex mesh 
-	CreateHeightFieldTerrain (scene, 9, 8.0f, 1.5f, 0.2f, 200.0f, -50.0f);
+	CreateHeightFieldTerrain(scene, HEIGHTFIELD_DEFAULT_SIZE, HEIGHTFIELD_DEFAULT_CELLSIZE, 1.5f, 0.2f, 200.0f, -50.0f);
 	
 
 	dMatrix camMatrix (dRollMatrix(-20.0f * 3.1416f /180.0f) * dYawMatrix(-45.0f * 3.1416f /180.0f));
 	dQuaternion rot (camMatrix);
-	dVector origin (1000.0f, 0.0f, 1000.0f, 0.0f);
-	dFloat hight = 1000.0f;
-	origin = FindFloor (scene->GetNewton(), dVector (origin.m_x, hight, origin .m_z, 0.0f), hight * 2);
+	dVector origin (250.0f, 0.0f, 250.0f, 0.0f);
+	dFloat height = 1000.0f;
+	origin = FindFloor (scene->GetNewton(), dVector (origin.m_x, height, origin .m_z, 0.0f), height * 2);
 	origin.m_y += 10.0f;
 
 	scene->SetCameraMatrix(rot, origin);
@@ -110,7 +108,7 @@ void UserHeightFieldCollision (DemoEntityManager* const scene)
 
 	int count = 5;
 //	int count = 1;
-	dMatrix shapeOffsetMatrix (GetIdentityMatrix());
+	dMatrix shapeOffsetMatrix (dGetIdentityMatrix());
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _SPHERE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _CAPSULE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
@@ -152,7 +150,7 @@ void UserPlaneCollision (DemoEntityManager* const scene)
 	dVector size (1.0f, 1.0f, 1.0f, 0.0f);
 
 	int count = 1;
-	dMatrix shapeOffsetMatrix (GetIdentityMatrix());
+	dMatrix shapeOffsetMatrix (dGetIdentityMatrix());
 	AddUniformScaledPrimitives(scene, 10.0f, location, size, count, count, 4.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 //	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _SPHERE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 //	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);

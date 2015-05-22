@@ -93,7 +93,7 @@ void CustomPlayerController::Init(dFloat mass, dFloat outerRadius, dFloat innerR
 	NewtonCompoundCollisionEndAddRemove (playerShape);	
 
 	// create the kinematic body
-	dMatrix locationMatrix (GetIdentityMatrix());
+	dMatrix locationMatrix (dGetIdentityMatrix());
 	m_body = NewtonCreateKinematicBody(world, playerShape, &locationMatrix[0][0]);
 
 	// players must have weight, otherwise they are infinitely strong when they collide
@@ -148,13 +148,13 @@ CustomPlayerController* CustomPlayerControllerManager::CreatePlayer (dFloat mass
 
 
 
-void CustomPlayerController::SetPlayerOrigin (dFloat originHigh)
+void CustomPlayerController::SetPlayerOrigin (dFloat originHeight)
 {
-	dAssert (0);
+/*
 	NewtonCollision* const playerShape = NewtonBodyGetCollision(m_body);
 	NewtonCompoundCollisionBeginAddRemove(playerShape);	
 
-		dMatrix supportShapeMatrix (GetIdentityMatrix());
+		dMatrix supportShapeMatrix (dGetIdentityMatrix());
 		supportShapeMatrix[0] = m_upVector;
 		supportShapeMatrix[1] = m_frontVector;
 		supportShapeMatrix[2] = supportShapeMatrix[0] * supportShapeMatrix[1];
@@ -177,6 +177,10 @@ void CustomPlayerController::SetPlayerOrigin (dFloat originHigh)
 	dFloat mass;
 	NewtonBodyGetMassMatrix(m_body, &mass, &Ixx, &Iyy, &Izz);
 	NewtonBodySetMassProperties(m_body, mass, playerShape);
+*/
+	originHeight = dClamp (originHeight, 0.0f, m_height);
+	dVector origin (m_upVector.Scale (originHeight));
+	NewtonBodySetCentreOfMass (m_body, &origin[0]);
 }
 
 
@@ -309,7 +313,7 @@ void CustomPlayerController::UpdateGroundPlane (dMatrix& matrix, const dMatrix& 
 	NewtonWorld* const world = manager->GetWorld();
 
 	CustomControllerConvexRayFilter filter(m_body);
-	NewtonWorldConvexRayCast (world, m_castingShape, &castMatrix[0][0], &dst[0], CustomControllerConvexRayFilter::Filter, &filter, CustomControllerConvexRayFilter::Prefilter, threadIndex);
+	NewtonWorldConvexRayCast (world, m_castingShape, &castMatrix[0][0], &dst[0], CustomControllerConvexRayFilter::Filter, &filter, CustomControllerConvexCastPreFilter::Prefilter, threadIndex);
 
 	m_groundPlane = dVector (0.0f, 0.0f, 0.0f, 0.0f);
 	m_groundVelocity = dVector (0.0f, 0.0f, 0.0f, 0.0f);

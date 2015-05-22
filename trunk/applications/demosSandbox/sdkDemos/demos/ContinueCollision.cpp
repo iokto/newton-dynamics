@@ -34,7 +34,7 @@ static void PlaceLargeFloorBox (DemoEntityManager* const scene)
 }
 */
 
-void ContinueCollision (DemoEntityManager* const scene)
+void ContinuousCollision (DemoEntityManager* const scene)
 {
 	// load the skybox
 	scene->CreateSkyBox();
@@ -45,8 +45,9 @@ void ContinueCollision (DemoEntityManager* const scene)
 //	CreateLevelMesh (scene, "flatPlane.ngd", 1);
 //	CreateLevelMesh (scene, "sponza.ngd", optimization);
 //	CreateLevelMesh (scene, "cattle.ngd", fileName);
-//	CreateLevelMesh (scene, "playground.ngd", fileName);
-	CreateHeightFieldTerrain (scene, 9, 8.0f, 1.5f, 0.2f, 200.0f, -50.0f);
+	//	CreateLevelMesh (scene, "playground.ngd", fileName);
+	CreateHeightFieldTerrain(scene, HEIGHTFIELD_DEFAULT_SIZE, HEIGHTFIELD_DEFAULT_CELLSIZE,
+							 1.5f, 0.2f, 200.0f, -50.0f);
 
 	dMatrix camMatrix (dRollMatrix(-20.0f * 3.1416f /180.0f) * dYawMatrix(-45.0f * 3.1416f /180.0f));
 	dQuaternion rot (camMatrix);
@@ -69,7 +70,7 @@ void ContinueCollision (DemoEntityManager* const scene)
 //	int count = 1;
 
 	// this is still a work in progress
-	dMatrix shapeOffsetMatrix (GetIdentityMatrix());
+	dMatrix shapeOffsetMatrix (dGetIdentityMatrix());
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 1.7f, _SPHERE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 //AddPrimitiveArray(scene, 10.0f, location, size, count, count, 1.7f, _SPHERE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 //AddPrimitiveArray(scene, 10.0f, location, size, count, count, 1.7f, _SPHERE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
@@ -87,7 +88,7 @@ void ContinueCollision (DemoEntityManager* const scene)
 //	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 1.7f, _REGULAR_CONVEX_HULL_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 //	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 1.7f, _RANDOM_CONVEX_HULL_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 
-	// set continue collision mode on all dynamics bodies
+	// set continuous collision mode on all dynamics bodies
 	for (NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
 		float Ix;
 		float Iy;

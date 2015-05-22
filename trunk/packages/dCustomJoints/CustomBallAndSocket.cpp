@@ -104,15 +104,19 @@ void CustomBallAndSocket::SubmitConstraints (dFloat timestep, int threadIndex)
 
 CustomLimitBallAndSocket::CustomLimitBallAndSocket(const dMatrix& pinAndPivotFrame, NewtonBody* const child, NewtonBody* const parent)
 	:CustomBallAndSocket(pinAndPivotFrame, child, parent)
-	,m_rotationOffset(GetIdentityMatrix())
+	,m_rotationOffset(dGetIdentityMatrix())
 {
 	SetConeAngle (0.0f);
 	SetTwistAngle (0.0f, 0.0f);
 }
 
+
 CustomLimitBallAndSocket::CustomLimitBallAndSocket(const dMatrix& childPinAndPivotFrame, NewtonBody* const child, const dMatrix& parentPinAndPivotFrame, NewtonBody* const parent)
 	:CustomBallAndSocket(childPinAndPivotFrame, child, parent)
 	,m_rotationOffset(childPinAndPivotFrame * parentPinAndPivotFrame.Inverse())
+//	,m_pitch()
+//	,m_yaw()
+//	,m_roll()
 {
 	SetConeAngle (0.0f);
 	SetTwistAngle (0.0f, 0.0f);
@@ -153,6 +157,7 @@ void CustomLimitBallAndSocket::Serialize (NewtonSerializeCallback callback, void
 
 void CustomLimitBallAndSocket::SetConeAngle (dFloat angle)
 {
+	m_coneAngle = angle;
 	m_coneAngleCos = dCos (angle);
 	m_coneAngleSin = dSin (angle);
 	m_coneAngleHalfCos = dCos (angle * 0.5f);
@@ -166,6 +171,17 @@ void CustomLimitBallAndSocket::SetTwistAngle (dFloat minAngle, dFloat maxAngle)
 	m_maxTwistAngle = maxAngle;
 }
 
+dFloat CustomLimitBallAndSocket::GetConeAngle () const
+{
+	return m_coneAngle;
+}
+
+void CustomLimitBallAndSocket::GetTwistAngle (dFloat& minAngle, dFloat& maxAngle) const
+{
+	minAngle = m_minTwistAngle;
+	maxAngle = m_maxTwistAngle;
+}
+
 
 void CustomLimitBallAndSocket::GetInfo (NewtonJointRecord* const info) const
 {
@@ -173,10 +189,15 @@ void CustomLimitBallAndSocket::GetInfo (NewtonJointRecord* const info) const
 
 	info->m_minAngularDof[0] = m_minTwistAngle;
 	info->m_maxAngularDof[0] = m_maxTwistAngle;
-	info->m_minAngularDof[1] = -dAcos (m_coneAngleCos);
-	info->m_maxAngularDof[1] =  dAcos (m_coneAngleCos);
-	info->m_minAngularDof[2] = -dAcos (m_coneAngleCos); 
-	info->m_maxAngularDof[2] =  dAcos (m_coneAngleCos);
+//	info->m_minAngularDof[1] = -dAcos (m_coneAngleCos);
+//	info->m_maxAngularDof[1] =  dAcos (m_coneAngleCos);
+//	info->m_minAngularDof[2] = -dAcos (m_coneAngleCos); 
+//	info->m_maxAngularDof[2] =  dAcos (m_coneAngleCos);
+
+	info->m_minAngularDof[1] = -m_coneAngle;
+	info->m_maxAngularDof[1] =  m_coneAngle;
+	info->m_minAngularDof[2] = -m_coneAngle; 
+	info->m_maxAngularDof[2] =  m_coneAngle;
 
 	strcpy (info->m_descriptionType, "limitballsocket");
 }
@@ -197,7 +218,117 @@ void CustomLimitBallAndSocket::SubmitConstraints (dFloat timestep, int threadInd
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_up[0]);
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
 
-	dMatrix localMatrix (matrix0 * (m_rotationOffset * matrix1).Inverse());
+	matrix1 = m_rotationOffset * matrix1;
+
+/*
+	dVector euler0;
+	dVector euler1;
+	dMatrix localMatrix (matrix0 * matrix1.Inverse());
+	localMatrix.GetEulerAngles(euler0, euler1);
+
+	AngularIntegration pitchStep0 (AngularIntegration (euler0.m_x) - m_pitch);
+	AngularIntegration pitchStep1 (AngularIntegration (euler1.m_x) - m_pitch);
+	if (dAbs (pitchStep0.m_angle) > dAbs (pitchStep1.m_angle)) {
+		euler0 = euler1;
+	}
+
+	dVector euler (m_pitch.Update (euler0.m_x), m_yaw.Update (euler0.m_y), m_roll.Update (euler0.m_z), 0.0f);
+//dTrace (("(%f %f %f) (%f %f %f)\n", m_pitch.m_angle * 180.0f / 3.141592f, m_yaw.m_angle * 180.0f / 3.141592f, m_roll.m_angle * 180.0f / 3.141592f,  euler0.m_x * 180.0f / 3.141592f, euler0.m_y * 180.0f / 3.141592f, euler0.m_z * 180.0f / 3.141592f));
+
+	// handle special case of cone angle being zero
+	if (m_coneAngle == 0.0f) {
+		dVector p0 (matrix0[3] + matrix0[0].Scale (MIN_JOINT_PIN_LENGTH));
+		dVector p1 (matrix0[3] + matrix1[0].Scale (MIN_JOINT_PIN_LENGTH));
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p0[0], &matrix1[1][0]);
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p0[0], &matrix1[2][0]);
+
+		if ((m_maxTwistAngle - m_minTwistAngle) < 1.0e-4f) {
+			// handle the cone angle zero as special case of twist angle being zero
+			dAssert (0);
+			dVector q0 (matrix0[3] + matrix0[1].Scale (MIN_JOINT_PIN_LENGTH));
+			dVector q1 (matrix0[3] + matrix1[1].Scale (MIN_JOINT_PIN_LENGTH));
+			NewtonUserJointAddLinearRow (m_joint, &q0[0], &q1[0], &matrix1[2][0]);
+		} else {
+			if (euler[0] < m_minTwistAngle) {
+				euler[0] = m_minTwistAngle;
+				dMatrix pyr (dPitchMatrix(m_pitch.m_angle) * dYawMatrix(m_yaw.m_angle) * dRollMatrix(m_roll.m_angle));
+				dMatrix p0y0r0 (dPitchMatrix(euler[0]) * dYawMatrix(euler[1]) * dRollMatrix(euler[2]));
+				dMatrix baseMatrix0 (p0y0r0.Inverse() * matrix0);
+				dVector q0 (matrix0[3] + baseMatrix0[1].Scale (MIN_JOINT_PIN_LENGTH));
+				dVector q1 (matrix0[3] + matrix1[1].Scale (MIN_JOINT_PIN_LENGTH));
+				NewtonUserJointAddLinearRow (m_joint, &q0[0], &q1[0], &matrix1[2][0]);
+				NewtonUserJointSetRowMinimumFriction(m_joint, 0.0f);
+
+			} else if (euler[0] > m_maxTwistAngle) {
+				euler[0] = m_maxTwistAngle;
+				dMatrix pyr (dPitchMatrix(m_pitch.m_angle) * dYawMatrix(m_yaw.m_angle) * dRollMatrix(m_roll.m_angle));
+				dMatrix p0y0r0 (dPitchMatrix(euler[0]) * dYawMatrix(euler[1]) * dRollMatrix(euler[2]));
+				dMatrix baseMatrix0 (p0y0r0.Inverse() * matrix0);
+				dVector q0 (matrix0[3] + baseMatrix0[1].Scale (MIN_JOINT_PIN_LENGTH));
+				dVector q1 (matrix0[3] + matrix1[1].Scale (MIN_JOINT_PIN_LENGTH));
+				NewtonUserJointAddLinearRow (m_joint, &q0[0], &q1[0], &matrix1[2][0]);
+				NewtonUserJointSetRowMaximumFriction(m_joint, 0.0f);
+			}
+		}
+	} else {
+		bool limitViolation = false;
+		if (euler[0] < m_minTwistAngle) {
+			limitViolation = true;
+			euler[0] = m_minTwistAngle;
+		} else if (euler[0] > m_maxTwistAngle) {
+			limitViolation = true;
+			euler[0] = m_maxTwistAngle;
+		}
+
+		dMatrix coneMatrix (dYawMatrix(euler[1]) * dRollMatrix(euler[2]));
+		dFloat coneAngle = dAcos (coneMatrix[0][0]);
+		if (coneAngle > m_coneAngle) {
+			limitViolation = true;
+			dFloat angle = dAtan2 (coneMatrix[0][2], coneMatrix[0][1]);
+			dMatrix alignMatrix (dPitchMatrix(angle));
+			coneMatrix = coneMatrix * alignMatrix.Inverse();
+			dAssert (dAbs (coneMatrix[0][2]) < 1.0e-4f);
+			dAssert (dAbs(dAtan2 (coneMatrix[0][1], coneMatrix[0][0]) - coneAngle) < 1.0e-4f);
+			dFloat deltaAngle = coneAngle - m_coneAngle;
+			dMatrix clipMatrix (dRollMatrix(-deltaAngle));
+			coneMatrix = coneMatrix * clipMatrix;
+			coneMatrix = dPitchMatrix (euler[0]) * coneMatrix * alignMatrix;
+		}
+
+		if (limitViolation) {
+			//dMatrix p0y0r0 (dPitchMatrix(euler[0]) * dYawMatrix(euler[1]) * dRollMatrix(euler[2]));
+			//dMatrix rotation (pyr * p0y0r0.Inverse());
+			dMatrix baseMatrix (coneMatrix * matrix1);
+			dMatrix rotation (matrix0.Inverse() * baseMatrix);
+
+			dQuaternion quat (rotation);
+			if (quat.m_q0 > dFloat (0.99995f)) {
+				//dVector p0 (matrix0[3] + baseMatrix[1].Scale (MIN_JOINT_PIN_LENGTH));
+				//dVector p1 (matrix0[3] + baseMatrix[1].Scale (MIN_JOINT_PIN_LENGTH));
+				//NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &baseMatrix[2][0]);
+				//NewtonUserJointSetRowMinimumFriction(m_joint, 0.0f);
+
+				//dVector q0 (matrix0[3] + baseMatrix[0].Scale (MIN_JOINT_PIN_LENGTH));
+				//NewtonUserJointAddLinearRow (m_joint, &q0[0], &q0[0], &baseMatrix[1][0]);
+				//NewtonUserJointAddLinearRow (m_joint, &q0[0], &q0[0], &baseMatrix[2][0]);
+
+			} else {
+				dMatrix basis (dGrammSchmidt (dVector (quat.m_q1, quat.m_q2, quat.m_q3, 0.0f)));
+
+				dVector p0 (matrix0[3] + basis[1].Scale (MIN_JOINT_PIN_LENGTH));
+				dVector p1 (matrix0[3] + rotation.RotateVector(basis[1].Scale (MIN_JOINT_PIN_LENGTH)));
+				NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &basis[2][0]);
+				NewtonUserJointSetRowMinimumFriction(m_joint, 0.0f);
+
+				dVector q0 (matrix0[3] + basis[0].Scale (MIN_JOINT_PIN_LENGTH));
+				NewtonUserJointAddLinearRow (m_joint, &q0[0], &q0[0], &basis[1][0]);
+				NewtonUserJointAddLinearRow (m_joint, &q0[0], &q0[0], &basis[2][0]);
+			}
+		}
+	}
+*/
+
+	dMatrix localMatrix (matrix0 * matrix1.Inverse());
 	dFloat pitchAngle = -dAtan2(localMatrix[1][2], localMatrix[2][2]);
 
 	if ((m_maxTwistAngle - m_minTwistAngle) < 1.0e-4f) {
@@ -257,3 +388,155 @@ void CustomLimitBallAndSocket::SubmitConstraints (dFloat timestep, int threadInd
 	}
 }
 
+
+CustomControlledBallAndSocket::CustomControlledBallAndSocket(const dMatrix& pinAndPivotFrame, NewtonBody* const child, NewtonBody* const parent)
+	:CustomBallAndSocket(pinAndPivotFrame, child, parent)
+	,m_targetAngles (0.0f, 0.0f, 0.0f, 0.0f)
+	,m_pitch(0.0f)
+	,m_yaw(0.0f)
+	,m_roll(0.0f)
+	,m_angulaSpeed (1.0f)
+{
+}
+
+CustomControlledBallAndSocket::~CustomControlledBallAndSocket()
+{
+}
+
+
+void CustomControlledBallAndSocket::GetInfo (NewtonJointRecord* const info) const
+{
+	CustomBallAndSocket::GetInfo (info);
+	dAssert (0);
+//	info->m_minAngularDof[0] = m_minTwistAngle;
+//	info->m_maxAngularDof[0] = m_maxTwistAngle;
+//	info->m_minAngularDof[1] = -m_coneAngle;
+//	info->m_maxAngularDof[1] =  m_coneAngle;
+//	info->m_minAngularDof[2] = -m_coneAngle; 
+//	info->m_maxAngularDof[2] =  m_coneAngle;
+
+	strcpy (info->m_descriptionType, "controlledballsocket");
+}
+
+
+void CustomControlledBallAndSocket::SetAngularVelocity (dFloat omegaMag)
+{
+	m_angulaSpeed = dAbs (omegaMag);
+}
+
+dFloat CustomControlledBallAndSocket::GetAngularVelocity () const
+{
+	return m_angulaSpeed;
+}
+
+void CustomControlledBallAndSocket::SetPitchAngle (dFloat angle)
+{
+	m_targetAngles[0] = angle;
+}
+
+dFloat CustomControlledBallAndSocket::SetPitchAngle () const
+{
+	return m_targetAngles[0];
+}
+
+void CustomControlledBallAndSocket::SetYawAngle (dFloat angle)
+{
+	m_targetAngles[1] = angle;
+}
+
+dFloat CustomControlledBallAndSocket::SetYawAngle () const
+{
+	return m_targetAngles[1];
+}
+
+void CustomControlledBallAndSocket::SetRollAngle (dFloat angle)
+{
+	m_targetAngles[2] = angle;
+}
+
+dFloat CustomControlledBallAndSocket::SetRollAngle () const
+{
+	return m_targetAngles[2];
+}
+
+
+void CustomControlledBallAndSocket::SubmitConstraints (dFloat timestep, int threadIndex)
+{
+	dMatrix matrix0;
+	dMatrix matrix1;
+
+	// calculate the position of the pivot point and the Jacobian direction vectors, in global space. 
+	CalculateGlobalMatrix (m_localMatrix0, m_localMatrix1, matrix0, matrix1);
+
+	const dVector& p0 = matrix0.m_posit;
+	const dVector& p1 = matrix1.m_posit;
+
+	// Restrict the movement on the pivot point along all tree orthonormal direction
+	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_front[0]);
+	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_up[0]);
+	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
+
+
+	dVector euler0;
+	dVector euler1;
+	dMatrix localMatrix (matrix0 * matrix1.Inverse());
+	localMatrix.GetEulerAngles(euler0, euler1);
+
+	AngularIntegration pitchStep0 (AngularIntegration (euler0.m_x) - m_pitch);
+	AngularIntegration pitchStep1 (AngularIntegration (euler1.m_x) - m_pitch);
+	if (dAbs (pitchStep0.GetAngle()) > dAbs (pitchStep1.GetAngle())) {
+		euler0 = euler1;
+	}
+
+	dVector euler (m_pitch.Update (euler0.m_x), m_yaw.Update (euler0.m_y), m_roll.Update (euler0.m_z), 0.0f);
+	//dTrace (("(%f %f %f) (%f %f %f)\n", m_pitch.m_angle * 180.0f / 3.141592f, m_yaw.m_angle * 180.0f / 3.141592f, m_roll.m_angle * 180.0f / 3.141592f,  euler0.m_x * 180.0f / 3.141592f, euler0.m_y * 180.0f / 3.141592f, euler0.m_z * 180.0f / 3.141592f));
+
+	//bool limitViolation = false;
+	for (int i = 0; i < 3; i ++) {
+		dFloat error = m_targetAngles[i] - euler[i];
+		if (dAbs (error) > (0.125f * 3.14159213f / 180.0f) ) {
+			//limitViolation = true;
+			dFloat angularStep = dSign(error) * m_angulaSpeed * timestep;
+			if (angularStep > 0.0f) {
+				if (angularStep > error) {
+					angularStep = error * 0.5f;
+				}
+			} else {
+				if (angularStep < error) {
+					angularStep = error * 0.5f;
+				}
+			}
+			euler[i] = euler[i] + angularStep;
+		}
+	}
+
+
+	//dMatrix pyr (dPitchMatrix(m_pitch.m_angle) * dYawMatrix(m_yaw.m_angle) * dRollMatrix(m_roll.m_angle));
+	dMatrix p0y0r0 (dPitchMatrix(euler[0]) * dYawMatrix(euler[1]) * dRollMatrix(euler[2]));
+	dMatrix baseMatrix (p0y0r0 * matrix1);
+	dMatrix rotation (matrix0.Inverse() * baseMatrix);
+
+	dQuaternion quat (rotation);
+	if (quat.m_q0 > dFloat (0.99995f)) {
+		dVector p0 (matrix0[3] + matrix0[0].Scale (MIN_JOINT_PIN_LENGTH));
+		dVector p1 (matrix1[3] + baseMatrix[0].Scale (MIN_JOINT_PIN_LENGTH));
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &baseMatrix[1][0]);
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &baseMatrix[2][0]);
+
+		dVector q0 (matrix0[3] + matrix0[1].Scale (MIN_JOINT_PIN_LENGTH));
+		dVector q1 (matrix0[3] + baseMatrix[1].Scale (MIN_JOINT_PIN_LENGTH));
+		NewtonUserJointAddLinearRow (m_joint, &q0[0], &q1[0], &baseMatrix[2][0]);
+
+	} else {
+		dMatrix basis (dGrammSchmidt (dVector (quat.m_q1, quat.m_q2, quat.m_q3, 0.0f)));
+
+		dVector p0 (matrix1[3] + basis[1].Scale (MIN_JOINT_PIN_LENGTH));
+		dVector p1 (matrix1[3] + rotation.RotateVector(basis[1].Scale (MIN_JOINT_PIN_LENGTH)));
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &basis[2][0]);
+		NewtonUserJointSetRowMinimumFriction(m_joint, 0.0f);
+
+		dVector q0 (matrix1[3] + basis[0].Scale (MIN_JOINT_PIN_LENGTH));
+		NewtonUserJointAddLinearRow (m_joint, &q0[0], &q0[0], &basis[1][0]);
+		NewtonUserJointAddLinearRow (m_joint, &q0[0], &q0[0], &basis[2][0]);
+	}
+}

@@ -84,7 +84,7 @@ freq *= 0.5f;
 
 
 /*
-	static DemoMesh* CreateVisualMesh (dFloat* const elevation, int size, dFloat cellSize, dFloat texelsDensity)
+	static DemoMesh____* CreateVisualMesh (dFloat* const elevation, int size, dFloat cellSize, dFloat texelsDensity)
 	{
 		dVector* const normals = new dVector [size * size];
 
@@ -298,17 +298,18 @@ freq *= 0.5f;
 		for (int i = 0; i < 4; i ++) {
 			ApplySmoothFilter (elevation, size);
 		}
+//memset (elevation, 0, size * size * sizeof (dFloat));
 
-		//		SetBaseHeight (elevation, size);
+		//SetBaseHeight (elevation, size);
 		// apply simple calderas
 		//		MakeCalderas (elevation, size, maxElevation * 0.7f, maxElevation * 0.1f);
 
 		//	// create the visual mesh
-		DemoMesh* const mesh = new DemoMesh ("terrain", elevation, size, cellSize, 1.0f/16.0f, TILE_SIZE);
+		DemoMesh* const mesh = new DemoMesh ("terrain", elevation, size, cellSize, 1.0f/4.0f, TILE_SIZE);
 
-		DemoEntity* const entity = new DemoEntity(GetIdentityMatrix(), NULL);
+		DemoEntity* const entity = new DemoEntity(dGetIdentityMatrix(), NULL);
 		scene->Append (entity);
-		entity->SetMesh(mesh, GetIdentityMatrix());
+		entity->SetMesh(mesh, dGetIdentityMatrix());
 		mesh->Release();
 
 		// create the height field collision and rigid body

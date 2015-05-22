@@ -26,7 +26,7 @@ static void BuildJenga (DemoEntityManager* const scene, dFloat mass, const dVect
 	blockBoxSize = blockBoxSize.Scale (1.0f);
 
 	// create the stack
-	dMatrix baseMatrix (GetIdentityMatrix());
+	dMatrix baseMatrix (dGetIdentityMatrix());
 
 	// for the elevation of the floor at the stack position
 	baseMatrix.m_posit.m_x = origin.m_x;
@@ -50,7 +50,7 @@ static void BuildJenga (DemoEntityManager* const scene, dFloat mass, const dVect
 	dFloat gap = 0.01f;
 
 	// create the shape and visual mesh as a common data to be re used
-	NewtonCollision* const collision = CreateConvexCollision (world, GetIdentityMatrix(), blockBoxSize, _BOX_PRIMITIVE, defaultMaterialID);
+	NewtonCollision* const collision = CreateConvexCollision (world, dGetIdentityMatrix(), blockBoxSize, _BOX_PRIMITIVE, defaultMaterialID);
 	DemoMesh* const geometry = new DemoMesh("box", collision, "wood_0.tga", "wood_0.tga", "wood_0.tga");
 
 	for (int i = 0; i < count; i ++) { 
@@ -73,9 +73,9 @@ static void BuildJenga (DemoEntityManager* const scene, dFloat mass, const dVect
 
 
 
-static void BuildPyramid (DemoEntityManager* const scene, dFloat mass, const dVector& origin, const dVector& size, int count, PrimitiveType type, const dMatrix& shapeMatrix = GetIdentityMatrix())
+static void BuildPyramid (DemoEntityManager* const scene, dFloat mass, const dVector& origin, const dVector& size, int count, PrimitiveType type, const dMatrix& shapeMatrix = dGetIdentityMatrix())
 {
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	matrix.m_posit = origin;
 	matrix.m_posit.m_w = 1.0f;
 
@@ -89,7 +89,7 @@ static void BuildPyramid (DemoEntityManager* const scene, dFloat mass, const dVe
 	NewtonCollision* const collision = CreateConvexCollision (world, shapeMatrix, size, type, defaultMaterialID);
 
 	DemoMesh* const geometry = new DemoMesh("cylinder_1", collision, "wood_4.tga", "wood_4.tga", "wood_1.tga");
-	//DemoMesh* const geometry = new DemoMesh("cylinder_1", collision, "smilli.tga", "smilli.tga", "smilli.tga");
+	//DemoMesh____* const geometry = new DemoMesh____("cylinder_1", collision, "smilli.tga", "smilli.tga", "smilli.tga");
 
 	//	matrix = dRollMatrix(3.141592f/2.0f);
 	dFloat startElevation = 100.0f;
@@ -100,20 +100,17 @@ static void BuildPyramid (DemoEntityManager* const scene, dFloat mass, const dVe
 	// get the dimension from shape itself
 	dVector minP;
 	dVector maxP;
-	CalculateAABB (collision, GetIdentityMatrix(), minP, maxP);
+	CalculateAABB (collision, dGetIdentityMatrix(), minP, maxP);
 
 	//dFloat stepz = size.m_z + 0.01f;
 	dFloat stepz = maxP.m_z - minP.m_z + 0.01f;
 	dFloat stepy = maxP.m_y - minP.m_y;
 
-	float y0 = matrix.m_posit.m_z + stepy / 2.0f;
+	float y0 = matrix.m_posit.m_y + stepy / 2.0f;
 	float z0 = matrix.m_posit.m_z - stepz * count / 2;
 
 	matrix.m_posit.m_y = y0;
 	for (int j = 0; j < count; j ++) {
-	//for (int j = 0; j < count/2; j ++) {
-	//for (int j = 0; j < 8; j ++) {
-
 		matrix.m_posit.m_z = z0;
 		for (int i = 0; i < (count - j) ; i ++) {
 			CreateSimpleSolid (scene, geometry, mass, matrix, collision, defaultMaterialID);
@@ -157,19 +154,19 @@ void BasicBoxStacks (DemoEntityManager* const scene)
 //index = 0;
 		dMatrix shapeMatrix (dRollMatrix(0.5f * 3.14159f));
 		if (selection[index] == _BOX_PRIMITIVE) {
-			shapeMatrix = GetIdentityMatrix();
+			shapeMatrix = dGetIdentityMatrix();
 		}
-		BuildPyramid (scene, 10.0f, dVector(-10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, selection[index], shapeMatrix);
-//		BuildPyramid (scene, 10.0f, dVector(-10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _BOX_PRIMITIVE);
-//		BuildPyramid (scene, 10.0f, dVector(-10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _CYLINDER_PRIMITIVE, dRollMatrix(0.5f * 3.14159f));
-//		BuildPyramid (scene, 10.0f, dVector(-10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _TAPERED_CYLINDER_PRIMITIVE, dRollMatrix(0.5f * 3.14159f));
-//		BuildPyramid (scene, 10.0f, dVector(-10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _REGULAR_CONVEX_HULL_PRIMITIVE, dRollMatrix(0.5f * 3.14159f));
+//		BuildPyramid (scene, 10.0f, dVector(-10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, selection[index], shapeMatrix);
+		BuildPyramid (scene, 10.0f, dVector(  0.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _BOX_PRIMITIVE);
+//		BuildPyramid (scene, 10.0f, dVector( 10.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _CYLINDER_PRIMITIVE, dRollMatrix(0.5f * 3.14159f));
+//		BuildPyramid (scene, 10.0f, dVector( 20.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _TAPERED_CYLINDER_PRIMITIVE, dRollMatrix(0.5f * 3.14159f));
+//		BuildPyramid (scene, 10.0f, dVector( 30.0f + i * 4.0f, 0.0f, 0.0f, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high, _REGULAR_CONVEX_HULL_PRIMITIVE, dRollMatrix(0.5f * 3.14159f));
 	}
 
 	high = 20;
-	for (int i = 0; i < 2; i ++) {
-		for (int j = 0; j < 2; j ++) {
-			BuildJenga (scene, 5.0f, dVector(-15.0f + j * 8, 0.0f, 10.0f + i * 8, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high);
+	for (int i = 0; i < 1; i ++) {
+		for (int j = 0; j < 1; j ++) {
+			//BuildJenga (scene, 5.0f, dVector(-15.0f + j * 8, 0.0f, 10.0f + i * 8, 0.0f), dVector (0.5f, 0.25f, 1.62f/2.0f, 0.0), high);
 		}
 	}
 #endif
@@ -178,6 +175,8 @@ void BasicBoxStacks (DemoEntityManager* const scene)
 	// place camera into position
 	dQuaternion rot;
 	dVector origin (-40.0f, 10.0f, 0.0f, 0.0f);
+origin.m_x = -10.0f;
+origin.m_y = 8.0f;
 	scene->SetCameraMatrix(rot, origin);
 
 

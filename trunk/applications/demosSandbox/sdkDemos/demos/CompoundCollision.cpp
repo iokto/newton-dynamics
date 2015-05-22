@@ -267,7 +267,7 @@ static void MakeFunnyCompound (DemoEntityManager* const scene, const dVector& or
 	DemoMesh* const visualMesh = new DemoMesh ("big ball", compound, "metal_30.tga", "metal_30.tga", "metal_30.tga");
 
 	int instaceCount = 2;
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	matrix.m_posit = origin;
 	for (int ix = 0; ix < instaceCount; ix ++) {
 		for (int iz = 0; iz < instaceCount; iz ++) {
@@ -294,8 +294,9 @@ void CompoundCollision (DemoEntityManager* const scene)
 	// load the scene from a ngd file format
 //	CreateLevelMesh (scene, "flatPlane.ngd", true);
 //	CreateLevelMesh (scene, "playground.ngd", true);
-//	CreateLevelMesh (scene, "sponza.ngd", true);
-	CreateHeightFieldTerrain (scene, 10, 8.0f, 1.5f, 0.2f, 200.0f, -50.0f);
+	//	CreateLevelMesh (scene, "sponza.ngd", true);
+	CreateHeightFieldTerrain(scene, HEIGHTFIELD_DEFAULT_SIZE, HEIGHTFIELD_DEFAULT_CELLSIZE,
+							 1.5f, 0.2f, 200.0f, -50.0f);
 
 	int defaultMaterialID = NewtonMaterialGetDefaultGroupID (scene->GetNewton());
 
@@ -319,7 +320,7 @@ void CompoundCollision (DemoEntityManager* const scene)
 
 	int count = 5;
 	dVector size (0.5f, 0.5f, 0.75f, 0.0f);
-	dMatrix shapeOffsetMatrix (GetIdentityMatrix());
+	dMatrix shapeOffsetMatrix (dGetIdentityMatrix());
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	AddPrimitiveArray(scene, 10.0f, location, size, count, count, 5.0f, _CAPSULE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);

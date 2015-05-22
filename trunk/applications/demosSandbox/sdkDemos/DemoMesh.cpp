@@ -10,18 +10,56 @@
 */
 
 
-// DemoMesh.cpp: implementation of the DemoMesh class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "toolbox_stdafx.h"
 #include "DemoMesh.h"
 #include "TargaToOpenGl.h"
 #include "DemoEntityManager.h"
 
+dInitRtti(DemoMeshInterface);
 dInitRtti(DemoMesh);
+dInitRtti(DemoBezierCurve);
 
 
 #define USING_DISPLAY_LIST
+
+
+
+#if defined(__APPLE__)
+// NOTE: displaylists are horribly slow on OSX
+// they cut the framerate in half
+#	if defined(USING_DISPLAY_LIST)
+#		undef USING_DISPLAY_LIST
+#	endif
+#endif
+
+DemoMeshInterface::DemoMeshInterface()
+	:dClassInfo()
+	,m_name()
+	,m_isVisible(true)
+{
+}
+
+DemoMeshInterface::~DemoMeshInterface()
+{
+}
+
+const dString& DemoMeshInterface::GetName () const
+{
+	//	strcpy (nameOut, m_name);
+	return m_name;
+}
+
+
+bool DemoMeshInterface::GetVisible () const
+{
+	return m_isVisible;
+}
+
+void DemoMeshInterface::SetVisible (bool visibilityFlag)
+{
+	m_isVisible = visibilityFlag;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -114,7 +152,7 @@ void DemoSubMesh::AllocIndexData (int indexCount)
 
 
 DemoMesh::DemoMesh(const char* const name)
-	:dClassInfo()
+	:DemoMeshInterface()
 	,dList<DemoSubMesh>()
 	,m_vertexCount(0)
 	,m_uv (NULL)
@@ -122,19 +160,17 @@ DemoMesh::DemoMesh(const char* const name)
 	,m_normal(NULL)
 	,m_optimizedOpaqueDiplayList(0)	
 	,m_optimizedTransparentDiplayList(0)
-	,m_name()
 {
 }
 
 DemoMesh::DemoMesh(const dScene* const scene, dScene::dTreeNode* const meshNode)
-	:dClassInfo()
+	:DemoMeshInterface()
 	,dList<DemoSubMesh>()
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
 	,m_optimizedOpaqueDiplayList(0)
 	,m_optimizedTransparentDiplayList(0)
-	,m_name()
 {
 	dMeshNodeInfo* const meshInfo = (dMeshNodeInfo*)scene->GetInfoFromNode(meshNode);
 	m_name = meshInfo->GetName();
@@ -208,7 +244,7 @@ DemoMesh::DemoMesh(const dScene* const scene, dScene::dTreeNode* const meshNode)
 }
 
 DemoMesh::DemoMesh(NewtonMesh* const mesh)
-	:dClassInfo()
+	:DemoMeshInterface()
 	,m_uv(NULL)
 	,m_vertex(NULL)
 	,m_normal(NULL)
@@ -272,7 +308,7 @@ DemoMesh::DemoMesh(NewtonMesh* const mesh)
 }
 
 DemoMesh::DemoMesh(const DemoMesh& mesh)
-	:dClassInfo()
+	:DemoMeshInterface()
 	,dList<DemoSubMesh>()
 	,m_uv(NULL)
 	,m_vertex(NULL)
@@ -308,7 +344,7 @@ DemoMesh::DemoMesh(const DemoMesh& mesh)
 }
 
 DemoMesh::DemoMesh(const char* const name, const NewtonCollision* const collision, const char* const texture0, const char* const texture1, const char* const texture2, dFloat opacity)
-	:dClassInfo()
+	:DemoMeshInterface()
 	,dList<DemoSubMesh>()
 	,m_uv(NULL)
 	,m_vertex(NULL)
@@ -390,7 +426,7 @@ DemoMesh::DemoMesh(const char* const name, const NewtonCollision* const collisio
 
 
 DemoMesh::DemoMesh(const char* const name, dFloat* const elevation, int size, dFloat cellSize, dFloat texelsDensity, int tileSize)
-	:dClassInfo()
+	:DemoMeshInterface()
 	,dList<DemoSubMesh>()
 	,m_uv(NULL)
 	,m_vertex(NULL)
@@ -558,11 +594,6 @@ NewtonMesh* DemoMesh::CreateNewtonMesh(NewtonWorld* const world, const dMatrix& 
 	return mesh;
 }
 
-const dString& DemoMesh::GetName () const
-{
-//	strcpy (nameOut, m_name);
-	return m_name;
-}
 
 const dString& DemoMesh::GetTextureName (const DemoSubMesh* const subMesh) const
 {
@@ -726,10 +757,6 @@ void  DemoMesh::ResetOptimization()
 	}
 }
 
-
-
-
-
 void DemoMesh::AllocVertexData (int vertexCount)
 {
 	m_vertexCount = vertexCount;
@@ -748,57 +775,56 @@ DemoSubMesh* DemoMesh::AddSubMesh()
 
 void DemoMesh::Render (DemoEntityManager* const scene)
 {
-//	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );	
-    if (m_optimizedTransparentDiplayList) {
-        scene->PushTransparentMesh (this); 
-    }
-
-	if (m_optimizedOpaqueDiplayList) {
-		glCallList(m_optimizedOpaqueDiplayList);
-	} else if (!m_optimizedTransparentDiplayList) {
-		glEnableClientState (GL_VERTEX_ARRAY);
-		glEnableClientState (GL_NORMAL_ARRAY);
-		glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
-		glVertexPointer (3, GL_FLOAT, 0, m_vertex);
-		glNormalPointer (GL_FLOAT, 0, m_normal);
-		glTexCoordPointer (2, GL_FLOAT, 0, m_uv);
-
-		for (dListNode* nodes = GetFirst(); nodes; nodes = nodes->GetNext()) {
-			DemoSubMesh& segment = nodes->GetInfo();
-			segment.Render();
+	if (m_isVisible) {
+		if (m_optimizedTransparentDiplayList) {
+			scene->PushTransparentMesh (this); 
 		}
-		glDisableClientState(GL_VERTEX_ARRAY);	// disable vertex arrays
-		glDisableClientState(GL_NORMAL_ARRAY);	// disable normal arrays
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);	// disable normal arrays
+
+		if (m_optimizedOpaqueDiplayList) {
+			glCallList(m_optimizedOpaqueDiplayList);
+		} else if (!m_optimizedTransparentDiplayList) {
+			glEnableClientState (GL_VERTEX_ARRAY);
+			glEnableClientState (GL_NORMAL_ARRAY);
+			glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+			glVertexPointer (3, GL_FLOAT, 0, m_vertex);
+			glNormalPointer (GL_FLOAT, 0, m_normal);
+			glTexCoordPointer (2, GL_FLOAT, 0, m_uv);
+
+			for (dListNode* nodes = GetFirst(); nodes; nodes = nodes->GetNext()) {
+				DemoSubMesh& segment = nodes->GetInfo();
+				segment.Render();
+			}
+			glDisableClientState(GL_VERTEX_ARRAY);	// disable vertex arrays
+			glDisableClientState(GL_NORMAL_ARRAY);	// disable normal arrays
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);	// disable normal arrays
+		}
 	}
 }
 
 void DemoMesh::RenderTransparency () const
 {
-//dMatrix xxxx;
-//glGetFloat (GL_MODELVIEW_MATRIX, &xxxx[0][0]);
-//glCallList(m_optimizedOpaqueDiplayList);
+	if (m_isVisible) {
+		if (m_optimizedTransparentDiplayList) {
+			glCallList(m_optimizedTransparentDiplayList);
+		} else {
+			glEnableClientState (GL_VERTEX_ARRAY);
+			glEnableClientState (GL_NORMAL_ARRAY);
+			glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
-    if (m_optimizedTransparentDiplayList) {
-        glCallList(m_optimizedTransparentDiplayList);
-    } else {
-        glEnableClientState (GL_VERTEX_ARRAY);
-        glEnableClientState (GL_NORMAL_ARRAY);
-        glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+			glVertexPointer (3, GL_FLOAT, 0, m_vertex);
+			glNormalPointer (GL_FLOAT, 0, m_normal);
+			glTexCoordPointer (2, GL_FLOAT, 0, m_uv);
 
-        glVertexPointer (3, GL_FLOAT, 0, m_vertex);
-        glNormalPointer (GL_FLOAT, 0, m_normal);
-        glTexCoordPointer (2, GL_FLOAT, 0, m_uv);
-
-        for (dListNode* nodes = GetFirst(); nodes; nodes = nodes->GetNext()) {
-            DemoSubMesh& segment = nodes->GetInfo();
-            segment.Render();
-        }
-        glDisableClientState(GL_VERTEX_ARRAY);	// disable vertex arrays
-        glDisableClientState(GL_NORMAL_ARRAY);	// disable normal arrays
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);	// disable normal arrays
-    }
+			for (dListNode* nodes = GetFirst(); nodes; nodes = nodes->GetNext()) {
+				DemoSubMesh& segment = nodes->GetInfo();
+				segment.Render();
+			}
+			glDisableClientState(GL_VERTEX_ARRAY);	// disable vertex arrays
+			glDisableClientState(GL_NORMAL_ARRAY);	// disable normal arrays
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);	// disable normal arrays
+		}
+	}
 }
 
 void DemoMesh::RenderNormals ()
@@ -820,3 +846,70 @@ void DemoMesh::RenderNormals ()
 
 	glEnable (GL_LIGHTING);
 }
+
+
+DemoBezierCurve::DemoBezierCurve(const dScene* const scene, dScene::dTreeNode* const bezierNode)
+	:DemoMeshInterface()
+	,m_curve()
+	,m_renderResolution(50)
+{
+	m_isVisible = false;
+	dLineNodeInfo* const bezeriInfo = (dLineNodeInfo*)scene->GetInfoFromNode(bezierNode);
+	dAssert (bezeriInfo->IsType(dLineNodeInfo::GetRttiType()));
+	m_name = bezeriInfo->GetName();
+
+	m_curve = bezeriInfo->GetCurve();
+}
+
+void DemoBezierCurve::RenderTransparency () const
+{
+}
+
+void DemoBezierCurve::RenderNormals ()
+{
+}	
+
+int DemoBezierCurve::GetRenderResolution () const
+{
+	return m_renderResolution;
+}
+
+void DemoBezierCurve::SetRenderResolution (int breaks)
+{
+	m_renderResolution = breaks;
+}
+
+
+void DemoBezierCurve::Render (DemoEntityManager* const scene)
+{
+	if (m_isVisible) {
+		glDisable (GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		glColor3f(1.0f, 1.0f, 1.0f);
+
+		dFloat64 scale = 1.0f / m_renderResolution;
+		glBegin(GL_LINES);
+		dBigVector p0 (m_curve.CurvePoint(0.0f)) ;
+		for (int i = 1; i <= m_renderResolution; i ++) {
+			dBigVector p1 (m_curve.CurvePoint(i * scale));
+			glVertex3f (p0.m_x, p0.m_y, p0.m_z);
+			glVertex3f (p1.m_x, p1.m_y, p1.m_z);
+			p0 = p1;
+		}
+		glEnd();
+/*
+		glPointSize(4.0f);
+		glBegin(GL_POINTS);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		int count = m_curve.GetKnotCount();
+		for (int i = 0; i < count; i ++) {
+			dFloat u = m_curve.GetKnot(i);
+			dBigVector p0 (m_curve.CurvePoint(u));
+			glVertex3f (p0.m_x, p0.m_y, p0.m_z);
+		}
+		glEnd();
+*/
+		glEnable (GL_LIGHTING);
+	}
+}
+

@@ -24,7 +24,7 @@ DemoEntity::DemoEntity(const dMatrix& matrix, DemoEntity* const parent)
 	,m_nextPosition (matrix.m_posit)
 	,m_curRotation (dQuaternion (matrix))
 	,m_nextRotation (dQuaternion (matrix))
-	,m_meshMatrix(GetIdentityMatrix())
+	,m_meshMatrix(dGetIdentityMatrix())
 	,m_mesh (NULL)
 	,m_userData(NULL)
 	,m_lock(0) 
@@ -36,15 +36,15 @@ DemoEntity::DemoEntity(const dMatrix& matrix, DemoEntity* const parent)
 
 
 
-DemoEntity::DemoEntity(DemoEntityManager& world, const dScene* const scene, dScene::dTreeNode* const rootSceneNode, dTree<DemoMesh*, dScene::dTreeNode*>& meshCache, DemoEntityManager::EntityDictionary& entityDictionary, DemoEntity* const parent)
+DemoEntity::DemoEntity(DemoEntityManager& world, const dScene* const scene, dScene::dTreeNode* const rootSceneNode, dTree<DemoMeshInterface*, dScene::dTreeNode*>& meshCache, DemoEntityManager::EntityDictionary& entityDictionary, DemoEntity* const parent)
 	:dClassInfo()
 	,dHierarchy<DemoEntity>() 
-	,m_matrix(GetIdentityMatrix()) 
+	,m_matrix(dGetIdentityMatrix()) 
 	,m_curPosition (0.0f, 0.0f, 0.0f, 1.0f)
 	,m_nextPosition (0.0f, 0.0f, 0.0f, 1.0f)
 	,m_curRotation (1.0f, 0.0f, 0.0f, 0.0f)
 	,m_nextRotation (1.0f, 0.0f, 0.0f, 0.0f)
-	,m_meshMatrix(GetIdentityMatrix())
+	,m_meshMatrix(dGetIdentityMatrix())
 	,m_mesh (NULL)
 	,m_userData(NULL)
 	,m_lock(0) 
@@ -72,7 +72,7 @@ DemoEntity::DemoEntity(DemoEntityManager& world, const dScene* const scene, dSce
 	// if this node has a mesh, find it and attach it to this entity
 	dScene::dTreeNode* const meshNode = scene->FindChildByType(rootSceneNode, dMeshNodeInfo::GetRttiType());
 	if (meshNode) {
-		DemoMesh* const mesh = meshCache.Find(meshNode)->GetInfo();
+		DemoMeshInterface* const mesh = meshCache.Find(meshNode)->GetInfo();
 		SetMesh(mesh, sceneInfo->GetGeometryTransform());
 	}
 
@@ -110,7 +110,7 @@ DemoEntity::~DemoEntity(void)
 	if (m_userData) {
 		delete m_userData;
 	}
-	SetMesh(NULL, GetIdentityMatrix());
+	SetMesh(NULL, dGetIdentityMatrix());
 }
 
 
@@ -131,7 +131,7 @@ void DemoEntity::LoadNGD_mesh (const char* const fileName, NewtonWorld* const wo
 	scene.FreezeScale();
 
 	// this will apply all local scale and transform to the mesh
-	//scene.FreezeGeometryPivot();
+	scene.FreezeGeometryPivot();
 	
 	dScene::dTreeNode* meshRootNode = NULL;
 	dScene::dTreeNode* const root = scene.GetRootNode();
@@ -156,7 +156,7 @@ void DemoEntity::LoadNGD_mesh (const char* const fileName, NewtonWorld* const wo
 		
 		stack = 1;
 
-		dTree<DemoMesh*, dScene::dTreeNode*> meshDictionary;
+		dTree<DemoMeshInterface*, dScene::dTreeNode*> meshDictionary;
 		while (stack) {
 			stack --;
 
@@ -188,12 +188,20 @@ void DemoEntity::LoadNGD_mesh (const char* const fileName, NewtonWorld* const wo
 
 				dNodeInfo* const meshInfo = scene.GetInfoFromNode(meshNode);
 				if (meshInfo->GetTypeId() == dMeshNodeInfo::GetRttiType()) {
-					dTree<DemoMesh*, dScene::dTreeNode*>::dTreeNode* cacheNode = meshDictionary.Find(meshNode);
+					dTree<DemoMeshInterface*, dScene::dTreeNode*>::dTreeNode* cacheNode = meshDictionary.Find(meshNode);
 					if (!cacheNode) {
-						DemoMesh* const mesh = new DemoMesh(&scene, meshNode);
+						DemoMeshInterface* const mesh = new DemoMesh(&scene, meshNode);
 						cacheNode = meshDictionary.Insert(mesh, meshNode);
 					}
-					DemoMesh* const mesh = cacheNode->GetInfo();
+					DemoMeshInterface* const mesh = cacheNode->GetInfo();
+					entity->SetMesh(mesh, sceneInfo->GetGeometryTransform());
+				} else if (meshInfo->GetTypeId() == dLineNodeInfo::GetRttiType()) {
+					dTree<DemoMeshInterface*, dScene::dTreeNode*>::dTreeNode* cacheNode = meshDictionary.Find(meshNode);
+					if (!cacheNode) {
+						DemoMeshInterface* const mesh = new DemoBezierCurve(&scene, meshNode);
+						cacheNode = meshDictionary.Insert(mesh, meshNode);
+					}
+					DemoMeshInterface* const mesh = cacheNode->GetInfo();
 					entity->SetMesh(mesh, sceneInfo->GetGeometryTransform());
 				}
 			}
@@ -203,24 +211,20 @@ void DemoEntity::LoadNGD_mesh (const char* const fileName, NewtonWorld* const wo
 				dNodeInfo* const info = scene.GetInfoFromNode(node);
 				if (info->IsType(dSceneNodeInfo::GetRttiType())) {
 					nodeStack[stack] = node;
-					entityStack[stack] = new DemoEntity (GetIdentityMatrix(), entity);
+					entityStack[stack] = new DemoEntity (dGetIdentityMatrix(), entity);
 					stack ++;
 				}
 			}
 		}
 
 		while (meshDictionary.GetCount()) {
-			dTree<DemoMesh*, dScene::dTreeNode*>::dTreeNode* const node = meshDictionary.GetRoot();
-			DemoMesh* const mesh = node->GetInfo();
+			dTree<DemoMeshInterface*, dScene::dTreeNode*>::dTreeNode* const node = meshDictionary.GetRoot();
+			DemoMeshInterface* const mesh = node->GetInfo();
 			mesh->Release();
 			meshDictionary.Remove(node);
 		}
 	}
 }
-
-
-
-
 
 
 
@@ -245,12 +249,12 @@ void DemoEntity::TransformCallback(const NewtonBody* body, const dFloat* matrix,
 }
 
 
-DemoMesh* DemoEntity::GetMesh() const
+DemoMeshInterface* DemoEntity::GetMesh() const
 {
 	return m_mesh;
 }
 
-void DemoEntity::SetMesh(DemoMesh* const mesh, const dMatrix& meshMatrix)
+void DemoEntity::SetMesh(DemoMeshInterface* const mesh, const dMatrix& meshMatrix)
 {
 	m_meshMatrix = meshMatrix;
 	if (m_mesh) {
@@ -284,7 +288,7 @@ dMatrix DemoEntity::GetNextMatrix () const
 
 dMatrix DemoEntity::CalculateGlobalMatrix (const DemoEntity* const root) const
 {
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	for (const DemoEntity* ptr = this; ptr != root; ptr = ptr->GetParent()) {
 		matrix = matrix * ptr->GetCurrentMatrix ();
 	}
@@ -293,7 +297,7 @@ dMatrix DemoEntity::CalculateGlobalMatrix (const DemoEntity* const root) const
 
 dMatrix DemoEntity::CalculateInterpolatedGlobalMatrix (const DemoEntity* const root) const
 {
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	for (const DemoEntity* ptr = this; ptr != root; ptr = ptr->GetParent()) {
 		matrix = matrix * ptr->m_matrix;
 	}

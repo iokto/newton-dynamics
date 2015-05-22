@@ -20,10 +20,6 @@
 #include "DemoCamera.h"
 #include "DebugDisplay.h"
 #include "DemoEntityManager.h"
-#include "CustomInputManager.h"
-#include "CustomTriggerManager.h"
-#include "CustomKinematicController.h"
-#include "CustomPlayerControllerManager.h"
 
 
 #define PLAYER_MASS						80.0f
@@ -104,7 +100,7 @@ class AdvancePlayerEntity: public DemoEntity
 	};
 
 	AdvancePlayerEntity (DemoEntityManager* const scene, CustomPlayerControllerManager* const manager, dFloat radius, dFloat height, const dMatrix& location)
-		:DemoEntity (GetIdentityMatrix(), NULL)
+		:DemoEntity (dGetIdentityMatrix(), NULL)
 		,m_inputs()
 		,m_currentTrigger(NULL)
 		,m_controller(NULL) 
@@ -123,9 +119,9 @@ class AdvancePlayerEntity: public DemoEntity
 		// make the player controller, this function makes a kinematic body
 		m_controller = manager->CreatePlayer(80.0f, radius, radius * 0.5f, height, height * 0.33f, playerAxis);
 
-		// players by default have the origin at the center of the lower bottom of the collision shape.
+		// players by default have the origin at the center of mass of the collision shape.
 		// you can change this by calling SetPlayerOrigin, for example if a player has it origin at the center of the AABB you can call 
-		//m_controller->SetPlayerOrigin (height * 0.5f);
+		m_controller->SetPlayerOrigin (height * 0.5f);
 
 		// get body from player, and set some parameter
 		NewtonBody* const body = m_controller->GetBody();
@@ -143,7 +139,7 @@ class AdvancePlayerEntity: public DemoEntity
 		NewtonCollision* const collision = NewtonBodyGetCollision(body);
 		DemoMesh* const geometry = new DemoMesh("player", collision, "smilli.tga", "smilli.tga", "smilli.tga");
 
-		SetMesh(geometry, GetIdentityMatrix());
+		SetMesh(geometry, dGetIdentityMatrix());
 		geometry->Release(); 
 	}
 
@@ -266,7 +262,7 @@ class AdvancedPlayerInputManager: public CustomInputManager
 		PrimitiveType type = PrimitiveType (dRand() % (sizeof (proSelection) / sizeof (proSelection[0])));
 
 		dVector size (0.35f, 0.25f, 0.25f, 0.0f);
-		NewtonCollision* const collision = CreateConvexCollision (world, GetIdentityMatrix(), size, type, 0);
+		NewtonCollision* const collision = CreateConvexCollision (world, dGetIdentityMatrix(), size, type, 0);
 		DemoMesh* const geometry = new DemoMesh("prop", collision, "smilli.tga", "smilli.tga", "smilli.tga");
 
 		dMatrix matrix (location);
@@ -519,7 +515,9 @@ class PlaformEntityEntity: public DemoEntity
 	{
 		scene->Append(this);
 
-		DemoMesh* const mesh = source->GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)source->GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
+
 		SetMesh(mesh, source->GetMeshMatrix());
 
 		const dFloat mass = 100.0f;
@@ -597,11 +595,12 @@ static void LoadFloor(DemoEntityManager* const scene, NewtonCollision* const sce
 	NewtonWorld* const world = scene->GetNewton();
 
 	// add a flat plane
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	DemoEntityManager::dListNode* const floorNode = LoadScene(scene, "flatPlane.ngd", matrix);
 
 	DemoEntity* const entity = floorNode->GetInfo();
-	DemoMesh* const mesh = entity->GetMesh();
+	DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+	dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 	NewtonCollision* const tree = NewtonCreateTreeCollision(world, 0);
 	NewtonTreeCollisionBeginBuild(tree);
@@ -660,7 +659,8 @@ static void LoadFerryBridge (DemoEntityManager* const scene, TriggerManager* con
 	for (DemoEntityManager::dListNode* node = bridgeNodes->GetNext(); node; node = node->GetNext()) {
 		DemoEntity* const entity = node->GetInfo();
 		if (entity->GetName().Find("ramp") != -1) {
-			DemoMesh* const mesh = entity->GetMesh();
+			DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+			dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 			const dMatrix& meshMatrix = entity->GetMeshMatrix();
 			//const dMatrix& meshMatrix (GetIdentityMatrix());
@@ -683,7 +683,8 @@ static void LoadFerryBridge (DemoEntityManager* const scene, TriggerManager* con
 		DemoEntity* const entity = node->GetInfo();
 		node = node->GetNext() ;
 		if (entity->GetName().Find("startTrigger") != -1) {
-			DemoMesh* const mesh = entity->GetMesh();
+			DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+			dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 			const dMatrix& meshMatrix = entity->GetMeshMatrix();
 			// create a trigger to match his mesh
@@ -732,7 +733,8 @@ static void LoadSlide (DemoEntityManager* const scene, TriggerManager* const tri
 	for (DemoEntityManager::dListNode* node = bridgeNodes->GetNext(); node; node = node->GetNext()) {
 		DemoEntity* const entity = node->GetInfo();
 		if (entity->GetName().Find("ramp") != -1) {
-			DemoMesh* const mesh = entity->GetMesh();
+			DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+			dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 			NewtonCollision* const collision = NewtonCreateConvexHull(world, mesh->m_vertexCount, mesh->m_vertex, 3 * sizeof (dFloat), 0, 0, NULL);
 			void* const proxy = NewtonSceneCollisionAddSubCollision (sceneCollision, collision);
@@ -755,7 +757,8 @@ static void LoadSlide (DemoEntityManager* const scene, TriggerManager* const tri
 		DemoEntity* const entity = node->GetInfo();
 		node = node->GetNext() ;
 		if (entity->GetName().Find("startTrigger") != -1) {
-			DemoMesh* const mesh = entity->GetMesh();
+			DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+			dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 			// create a trigger to match his mesh
 			NewtonCollision* const collision = NewtonCreateConvexHull(world, mesh->m_vertexCount, mesh->m_vertex, 3 * sizeof (dFloat), 0, 0, NULL);
@@ -804,7 +807,8 @@ static void LoadHangingBridge (DemoEntityManager* const scene, TriggerManager* c
 	for (DemoEntityManager::dListNode* node = bridgeNodes->GetNext(); node; node = node->GetNext()) {
 		DemoEntity* const entity = node->GetInfo();
 		if (entity->GetName().Find("ramp") != -1) {	
-			DemoMesh* const mesh = entity->GetMesh();
+			DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+			dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 			NewtonCollision* const collision = NewtonCreateConvexHull(world, mesh->m_vertexCount, mesh->m_vertex, 3 * sizeof (dFloat), 0, 0, NULL);
 			void* const proxy = NewtonSceneCollisionAddSubCollision (sceneCollision, collision);
@@ -826,7 +830,8 @@ static void LoadHangingBridge (DemoEntityManager* const scene, TriggerManager* c
 	for (DemoEntityManager::dListNode* node = bridgeNodes->GetNext(); node; node = node->GetNext()) {
 		DemoEntity* const entity = node->GetInfo();
 		if (entity->GetName().Find("plank") != -1) {	
-			DemoMesh* const mesh = entity->GetMesh();
+			DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+			dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 			// note: because the mesh matrix can have scale, for simplicity just apply the local mesh matrix to the vertex cloud
 			dVector pool[128];
@@ -882,7 +887,7 @@ static void LoadHangingBridge (DemoEntityManager* const scene, TriggerManager* c
 		NewtonBodyGetMatrix(body1, &matrix1[0][0]);
 
 		// calculate the hinge parameter form the matrix location of each plank
-		dMatrix pinMatrix0 (GetIdentityMatrix());
+		dMatrix pinMatrix0 (dGetIdentityMatrix());
 		pinMatrix0[0] = pinMatrix0[1] * planksideDir;
 		pinMatrix0[0] = pinMatrix0[0].Scale (1.0f / dSqrt (pinMatrix0[0] % pinMatrix0[0]));
 		pinMatrix0[2] = pinMatrix0[0] * pinMatrix0[1];
@@ -911,7 +916,7 @@ static void LoadHangingBridge (DemoEntityManager* const scene, TriggerManager* c
 		body0 = iter.GetNode()->GetInfo();
 		NewtonBodyGetMatrix(body0, &matrix0[0][0]);
 
-		dMatrix pinMatrix0 (GetIdentityMatrix());
+		dMatrix pinMatrix0 (dGetIdentityMatrix());
 		pinMatrix0[0] = pinMatrix0[1] * planksideDir;
 		pinMatrix0[0] = pinMatrix0[0].Scale (1.0f / dSqrt (pinMatrix0[0] % pinMatrix0[0]));
 		pinMatrix0[2] = pinMatrix0[0] * pinMatrix0[1];
@@ -928,7 +933,7 @@ static void LoadHangingBridge (DemoEntityManager* const scene, TriggerManager* c
 		body0 = iter.GetNode()->GetInfo();
 		NewtonBodyGetMatrix(body0, &matrix0[0][0]);
 
-		dMatrix pinMatrix0 (GetIdentityMatrix());
+		dMatrix pinMatrix0 (dGetIdentityMatrix());
 		pinMatrix0[0] = pinMatrix0[1] * planksideDir;
 		pinMatrix0[0] = pinMatrix0[0].Scale (1.0f / dSqrt (pinMatrix0[0] % pinMatrix0[0]));
 		pinMatrix0[2] = pinMatrix0[0] * pinMatrix0[1];
@@ -950,7 +955,7 @@ static void LoadPlayGroundScene(DemoEntityManager* const scene, TriggerManager* 
 	//	return;
 
 	// make the body with a dummy null collision, so that we can use for attaching world objects
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	NewtonCollision* const dommyCollision = NewtonCreateNull(world);
 	NewtonBody* const playGroundBody = NewtonCreateDynamicBody (world, dommyCollision, &matrix[0][0]);
 	NewtonDestroyCollision (dommyCollision);	
@@ -968,14 +973,14 @@ static void LoadPlayGroundScene(DemoEntityManager* const scene, TriggerManager* 
 		LoadFloor(scene, sceneCollision);
 
 		// load a slide platform
-		dMatrix slideMatrix(GetIdentityMatrix());
+		dMatrix slideMatrix(dGetIdentityMatrix());
 		slideMatrix.m_posit.m_x += 80.0f;
 		slideMatrix.m_posit.m_z = -20.0f;
 		//LoadSlide(scene, triggerManager, sceneCollision, "slide.ngd", slideMatrix, playGroundBody);
 		LoadFerryBridge(scene, triggerManager, sceneCollision, "platformBridge.ngd", slideMatrix, playGroundBody);
 
 		// load another hanging bridge
-		dMatrix bridgeMatrix(GetIdentityMatrix());
+		dMatrix bridgeMatrix(dGetIdentityMatrix());
 		bridgeMatrix.m_posit.m_x += 40.0f;
 		LoadHangingBridge(scene, triggerManager, sceneCollision, "hangingBridge.ngd", bridgeMatrix, playGroundBody);
 
@@ -1019,7 +1024,7 @@ void AdvancedPlayerController (DemoEntityManager* const scene)
 	LoadPlayGroundScene(scene, triggerManager);
 
 	// add main player
-	dMatrix location (GetIdentityMatrix());
+	dMatrix location (dGetIdentityMatrix());
 	location.m_posit.m_x = 45.0f;
 	location.m_posit.m_y = 5.0f;
 	location.m_posit.m_z = -10.0f;

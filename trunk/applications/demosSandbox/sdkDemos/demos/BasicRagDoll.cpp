@@ -120,7 +120,8 @@ class RagDollManager: public CustomArticulaledTransformManager
 
 	void GetDimentions(DemoEntity* const bodyPart, dVector& origin, dVector& size) const
 	{	
-		DemoMesh* const mesh = bodyPart->GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)bodyPart->GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 		dFloat* const array = mesh->m_vertex;
 		dVector pmin( 1.0e20f,  1.0e20f,  1.0e20f, 0.0f);
@@ -150,7 +151,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 	{
 		dVector size;
 		dVector origin;
-		dMatrix matrix (GetIdentityMatrix());
+		dMatrix matrix (dGetIdentityMatrix());
 
 		matrix.m_posit.m_x = definition.m_shape_x;
 		matrix.m_posit.m_y = definition.m_shape_y;
@@ -196,7 +197,8 @@ class RagDollManager: public CustomArticulaledTransformManager
 	{
 		dVector points[1024 * 16];
 
-		DemoMesh* const mesh = bodyPart->GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)bodyPart->GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 		dAssert (mesh->m_vertexCount && (mesh->m_vertexCount < int (sizeof (points)/ sizeof (points[0]))));
 
 		// go over the vertex array and find and collect all vertices's weighted by this bone.
@@ -287,7 +289,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 		// for debugging
 		//NewtonBodySetMassMatrix(rootBone, 0.0f, 0.0f, 0.0f, 0.0f);
 
-		CustomArticulatedTransformController::dSkeletonBone* const bone = controller->AddBone (rootBone, GetIdentityMatrix());
+		CustomArticulatedTransformController::dSkeletonBone* const bone = controller->AddBone (rootBone, dGetIdentityMatrix());
 		// save the controller as the collision user data, for collision culling
 		NewtonCollisionSetUserData (NewtonBodyGetCollision(rootBone), bone);
 
@@ -347,22 +349,23 @@ void DescreteRagDoll (DemoEntityManager* const scene)
 	// load the sky box
 	scene->CreateSkyBox();
 	//CreateLevelMesh (scene, "flatPlane.ngd", true);
-	CreateHeightFieldTerrain (scene, 9, 8.0f, 1.5f, 0.2f, 200.0f, -50.0f);
+	CreateHeightFieldTerrain(scene, HEIGHTFIELD_DEFAULT_SIZE, HEIGHTFIELD_DEFAULT_CELLSIZE,
+							 1.5f, 0.2f, 200.0f, -50.0f);
 
 	// load a skeleton mesh for using as a ragdoll manager
-	DemoEntity ragDollModel(GetIdentityMatrix(), NULL);
+	DemoEntity ragDollModel(dGetIdentityMatrix(), NULL);
 	ragDollModel.LoadNGD_mesh ("skeleton.ngd", scene->GetNewton());
 
 	//  create a skeletal transform controller for controlling rag doll
 	RagDollManager* const manager = new RagDollManager (scene);
 
 	NewtonWorld* const world = scene->GetNewton();
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 
 //	dVector origin (-10.0f, 1.0f, 0.0f, 1.0f);
 	dVector origin (FindFloor (world, dVector (-10.0f, 50.0f, 0.0f, 1.0f), 2.0f * 50.0f));
 
-	int count = 6;
+	int count = 3;
 	for (int x = 0; x < count; x ++) {
 		for (int z = 0; z < count; z ++) {
 			dVector p (origin + dVector ((x - count / 2) * 3.0f - count / 2, 0.0f, (z - count / 2) * 3.0f, 0.0f));

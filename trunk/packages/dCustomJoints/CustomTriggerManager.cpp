@@ -17,9 +17,6 @@
 #include <CustomJoint.h>
 #include <CustomTriggerManager.h>
 
-
-
-
 CustomTriggerManager::CustomTriggerManager(NewtonWorld* const world)
 	:CustomControllerManager<CustomTriggerController>(world, TRIGGER_PLUGIN_NAME)
 	,m_lock(0)
@@ -50,6 +47,21 @@ void CustomTriggerManager::PreUpdate(dFloat timestep)
 }
 
 
+void CustomTriggerManager::OnDestroyBody (NewtonBody* const body)
+{
+	for (dListNode* node = GetFirst(); node; node = node->GetNext()) {
+		CustomTriggerController& controller = node->GetInfo();
+		dTree<NewtonBody*,NewtonBody*>& manifest = controller.m_manifest;
+		dTree<NewtonBody*,NewtonBody*>::dTreeNode* const passengerNode = manifest.Find (body);
+		if (passengerNode) {
+			EventCallback (&controller, m_exitTrigger, body);
+
+			CustomScopeLock lock (&m_lock);
+			manifest.Remove (passengerNode);
+		}
+	}
+}
+
 void CustomTriggerManager::UpdateTrigger (CustomTriggerController* const controller)
 {
 	NewtonBody* const triggerBody = controller->GetBody();
@@ -62,8 +74,8 @@ void CustomTriggerManager::UpdateTrigger (CustomTriggerController* const control
 		NewtonBody* const body1 = NewtonJointGetBody1(joint);
 		NewtonBody* const passangerBody = (body0 != triggerBody) ? body0 : body1; 
 		
-		dTree<NewtonBody*,NewtonBody*>::dTreeNode* const passengerNode = manifest.Find (passangerBody);
 		if (isActive) {
+		dTree<NewtonBody*,NewtonBody*>::dTreeNode* const passengerNode = manifest.Find (passangerBody);
 			if (passengerNode) {
 				EventCallback (controller, m_inTrigger, passangerBody);
 
@@ -73,6 +85,8 @@ void CustomTriggerManager::UpdateTrigger (CustomTriggerController* const control
 				EventCallback (controller, m_enterTrigger, passangerBody);
 			} 
 		} else {
+			dTree<NewtonBody*,NewtonBody*>::dTreeNode* const passengerNode = manifest.Find (passangerBody);
+
 			if (passengerNode) {
 				EventCallback (controller, m_exitTrigger, passangerBody);
 
@@ -81,7 +95,6 @@ void CustomTriggerManager::UpdateTrigger (CustomTriggerController* const control
 			}
 		}
 	}
-
 }
 
 
@@ -117,7 +130,7 @@ void CustomTriggerController::Init (NewtonCollision* const convexShape, const dM
 	
 	// set this shape do not collide with other bodies
 	NewtonCollision* const collision = NewtonBodyGetCollision (m_body);
-	NewtonCollisionSetCollisionMode(collision, 0);
+	NewtonCollisionSetMode(collision, 0);
 }
 
 

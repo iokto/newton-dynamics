@@ -47,6 +47,10 @@ class CustomLimitBallAndSocket: public CustomBallAndSocket
 
 	CUSTOM_JOINTS_API void SetConeAngle (dFloat angle);
 	CUSTOM_JOINTS_API void SetTwistAngle (dFloat minAngle, dFloat maxAngle);
+
+	CUSTOM_JOINTS_API dFloat GetConeAngle () const;
+	CUSTOM_JOINTS_API void GetTwistAngle (dFloat& minAngle, dFloat& maxAngle) const;
+
 	protected:
 	CUSTOM_JOINTS_API CustomLimitBallAndSocket (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData);
 	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const; 
@@ -55,17 +59,49 @@ class CustomLimitBallAndSocket: public CustomBallAndSocket
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
 
 	dMatrix m_rotationOffset;
+	dFloat m_coneAngle;
 	dFloat m_minTwistAngle;
 	dFloat m_maxTwistAngle;
-
 	dFloat m_coneAngleCos;
 	dFloat m_coneAngleSin;
 	dFloat m_coneAngleHalfCos;
 	dFloat m_coneAngleHalfSin;
 
 	DECLARE_CUSTON_JOINT(CustomLimitBallAndSocket, CustomBallAndSocket)
+//	AngularIntegration m_pitch;
+//	AngularIntegration m_yaw;
+//	AngularIntegration m_roll;
 };
 
+
+class CustomControlledBallAndSocket: public CustomBallAndSocket  
+{
+	public:
+	CUSTOM_JOINTS_API CustomControlledBallAndSocket(const dMatrix& pinAndPivotFrame, NewtonBody* const child, NewtonBody* const parent = NULL);
+	CUSTOM_JOINTS_API virtual ~CustomControlledBallAndSocket();
+
+	CUSTOM_JOINTS_API void SetAngularVelocity (dFloat omegaMag);
+	CUSTOM_JOINTS_API dFloat GetAngularVelocity () const;
+
+	CUSTOM_JOINTS_API void SetPitchAngle (dFloat angle);
+	CUSTOM_JOINTS_API dFloat SetPitchAngle () const;
+
+	CUSTOM_JOINTS_API void SetYawAngle (dFloat angle);
+	CUSTOM_JOINTS_API dFloat SetYawAngle () const;
+
+	CUSTOM_JOINTS_API void SetRollAngle (dFloat angle);
+	CUSTOM_JOINTS_API dFloat SetRollAngle () const;
+
+	protected:
+	CUSTOM_JOINTS_API void GetInfo (NewtonJointRecord* const info) const;
+	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
+
+	dVector m_targetAngles;
+	AngularIntegration m_pitch;
+	AngularIntegration m_yaw;
+	AngularIntegration m_roll;
+	dFloat m_angulaSpeed;
+};
 
 #endif 
 
