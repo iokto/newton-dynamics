@@ -25,6 +25,8 @@
 
 //dInitRtti(CustomBallAndSocket);
 //dInitRtti(CustomLimitBallAndSocket);
+IMPLEMENT_CUSTON_JOINT(CustomBallAndSocket);
+IMPLEMENT_CUSTON_JOINT(CustomLimitBallAndSocket);
 
 CustomBallAndSocket::CustomBallAndSocket(const dMatrix& pinAndPivotFrame, NewtonBody* const child, NewtonBody* const parent)
 	:CustomJoint(6, child, parent)
@@ -44,6 +46,18 @@ CustomBallAndSocket::CustomBallAndSocket(const dMatrix& pinAndPivotFrame0, const
 CustomBallAndSocket::~CustomBallAndSocket()
 {
 }
+
+CustomBallAndSocket::CustomBallAndSocket (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData)
+	:CustomJoint(child, parent, callback, userData)
+{
+
+}
+
+void CustomBallAndSocket::Serialize (NewtonSerializeCallback callback, void* const userData) const
+{
+	CustomJoint::Serialize (callback, userData);
+}
+
 
 void CustomBallAndSocket::GetInfo (NewtonJointRecord* const info) const
 {
@@ -109,6 +123,31 @@ CustomLimitBallAndSocket::CustomLimitBallAndSocket(const dMatrix& childPinAndPiv
 
 CustomLimitBallAndSocket::~CustomLimitBallAndSocket()
 {
+}
+
+CustomLimitBallAndSocket::CustomLimitBallAndSocket (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData)
+	:CustomBallAndSocket (child, parent, callback, userData)
+{
+	callback (userData, &m_rotationOffset, sizeof (dMatrix));
+	callback (userData, &m_minTwistAngle, sizeof (dFloat));
+	callback (userData, &m_maxTwistAngle, sizeof (dFloat));
+	callback (userData, &m_coneAngleCos, sizeof (dFloat));
+	callback (userData, &m_coneAngleSin, sizeof (dFloat));
+	callback (userData, &m_coneAngleHalfCos, sizeof (dFloat));
+	callback (userData, &m_coneAngleHalfSin, sizeof (dFloat));
+}
+
+void CustomLimitBallAndSocket::Serialize (NewtonSerializeCallback callback, void* const userData) const
+{
+	CustomBallAndSocket::Serialize (callback, userData);
+
+	callback (userData, &m_rotationOffset, sizeof (dMatrix));
+	callback (userData, &m_minTwistAngle, sizeof (dFloat));
+	callback (userData, &m_maxTwistAngle, sizeof (dFloat));
+	callback (userData, &m_coneAngleCos, sizeof (dFloat));
+	callback (userData, &m_coneAngleSin, sizeof (dFloat));
+	callback (userData, &m_coneAngleHalfCos, sizeof (dFloat));
+	callback (userData, &m_coneAngleHalfSin, sizeof (dFloat));
 }
 
 

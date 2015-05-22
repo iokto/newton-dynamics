@@ -26,9 +26,13 @@ class CustomBallAndSocket: public CustomJoint
 	CUSTOM_JOINTS_API virtual ~CustomBallAndSocket();
 
 	protected:
+	CUSTOM_JOINTS_API CustomBallAndSocket (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData);
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const; 
+
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
-	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const {dAssert (0);} 
+
+	DECLARE_CUSTON_JOINT(CustomBallAndSocket, CustomJoint)
 };
 
 
@@ -44,9 +48,11 @@ class CustomLimitBallAndSocket: public CustomBallAndSocket
 	CUSTOM_JOINTS_API void SetConeAngle (dFloat angle);
 	CUSTOM_JOINTS_API void SetTwistAngle (dFloat minAngle, dFloat maxAngle);
 	protected:
+	CUSTOM_JOINTS_API CustomLimitBallAndSocket (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData);
+	CUSTOM_JOINTS_API virtual void Serialize (NewtonSerializeCallback callback, void* const userData) const; 
+
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
-
 
 	dMatrix m_rotationOffset;
 	dFloat m_minTwistAngle;
@@ -56,6 +62,8 @@ class CustomLimitBallAndSocket: public CustomBallAndSocket
 	dFloat m_coneAngleSin;
 	dFloat m_coneAngleHalfCos;
 	dFloat m_coneAngleHalfSin;
+
+	DECLARE_CUSTON_JOINT(CustomLimitBallAndSocket, CustomBallAndSocket)
 };
 
 
