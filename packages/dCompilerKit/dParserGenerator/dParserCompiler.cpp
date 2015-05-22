@@ -206,7 +206,7 @@ class dParserCompiler::dState: public dList<dParserCompiler::dItem>
 		{
 		}
 
-		dItemKey (dCRCTYPE symbol, dProductionRule::dListNode* rule)
+		dItemKey (dCRCTYPE symbol, dProductionRule::dListNode* const rule)
 			:m_lookAheadSymbolCRC (symbol), m_rule (rule)
 		{
 		}
@@ -215,8 +215,9 @@ class dParserCompiler::dState: public dList<dParserCompiler::dItem>
 		{	
 			if (m_lookAheadSymbolCRC < key.m_lookAheadSymbolCRC) {
 				return true;	
-			} else if (m_lookAheadSymbolCRC == key.m_lookAheadSymbolCRC){
-				if (m_rule < key.m_rule) {
+			} else if (m_lookAheadSymbolCRC == key.m_lookAheadSymbolCRC) {
+				//if (m_rule < key.m_rule) {
+                if (m_rule->GetInfo().m_ruleNumber < key.m_rule->GetInfo().m_ruleNumber) {
 					return true;	
 				} 
 			}
@@ -228,7 +229,8 @@ class dParserCompiler::dState: public dList<dParserCompiler::dItem>
 			if (m_lookAheadSymbolCRC > key.m_lookAheadSymbolCRC) {
 				return true;	
 			} else if (m_lookAheadSymbolCRC == key.m_lookAheadSymbolCRC){
-				if (m_rule > key.m_rule) {
+				//if (m_rule > key.m_rule) {
+                if (m_rule->GetInfo().m_ruleNumber > key.m_rule->GetInfo().m_ruleNumber) {
 					return true;	
 				} 
 			}
@@ -484,7 +486,9 @@ dParserCompiler::~dParserCompiler()
 void dParserCompiler::DisplayError (const char* format, ...) const
 {
 	va_list v_args;
-	char* const text = (char*) malloc (strlen (format) + 2048);
+	//char* const text = (char*) malloc (strlen (format) + 2048);
+	char* const text = (char*) alloca (strlen (format) + 2048);
+	dAssert (text);
 
 	text[0] = 0;
 	va_start (v_args, format);     
@@ -496,7 +500,7 @@ void dParserCompiler::DisplayError (const char* format, ...) const
 	OutputDebugStringA (text);
 #endif	
 
-	free (text);
+	//free (text);
 }
 
 
@@ -527,16 +531,19 @@ void dParserCompiler::LoadTemplateFile(const char* const templateName, dString& 
 	char path[2048];
 
 	// in windows
-	GetModuleFileName(NULL, path, sizeof(path)); 
+	if (GetModuleFileName(NULL, path, sizeof(path))) { 
 
-	char* const ptr = strrchr (path, '\\') + 1;
-	sprintf (ptr, templateName);
+		char* const ptr = strrchr (path, '\\') + 1;
+		sprintf (ptr, templateName);
 
-	FILE* const templateFile = fopen (path, "rb");
-	dAssert (templateFile);
+		FILE* const templateFile = fopen (path, "rb");
+		dAssert (templateFile);
 
-	templateOuput.LoadFile(templateFile);
-	fclose (templateFile);	
+		templateOuput.LoadFile(templateFile);
+		fclose (templateFile);	
+	} else {
+		dAssert (0);
+	}
 }
 
 void dParserCompiler::SaveFile(const char* const fileName, const char* const extention, const dString& input) const
@@ -751,7 +758,7 @@ dParserCompiler::dToken dParserCompiler::ScanGrammarRule(
 				currentRule->m_semanticActionCode = lastNode->GetInfo().m_info;
 			}
 		}
-		for (dList<dTokenStringPair>::dListNode* node = ruleTokens.GetFirst(); node != lastNode; node = node->GetNext()) {
+		for (dList<dTokenStringPair>::dListNode* node = ruleTokens.GetFirst(); node && (node != lastNode); node = node->GetNext()) {
 			dTokenStringPair& pair = node->GetInfo();
 
 			if (pair.m_token == LITERAL) {
@@ -866,6 +873,7 @@ void dParserCompiler::CanonicalItemSets (
 
 			dCRCTYPE symbol = iter.GetKey();
 			dState* const newState = Goto (state, symbol, symbolList, ruleMap);
+			dAssert (newState);
 
 			if (newState->GetCount()) {
 				const dTokenInfo& tokenInfo = iter.GetNode()->GetInfo();

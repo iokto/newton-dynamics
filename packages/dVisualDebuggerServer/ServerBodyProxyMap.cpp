@@ -413,8 +413,7 @@ void ServerBodyProxyMap::AddNewBodies ()
 		int code = NEWTON_DEBUGGER_ADD_BODIES;
 		SerializeData (&code, sizeof (code));
 
-		dAssert (0);
-//		NewtonSerializeBodyArray(world, m_bodyBuffer, bodyCount, BodySerialization, SerializeData, this);
+		NewtonSerializeBodyArray(world, m_bodyBuffer, bodyCount, BodySerialization, SerializeData, this);
 
 		// Send Command this command here, before resetting the buffer
 		if (!me->SendData (m_bodyBuffer, m_memCount)) {

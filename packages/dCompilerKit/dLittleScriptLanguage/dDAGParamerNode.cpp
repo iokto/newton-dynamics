@@ -42,32 +42,35 @@ void dDAGParameterNode::SetType(dDAGTypeNode* const type)
 }
 
 
+dDAGTypeNode* dDAGParameterNode::GetType() const 
+{
+	return m_type;
+}
+
 void dDAGParameterNode::ConnectParent(dDAG* const parent)  
 {
 	m_parent = parent;
 
 	dDAGScopeBlockNode* const scope = GetScope();
 	if (scope) {
-		scope->AddVariable (m_name, m_type->m_intrinsicType);
+		scope->AddVariable (m_name, m_type->GetArgType());
 	}
-
 	m_type->ConnectParent(this);
-//	if (m_initializationExp) {
-//		m_initializationExp->ConnectParent(this);
-//	}
 }
 
 
 void dDAGParameterNode::CompileCIL(dCIL& cil)  
 {
 	dDAGScopeBlockNode* const scope = GetScope();
-	dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* const varNameNode = scope->FindVariable(m_name);
+	dTree<dCILInstr::dArg, dString>::dTreeNode* const varNameNode = scope->FindVariable(m_name);
 	dAssert (varNameNode);
-
-	dTreeAdressStmt& fntArg = cil.NewStatement()->GetInfo();
-	fntArg.m_instruction = dTreeAdressStmt::m_local;
+	m_result = varNameNode->GetInfo();
+/*
+	dCILInstr& fntArg = cil.NewStatement()->GetInfo();
+	fntArg.m_instruction = dCILInstr::m_local;
 	fntArg.m_arg0 = varNameNode->GetInfo();
 	fntArg.m_arg1 = fntArg.m_arg0;
 	m_result = fntArg.m_arg0;
 	DTRACE_INTRUCTION (&fntArg);
+*/
 }

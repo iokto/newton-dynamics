@@ -25,11 +25,17 @@
 #include <dRtti.h>
 #include <dString.h>
 #include <dCILstdafx.h>
+#include <dCILInstr.h>
 #include <dRefCounter.h>
 #include <dDataFlowGraph.h>
 #include <dVirtualMachine.h>
-#include <dTreeAdressStmt.h>
+#include <dBasicBlocksGraph.h>
 #include <dContainersStdAfx.h>
+
+#include <dCILInstrBranch.h>
+#include <dCILInstrLoadStore.h>
+#include <dCILInstrArithmetic.h>
+#include <dCILInstrMiscellaneous.h>
 
 
 #define D_DEBUG_PARCEL

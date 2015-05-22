@@ -38,6 +38,7 @@ extern "C" {
 	void NewtonDebuggerDestroyServer (void* const server);
 	void NewtonDebuggerServe (void* const server, dFloat timestep);
 
+
 #ifdef __cplusplus 
 }
 #endif

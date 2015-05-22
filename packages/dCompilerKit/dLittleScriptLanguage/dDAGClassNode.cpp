@@ -71,6 +71,12 @@ dString dDAGClassNode::GetFunctionName (const dString& name, dList<dDAGExpressio
 
 dString dDAGClassNode::GetFunctionName (const dString& name, dList<dDAGParameterNode*>& parameterNodeList) const
 {
+//	dString protoName (name);
+//	for (dList<dDAGParameterNode*>::dListNode* paramNode = parameterNodeList.GetFirst(); paramNode; paramNode = paramNode->GetNext()) {
+//		dDAGTypeNode* const type = paramNode->GetInfo()->GetType();
+//		protoName += m_prototypeSeparator + type->GetIntrisicTypeString();
+//	}
+
 	for (dList<dDAGFunctionNode*>::dListNode* functionNode = m_functionList.GetFirst(); functionNode; functionNode = functionNode->GetNext()) {
 		dDAGFunctionNode* const function = functionNode->GetInfo();
 		if (function->m_name == name) {
@@ -79,11 +85,27 @@ dString dDAGClassNode::GetFunctionName (const dString& name, dList<dDAGParameter
 		}
 	}
 
+	// serach for oteh classes
 	dAssert (0);
 	return "xxxx";
 }
 
-dDAGTypeNode* dDAGClassNode::GetFunctionReturnType (const dString& name, dList<dDAGExpressionNode*>& argumentList) const
+
+dDAGFunctionNode* dDAGClassNode::GetFunction (const dString& name) const
+{
+	for (dList<dDAGFunctionNode*>::dListNode* functionNode = m_functionList.GetFirst(); functionNode; functionNode = functionNode->GetNext()) {
+		dDAGFunctionNode* const function = functionNode->GetInfo();
+		if (function->m_name == name) {
+			return function;
+		}
+	}
+
+	dAssert (0);
+	return NULL;
+}
+
+/*
+dDAGTypeNode* dDAGClassNode::GetFunctionReturnType (const dString& name) const
 {
 	for (dList<dDAGFunctionNode*>::dListNode* functionNode = m_functionList.GetFirst(); functionNode; functionNode = functionNode->GetNext()) {
 		dDAGFunctionNode* const function = functionNode->GetInfo();
@@ -95,7 +117,7 @@ dDAGTypeNode* dDAGClassNode::GetFunctionReturnType (const dString& name, dList<d
 	dAssert (0);
 	return NULL;
 }
-
+*/
 
 void dDAGClassNode::AddVariable (dDAGExpressionClassVariable* const variable)
 {
@@ -133,28 +155,29 @@ void dDAGClassNode::ConnectParent(dDAG* const parent)
 void dDAGClassNode::CompileCIL(dCIL& cil)  
 {
 	for (dList<dDAGExpressionClassVariable*>::dListNode* node = m_variables.GetFirst(); node; node = node->GetNext()) {
-		dDAGExpressionClassVariable* const variable = node->GetInfo();
-		variable->Evalue(cil);
+		dAssert (0);
+//		dDAGExpressionClassVariable* const variable = node->GetInfo();
+//		variable->Evalue();
 	}
 
 	for (dList<dDAGFunctionNode*>::dListNode* node = m_functionList.GetFirst(); node; node = node->GetNext()) {
-		m_cilCodeList.Append (cil.NewStatement());
 		dDAGFunctionNode* const function = node->GetInfo();
-
-		dCIL::dListNode* const functionNode = cil.GetLast();
 		function->CompileCIL(cil);
-
-		//cil.Optimize(functionNode->GetNext(), function->m_argumentsCount, returnType);
-		//cil.Optimize(functionNode->GetNext(), 0, returnType);
-		function->BuildBasicBlocks (cil, functionNode->GetNext());
 	}
 }
 
-
-void dDAGClassNode::TranslateToLLVM (dCIL& cil, llvm::Module* const module, llvm::LLVMContext &context)
+void dDAGClassNode::ConvertToTarget (dCIL& cil)
 {
 	for (dList<dDAGFunctionNode*>::dListNode* node = m_functionList.GetFirst(); node; node = node->GetNext()) {
 		dDAGFunctionNode* const function = node->GetInfo();
-		function->TranslateToLLVM (cil, module, context);
+		function->ConvertToTarget (cil);
+	}
+}
+
+void dDAGClassNode::Optimize (dCIL& cil)
+{
+	for (dList<dDAGFunctionNode*>::dListNode* node = m_functionList.GetFirst(); node; node = node->GetNext()) {
+		dDAGFunctionNode* const function = node->GetInfo();
+		function->Optimize(cil);
 	}
 }

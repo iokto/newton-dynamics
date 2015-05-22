@@ -40,14 +40,11 @@ void dDAGFunctionStatementReturn::ConnectParent(dDAG* const parent)
 
 void dDAGFunctionStatementReturn::CompileCIL(dCIL& cil)
 {
-	dTreeAdressStmt::dArg retValue;
-	retValue.m_type = dTreeAdressStmt::m_void;
-
+	dCILInstr::dArg retValue;
 	if (m_expression) {
 		m_expression->CompileCIL(cil);
 		retValue = m_expression->m_result;
 	}
-
 	
 
 	for (dDAG* node = m_parent; node && (node->GetTypeId() != dDAGFunctionNode::GetRttiType()); node = node->m_parent) {
@@ -55,19 +52,16 @@ void dDAGFunctionStatementReturn::CompileCIL(dCIL& cil)
 			dDAGScopeBlockNode* const scope = (dDAGScopeBlockNode*)node;
 			for (dList<dString>::dListNode* node = scope->m_allocations.GetLast(); node; node = node->GetPrev()) {
 				dAssert(0);
-/*
-				dTreeAdressStmt& allocationStmt = cil.NewStatement()->GetInfo();
-				allocationStmt.m_instruction = dTreeAdressStmt::m_release;
-				allocationStmt.m_arg0.m_label = node->GetInfo();
-				DTRACE_INTRUCTION (&allocationStmt);
-*/
+				//dThreeAdressStmt& allocationStmt = cil.NewStatement()->GetInfo();
+				//allocationStmt.m_instruction = dThreeAdressStmt::m_release;
+				//allocationStmt.m_arg0.m_label = node->GetInfo();
+				//DTRACE_INTRUCTION (&allocationStmt);
 			}
 		}
 	}
 
-	dTreeAdressStmt::dArg arg1 (LoadLocalVariable(cil, retValue));
-	dTreeAdressStmt& stmt = cil.NewStatement()->GetInfo();
-	stmt.m_instruction = dTreeAdressStmt::m_ret;
-	stmt.m_arg0 = arg1;
-	DTRACE_INTRUCTION (&stmt);
+
+	dCILInstr::dArg arg1 (LoadLocalVariable(cil, retValue));
+	dCILInstrReturn* const instr = new dCILInstrReturn (cil, arg1.m_label, arg1.GetType());
+	instr->Trace();
 }

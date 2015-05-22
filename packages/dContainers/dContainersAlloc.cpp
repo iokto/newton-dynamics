@@ -26,9 +26,10 @@
 #pragma warning (disable: 4100) //warning C4100: 'lpReserved' : unreferenced formal parameter
 
 #ifdef _DCONTAINERS_DLL
-	void* operator new (size_t size) 
+	void* operator new (size_t size)
 	{ 
 		void* const ptr = malloc (size);
+		dAssert (ptr);
 		return ptr;
 	}
 

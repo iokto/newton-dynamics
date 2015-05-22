@@ -24,9 +24,9 @@ void *operator new(size_t s)
 		#endif
 	}
 	void* const mem = malloc (s);
-	unsigned long xxx = unsigned long (mem);
-	if (((xxx & 0xffff) == 0xEF90) && (s == 12))
-		dAssert(0);
+//	unsigned long xxx = unsigned long (mem);
+//	if (((xxx & 0xffff) == 0x8598) && (s == 16))
+//		dAssert(0);
 	return mem;
 }
 
@@ -48,7 +48,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	const char* const sourceFileName = argv[1];
 	FILE* const sourceFile = fopen (sourceFileName, "r");
 	if (!sourceFile) {
-		fprintf (stdout, "script source file: \"%s\" not found\n", sourceFile);
+		fprintf (stdout, "script source file: \"%s\" not found\n", sourceFileName);
 		exit (0);
 	}
 
@@ -59,8 +59,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	const char* const packacgeName = "demos";
 	dScriptCompiler compiler(packacgeName);
 	compiler.CompileSource (source.GetStr());
-
-	llvm::llvm_shutdown();
 	return 0;
 }
 

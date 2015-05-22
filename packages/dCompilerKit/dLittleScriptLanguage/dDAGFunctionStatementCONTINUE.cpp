@@ -35,11 +35,13 @@ dAssert (0);
 
 void dDAGFunctionStatementCONTINUE::CompileCIL(dCIL& cil)  
 {
+dAssert (0);
+/*
 	for (dDAG* node = m_parent; node && (node->GetTypeId() != dDAGFunctionNode::GetRttiType()); node = node->m_parent) {
 		if (node->IsType(dDAGFunctionStatementFlow::GetRttiType())) {
 			dDAGFunctionStatementFlow* const flowControl = (dDAGFunctionStatementFlow*) node;
-			dTreeAdressStmt& stmt = cil.NewStatement()->GetInfo();
-			stmt.m_instruction = dTreeAdressStmt::m_goto;
+			dCILInstr& stmt = cil.NewStatement()->GetInfo();
+			stmt.m_instruction = dCILInstr::m_goto;
 			if (flowControl->m_currentContinueLabel == "") {
 				flowControl->m_currentContinueLabel = cil.NewLabel();
 			} 
@@ -52,4 +54,5 @@ void dDAGFunctionStatementCONTINUE::CompileCIL(dCIL& cil)
 
 	// warning break instruction outside of a flow control statement
 	dAssert (0);
+*/
 }

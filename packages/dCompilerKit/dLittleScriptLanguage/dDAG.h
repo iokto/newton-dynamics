@@ -12,6 +12,7 @@
 #ifndef __dDAG_h_
 #define __dDAG_h_
 
+#include "dCILstdafx.h"
 #include "dLSCstdafx.h"
 
 #ifdef _MSC_VER
@@ -41,20 +42,20 @@ class dDAG
 	dDAGClassNode* GetClass() const;
 	dDAGScopeBlockNode* GetScope() const;
 	dDAGFunctionNode* GetFunction() const;
-	virtual dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* FindLocalVariable(const dString& name) const;
+	virtual dTree<dCILInstr::dArg, dString>::dTreeNode* FindLocalVariable(const dString& name) const;
 
-	dTreeAdressStmt::dArg LoadLocalVariable (dCIL& cil, const dTreeAdressStmt::dArg& arg) const;
+	dCILInstr::dArg LoadLocalVariable (dCIL& cil, const dCILInstr::dArg& arg) const;
 	
 	dString m_name;
-	dTreeAdressStmt::dArg m_result;
+	dCILInstr::dArg m_result;
 	dDAG* m_next;
 	dDAG* m_parent;
 	dList<dDAG*>::dListNode* m_myListNode;
 
-	static dString dScopePrefix;
+	static dString m_scopePrefix;
+	static dString m_prototypeSeparator;
 
 	dDAGRttiRootClassSupportDeclare(dDAG);
-	
 };
 
 

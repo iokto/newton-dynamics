@@ -48,10 +48,13 @@ dDAG* dDAGDimensionNode::Clone (dList<dDAG*>& allNodes) const
 
 void dDAGDimensionNode::ConnectParent(dDAG* const parent)  
 {
-dAssert (0);
 	m_parent = parent;
 	if (m_dimExp) {
 		m_dimExp->ConnectParent(this);
+	}
+
+	if (m_next) {
+		m_next->ConnectParent(this);
 	}
 }
 
@@ -59,7 +62,14 @@ void dDAGDimensionNode::CompileCIL(dCIL& cil)
 {
 	if (m_dimExp) {
 		m_dimExp->CompileCIL(cil) ;
-		m_result = m_dimExp->m_result;
+		m_result = LoadLocalVariable(cil, m_dimExp->m_result);
+		dAssert (m_result.GetType().m_intrinsicType != dCILInstr::m_constFloat);
+		if (m_result.GetType().m_intrinsicType == dCILInstr::m_constInt) {
+			dCILInstrMove* const move = new dCILInstrMove (cil, cil.NewTemp(), dCILInstr::dArgType (dCILInstr::m_int), m_result.m_label, m_result.GetType());
+			move->Trace();
+			m_result = move->GetArg0();
+		}
+		dAssert (m_result.GetType().m_intrinsicType == dCILInstr::m_int);
 	} else {
 		dAssert (0);
 	}
