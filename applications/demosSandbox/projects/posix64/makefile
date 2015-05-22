@@ -54,7 +54,6 @@ SDK_XML_PATH = ../../../../packages/thirdParty/tinyxml
 SDK_INCLUDE_PATH = \
 		-I ../../../../coreLibrary_300/source/newton \
 		-I ../../../../coreLibrary_300/source/core \
-		-I ../../../../coreLibrary_300/source/ai \
 		-I $(SDK_MAIN_PATH) \
 		-I $(SDK_TOOLBOX_PATH) \
 		-I $(SDK_DEMOS_PATH) \
@@ -74,7 +73,6 @@ SDK_SCENE_MAKE = ../../../../packages/projects/$(PLATFORM)/dScene
 SDK_JOINTS_MAKE = ../../../../packages/projects/$(PLATFORM)/dCustomJoints
 SDK_CONTAINERS_MAKE = ../../../../packages/projects/$(PLATFORM)/dContainers
 SDK_VISUALDEBUGGER_MAKE = ../../../../packages/projects/$(PLATFORM)/dVisualDebuggerServer
-SDK_AILIBRARY_MAKE = ../../../../packages/projects/$(PLATFORM)/dAILibrary
 SDK_XML_MAKE = ../../../../packages/projects/$(PLATFORM)/thirdParty/tinyxml
 
 
@@ -90,29 +88,28 @@ NEWTON_LIB = \
 	$(SDK_NEWTON_PATH)/libdJointLibrary.a \
 	$(SDK_NEWTON_PATH)/libTinyXML.a
 #	$(SDK_NEWTON_PATH)/libdVisualDebuggerServer.a \
-#	$(SDK_NEWTON_PATH)/libdAILibrary.a \
+
 
 
 SDK_MAIN_SRC = \
-		$(SDK_MAIN_PATH)/DemoAIListener.cpp \
 		$(SDK_MAIN_PATH)/DemoCameraListener.cpp \
 		$(SDK_MAIN_PATH)/DemoEntityListener.cpp \
 		$(SDK_MAIN_PATH)/DemoListenerBase.cpp \
 		$(SDK_MAIN_PATH)/DemoSoundListener.cpp \
 		$(SDK_MAIN_PATH)/DemoVisualDebugerListener.cpp \
-		$(SDK_MAIN_PATH)/DemoAIAgent.cpp \
 		$(SDK_MAIN_PATH)/DemoCamera.cpp \
 		$(SDK_MAIN_PATH)/DemoEntity.cpp \
 		$(SDK_MAIN_PATH)/DemoEntityManager.cpp \
 		$(SDK_MAIN_PATH)/DemoMesh.cpp \
 		$(SDK_MAIN_PATH)/NewtonDemos.cpp
-		
 
 SDK_DEMOS_SRC = \
 		$(SDK_DEMOS_PATH)/ArchimedesBuoyancy.cpp \
 		$(SDK_DEMOS_PATH)/AdvancedPlayerController.cpp \
 		$(SDK_DEMOS_PATH)/ArticulatedJoints.cpp \
 		$(SDK_DEMOS_PATH)/BasicCar.cpp \
+		$(SDK_DEMOS_PATH)/SuperCar.cpp \
+		$(SDK_DEMOS_PATH)/HeavyVehicles.cpp \
 		$(SDK_DEMOS_PATH)/BasicFriction.cpp \
 		$(SDK_DEMOS_PATH)/BasicPlayerController.cpp \
 		$(SDK_DEMOS_PATH)/BasicRagDoll.cpp \
@@ -124,7 +121,6 @@ SDK_DEMOS_SRC = \
 		$(SDK_DEMOS_PATH)/ContinueCollision1.cpp \
 		$(SDK_DEMOS_PATH)/ConvexApproximation.cpp \
 		$(SDK_DEMOS_PATH)/ConvexCast.cpp \
-		$(SDK_DEMOS_PATH)/HeavyVehicles.cpp \
 		$(SDK_DEMOS_PATH)/HeighFieldCollision.cpp \
 		$(SDK_DEMOS_PATH)/KinematicBodies.cpp \
 		$(SDK_DEMOS_PATH)/MeshCollision.cpp \
@@ -139,7 +135,6 @@ SDK_DEMOS_SRC = \
 		$(SDK_DEMOS_PATH)/SoftBodies.cpp \
 		$(SDK_DEMOS_PATH)/StandardJoints.cpp \
 		$(SDK_DEMOS_PATH)/StructuredConvexFracturing.cpp \
-		$(SDK_DEMOS_PATH)/SuperCar.cpp \
 		$(SDK_DEMOS_PATH)/UserStaticCollision.cpp \
 		$(SDK_DEMOS_PATH)/UsingNewtonMeshTool.cpp
 

@@ -49,13 +49,10 @@ class DemoCameraListener: public DemoListenerBase
 	virtual void PreUpdate (const NewtonWorld* const world, dFloat timestep);
 	virtual void PostUpdate (const NewtonWorld* const world, dFloat timestep);
 
+	virtual void OnBodyDestroy (NewtonBody* const body);
 	void UpdatePickBody (DemoEntityManager* const scene, float timestep); 
-
-	static void OnPickedBodyDestroyedNotify (const NewtonBody* body);
-	static void OnPickedBodyApplyForce (const NewtonBody* body, dFloat timestep, int threadIndex);
 	
 	DemoCamera* m_camera;
-
 	int m_mousePosX;
 	int m_mousePosY;
 	dFloat m_yaw;
@@ -68,13 +65,11 @@ class DemoCameraListener: public DemoListenerBase
 
 	bool m_prevMouseState;	
 	bool m_mouseLockState;	
-	static dVector m_pickedBodyDisplacement;
-	static dVector m_pickedBodyLocalAtachmentPoint;
-	static dVector m_pickedBodyLocalAtachmentNormal;
-	static NewtonBody* m_targetPicked;
-	static NewtonBodyDestructor m_bodyDestructor;
-	static NewtonApplyForceAndTorque m_chainPickBodyForceCallback; 
-
+	dVector m_pickedBodyTargetPosition;
+	dVector m_pickedBodyLocalAtachmentPoint;
+	dVector m_pickedBodyLocalAtachmentNormal;
+	NewtonBody* m_targetPicked;
+	NewtonBodyDestructor m_bodyDestructor;
 	friend class DemoCamera;
 };
 

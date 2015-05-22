@@ -26,14 +26,14 @@ class SimpleSoftBodyEntity: public DemoEntity
 {
 	public:
 	SimpleSoftBodyEntity (DemoEntityManager* const scene, NewtonCollision* const softCollision, const dVector& location)
-		:DemoEntity (GetIdentityMatrix(), NULL)
+		:DemoEntity (dGetIdentityMatrix(), NULL)
 	{
 		// add an new entity to the world
 		scene->Append (this);
 
 		// create the render mesh
 		DemoMesh* const mesh = new DemoMesh ("softMesh");
-		SetMesh(mesh, GetIdentityMatrix());
+		SetMesh(mesh, dGetIdentityMatrix());
 		mesh->Release();
 
 		NewtonWorld* const world = scene->GetNewton();
@@ -49,7 +49,7 @@ class SimpleSoftBodyEntity: public DemoEntity
 		dFloat Izz = mass * inertia[2];
 
 		//create the rigid body
-		dMatrix matrix (GetIdentityMatrix());
+		dMatrix matrix (dGetIdentityMatrix());
 		matrix.m_posit.m_x = location.m_x;
 		matrix.m_posit.m_y = location.m_y;
 		matrix.m_posit.m_z = location.m_z;
@@ -91,7 +91,8 @@ class SimpleSoftBodyEntity: public DemoEntity
 
 	void CreateVisualMesh ()
 	{
-		DemoMesh* const mesh = GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 		// now create a visual representation for this mesh
 		int vertexCount = NewtonDeformableMeshGetVertexCount (m_softCollision); 
@@ -137,7 +138,7 @@ class SimpleSoftBodyEntity: public DemoEntity
 		}
 #else
 		dVector size (2.0f, 2.0f, 2.0f, 0.0f);
-		NewtonCollision* const box = CreateConvexCollision (world, GetIdentityMatrix(), size, _BOX_PRIMITIVE, 0);
+		NewtonCollision* const box = CreateConvexCollision (world, dGetIdentityMatrix(), size, _BOX_PRIMITIVE, 0);
 		NewtonMesh* const mesh = NewtonMeshCreateFromCollision(box);
 		int material = LoadTexture("smilli.tga");
 		NewtonMeshApplyBoxMapping(mesh, material, material, material);
@@ -342,7 +343,8 @@ class SimpleSoftBodyEntity: public DemoEntity
 
 	virtual void Render(dFloat timeStep, DemoEntityManager* const scene) const
 	{
-		DemoMesh* const mesh = GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 		// regenerate the soft body mesh for rendering
 		NewtonDeformableMeshUpdateRenderNormals(m_softCollision);
@@ -360,7 +362,7 @@ class SimpleSoftBodyEntity: public DemoEntity
 #endif
 
 
-void ClothPath(DemoEntityManager* const scene)
+void ClothPatch(DemoEntityManager* const scene)
 {
     // load the skybox
     scene->CreateSkyBox();

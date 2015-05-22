@@ -59,10 +59,10 @@ static void AddNonUniformScaledPrimitives (DemoEntityManager* const scene, dFloa
 	// create the shape and visual mesh as a common data to be re used
 	NewtonWorld* const world = scene->GetNewton();
 //	NewtonCollision* const collision = CreateConvexCollision (world, &shapeOffsetMatrix[0][0], size, type, materialID);
-	NewtonCollision* const collision = CreateConvexCollision (world, GetIdentityMatrix(), size, type, materialID);
+	NewtonCollision* const collision = CreateConvexCollision (world, dGetIdentityMatrix(), size, type, materialID);
 
 	dFloat startElevation = 1000.0f;
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 //matrix = dPitchMatrix(-45.0f * 3.141592f/180.0f);
 	for (int i = 0; i < xCount; i ++) {
 		dFloat x = origin.m_x + (i - xCount / 2) * spacing;
@@ -109,7 +109,8 @@ static void CreateScaleStaticMesh (DemoEntity* const entity, NewtonCollision* co
 {
 	// now make a scale version of the same model
 	// first Get The mesh and make a scale copy
-	DemoMesh* const mesh = entity->GetMesh();
+	DemoMesh* const mesh = (DemoMesh*)entity->GetMesh();
+	dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 
 	// since the render does no handle scale, we will made a duplicated mesh with the scale baked in
 	DemoMesh* const scaledMesh =  new DemoMesh (*mesh);
@@ -124,7 +125,7 @@ static void CreateScaleStaticMesh (DemoEntity* const entity, NewtonCollision* co
 
 	DemoEntity* const scaledEntity = new DemoEntity(location, NULL);
 	scene->Append (scaledEntity);
-	scaledEntity->SetMesh(scaledMesh, GetIdentityMatrix());
+	scaledEntity->SetMesh(scaledMesh, dGetIdentityMatrix());
 	scaledMesh->Release();
 
 	// now make a body with a scaled collision mesh
@@ -238,10 +239,11 @@ void ScaledMeshCollision (DemoEntityManager* const scene)
 	//CreateLevelMesh (scene, "cattle.ngd", fileName);
 	//CreateLevelMesh (scene, "playground.ngd", 0);
 
-	dMatrix camMatrix (dRollMatrix(-20.0f * 3.1416f /180.0f) * dYawMatrix(-45.0f * 3.1416f /180.0f));
+	//dMatrix camMatrix (dRollMatrix(-20.0f * 3.1416f /180.0f) * dYawMatrix(-45.0f * 3.1416f /180.0f));
+	dMatrix camMatrix (dGetIdentityMatrix());
 	dQuaternion rot (camMatrix);
-	dVector origin (-15.0f, 10.0f, -20.0f, 0.0f);
-	origin = origin.Scale (0.25f);
+	dVector origin (-15.0f, 5.0f, 0.0f, 0.0f);
+	//origin = origin.Scale (0.25f);
 	scene->SetCameraMatrix(rot, origin);
 
 
@@ -249,20 +251,22 @@ void ScaledMeshCollision (DemoEntityManager* const scene)
 	int defaultMaterialID = NewtonMaterialGetDefaultGroupID (world);
 	dVector location (0.0f, 0.0f, 0.0f, 0.0f);
 
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	matrix.m_posit = location;
 	matrix.m_posit.m_x = 0.0f;
 	matrix.m_posit.m_y = 0.0f;
 	matrix.m_posit.m_z = 0.0f;
 	matrix.m_posit.m_w = 1.0f;
 
-	DemoEntity teaPot (GetIdentityMatrix(), NULL);
-	teaPot.LoadNGD_mesh("teapot.ngd", world);
+	DemoEntity teaPot (dGetIdentityMatrix(), NULL);
+	//teaPot.LoadNGD_mesh("teapot.ngd", world);
 	//teaPot.LoadNGD_mesh("cube.ngd", world);
+	teaPot.LoadNGD_mesh("box.ngd", world);
 
 	NewtonCollision* const staticCollision = CreateCollisionTree (world, &teaPot, 0, true);
 	//	CreateScaleStaticMesh (&teaPot, staticCollision, scene, matrix, dVector (1.0f, 1.0f, 1.0f, 0.0f));
-	CreateScaleStaticMesh (&teaPot, staticCollision, scene, matrix, dVector (2.0f, 2.0f, 2.0f, 0.0f));
+	//CreateScaleStaticMesh (&teaPot, staticCollision, scene, matrix, dVector (2.0f, 2.0f, 2.0f, 0.0f));
+	CreateScaleStaticMesh (&teaPot, staticCollision, scene, matrix, dVector (0.5f, 5.0f, 3.0f, 0.0f));
 
 	matrix.m_posit.m_z = -5.0f;
 	//	CreateScaleStaticMesh (&teaPot, staticCollision, scene, matrix, dVector (0.75f, 0.75f, 0.75f, 0.0f));
@@ -300,4 +304,96 @@ void ScaledMeshCollision (DemoEntityManager* const scene)
 	//	AddNonUniformScaledPrimitives(scene, 10.0f, location, size, count, count, 5.0f, _CONE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	//	AddNonUniformScaledPrimitives(scene, 10.0f, location, size, count, count, 5.0f, _REGULAR_CONVEX_HULL_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	//	AddNonUniformScaledPrimitives(scene, 10.0f, location, size, count, count, 5.0f, _RANDOM_CONVEX_HULL_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
+
+
+/*
+	// load the skybox
+	scene->CreateSkyBox();
+	NewtonBody* const body = CreateLevelMesh (scene, "flatPlane.ngd", true);
+
+	dMatrix originMatrix;
+	NewtonBodyGetMatrix(body, &originMatrix[0][0]);
+
+	dMatrix camMatrix (dRollMatrix(-20.0f * 3.1416f /180.0f) * dYawMatrix(180.0f * 3.1416f /180.0f));
+	dQuaternion rot (camMatrix);
+	dVector origin (originMatrix.m_posit);
+	dFloat hight = 1000.0f;
+	origin = FindFloor (scene->GetNewton(), dVector (origin.m_x, hight, origin .m_z, 0.0f), hight * 2);
+
+
+	dVector location (origin);
+	location.m_x -= 0.0f;
+	location.m_z -= 0.0f;
+	location.m_y += 1.0f;
+
+	int defaultMaterialID = NewtonMaterialGetDefaultGroupID (scene->GetNewton());
+
+	dMatrix matrix (dGetIdentityMatrix());
+	matrix.m_posit = location;
+	matrix.m_posit.m_x = 0.0f;
+	matrix.m_posit.m_y = 0.8f;
+	matrix.m_posit.m_z = 0.0f;
+	matrix.m_posit.m_w = 1.0f;
+
+	matrix.m_posit.m_y = 8.0f;
+
+	NewtonCollision* seatcol = 0;
+	char pathName[2048];
+	GetWorkingFileName ("seat.col", pathName);
+
+	float scale = 0.01f;
+	FILE* file = fopen(pathName, "rb");
+	seatcol = NewtonCreateCollisionFromSerialization (scene->GetNewton(), DemoEntityManager::DeserializeFile, file);
+	fclose (file);
+	if (seatcol)
+	{
+		NewtonMesh* nmesh = NewtonMeshCreateFromCollision(seatcol);
+		DemoMesh* const visualMesh = new DemoMesh(nmesh);
+		for (int i = 0 ; i < visualMesh->m_vertexCount; i ++) {
+			visualMesh->m_vertex[i * 3 + 0] *= scale;
+			visualMesh->m_vertex[i * 3 + 1] *= scale;
+			visualMesh->m_vertex[i * 3 + 2] *= scale;
+		}
+		// re-optimize for render
+		visualMesh->OptimizeForRender();
+
+		NewtonBodySetCollisionScale(CreateSimpleSolid(scene, visualMesh, 10.0f, matrix, seatcol, 0), scale, scale, scale);
+		visualMesh->Release();
+		NewtonMeshDestroy(nmesh);
+		NewtonDestroyCollision(seatcol);
+	}
+
+	NewtonCollision* groundcol = 0;
+	matrix.m_posit.m_y = 1.0f;
+	matrix.m_posit.m_y = 5.0f;
+
+	GetWorkingFileName ("support.col", pathName);
+	file = fopen(pathName, "rb");
+	groundcol = NewtonCreateCollisionFromSerialization (scene->GetNewton(), DemoEntityManager::DeserializeFile, file);
+	fclose (file);
+
+	//scale = 0.5f;
+	scale = 5.0f;
+	if (groundcol)
+	{
+		NewtonMesh* nmesh = NewtonMeshCreateFromCollision(groundcol);
+		DemoMesh* const visualMesh = new DemoMesh(nmesh);
+		for (int i = 0 ; i < visualMesh->m_vertexCount; i ++) {
+			visualMesh->m_vertex[i * 3 + 0] *= scale;
+			visualMesh->m_vertex[i * 3 + 1] *= scale;
+			visualMesh->m_vertex[i * 3 + 2] *= scale;
+		}
+		// re-optimize for render
+		visualMesh->OptimizeForRender();
+		NewtonBody* body = CreateSimpleSolid(scene, visualMesh, 0.0f, matrix, groundcol, 0);
+		NewtonBodySetCollisionScale(body, scale, scale, scale);
+		NewtonBodySetContinuousCollisionMode(body, 1);
+		visualMesh->Release();
+		NewtonMeshDestroy(nmesh);
+		NewtonDestroyCollision(groundcol);
+	}
+*/
+	origin.m_x += 1.0f;
+	origin.m_y += 1.0f;
+	scene->SetCameraMatrix(rot, origin);	
 }

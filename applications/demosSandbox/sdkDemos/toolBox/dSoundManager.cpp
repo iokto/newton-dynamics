@@ -116,7 +116,7 @@ dSoundManager::dSoundAsset::~dSoundAsset()
 dSoundManager::dSoundManager()
 	:m_device(alcOpenDevice(NULL))
 	,m_context(NULL)
-	,m_coordinateSystem (GetIdentityMatrix())
+	,m_coordinateSystem (dGetIdentityMatrix())
 {
 	if (m_device) {
 		m_context = alcCreateContext(m_device, NULL);
@@ -420,7 +420,7 @@ void dSoundManager::SetChannelPitch(void* const channelHandle, dFloat pitch)
 	}
 }
 
-dFloat dSoundManager::GetChannelSecPosition(void* const channelHandle) const
+dFloat dSoundManager::GetChannelGetPosition(void* const channelHandle) const
 {
 	if (m_device) {
 		dSoundChannelList::dListNode* const node = (dSoundChannelList::dListNode*)channelHandle;

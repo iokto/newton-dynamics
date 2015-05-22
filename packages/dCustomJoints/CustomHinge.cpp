@@ -102,7 +102,7 @@ void CustomHinge::SetLimis(dFloat minAngle, dFloat maxAngle)
 
 dFloat CustomHinge::GetJointAngle () const
 {
-	return m_curJointAngle.m_angle;
+	return m_curJointAngle.GetAngle();
 }
 
 dVector CustomHinge::GetPinAxis () const
@@ -156,7 +156,7 @@ void CustomHinge::ProjectError () const
 	sinAngle *= angleMag;
 	cosAngle *= angleMag;
 
-	const dMatrix& identity = GetIdentityMatrix();
+	const dMatrix& identity = dGetIdentityMatrix();
 	dMatrix angleMatrix (identity);
 	angleMatrix[1][1] = cosAngle;
 	angleMatrix[1][2] = -sinAngle;
@@ -224,7 +224,7 @@ void CustomHinge::SubmitConstraints (dFloat timestep, int threadIndex)
 	dFloat sinAngle;
 	dFloat cosAngle;
 	CalculatePitchAngle (matrix0, matrix1, sinAngle, cosAngle);
-	m_curJointAngle.CalculateJointAngle (cosAngle, sinAngle);
+	m_curJointAngle.Update (cosAngle, sinAngle);
 
 	// save the current joint Omega
 	dVector omega0(0.0f, 0.0f, 0.0f, 0.0f);
@@ -239,8 +239,9 @@ void CustomHinge::SubmitConstraints (dFloat timestep, int threadIndex)
 	if (m_friction != 0.0f) {
         if (m_limitsOn) {
             // friction and limits at the same time
-            if (m_curJointAngle.m_angle < m_minAngle) {
-                dFloat relAngle = m_curJointAngle.m_angle - m_minAngle;
+            if (m_curJointAngle.GetAngle() < m_minAngle) {
+                dFloat relAngle = m_curJointAngle.GetAngle() - m_minAngle;
+
                 // the angle was clipped save the new clip limit
                 //m_curJointAngle.m_angle = m_minAngle;
 
@@ -252,8 +253,8 @@ void CustomHinge::SubmitConstraints (dFloat timestep, int threadIndex)
 
                 // allow the joint to move back freely 
                 NewtonUserJointSetRowMaximumFriction (m_joint, 0.0f);
-            } else if (m_curJointAngle.m_angle > m_maxAngle) {
-                dFloat relAngle = m_curJointAngle.m_angle - m_maxAngle;
+            } else if (m_curJointAngle.GetAngle()  > m_maxAngle) {
+                dFloat relAngle = m_curJointAngle.GetAngle() - m_maxAngle;
 
                 // the angle was clipped save the new clip limit
                 //m_curJointAngle.m_angle = m_maxAngle;
@@ -288,8 +289,8 @@ void CustomHinge::SubmitConstraints (dFloat timestep, int threadIndex)
 	} else if (m_limitsOn) {
         // only limit are on 
         // the joint angle can be determine by getting the angle between any two non parallel vectors
-        if (m_curJointAngle.m_angle < m_minAngle) {
-            dFloat relAngle = m_curJointAngle.m_angle - m_minAngle;
+        if (m_curJointAngle.GetAngle() < m_minAngle) {
+            dFloat relAngle = m_curJointAngle.GetAngle() - m_minAngle;
             // the angle was clipped save the new clip limit
             //m_curJointAngle.m_angle = m_minAngle;
 
@@ -301,8 +302,8 @@ void CustomHinge::SubmitConstraints (dFloat timestep, int threadIndex)
 
             // allow the joint to move back freely 
             NewtonUserJointSetRowMaximumFriction (m_joint, 0.0f);
-        } else if (m_curJointAngle.m_angle > m_maxAngle) {
-            dFloat relAngle = m_curJointAngle.m_angle - m_maxAngle;
+        } else if (m_curJointAngle.GetAngle()  > m_maxAngle) {
+            dFloat relAngle = m_curJointAngle.GetAngle() - m_maxAngle;
 
             // the angle was clipped save the new clip limit
             //m_curJointAngle.m_angle = m_maxAngle;

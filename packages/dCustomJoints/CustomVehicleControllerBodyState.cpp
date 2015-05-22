@@ -31,6 +31,11 @@ void CustomVehicleControllerBodyState::Init(CustomVehicleController* const contr
 	m_controller = controller;
 }
 
+CustomVehicleController* CustomVehicleControllerBodyState::GetController() const
+{
+	return m_controller;
+}
+
 dFloat CustomVehicleControllerBodyState::GetMass () const
 {
 	return dComplemtaritySolver::dBodyState::GetMass();
@@ -69,30 +74,136 @@ void CustomVehicleControllerBodyState::ApplyNetForceAndTorque (dFloat invTimeste
 }
 
 
+void CustomVehicleControllerBodyStateContact::Init (CustomVehicleController* const controller, const NewtonBody* const body)
+{
+	CustomVehicleControllerBodyState::Init (controller);
+
+	m_newtonBody = (NewtonBody*)body;
+
+	m_localFrame = dGetIdentityMatrix();
+	NewtonBodyGetCentreOfMass(body, &m_localFrame[3][0]);
+
+	NewtonBodyGetMatrix(body, &m_matrix[0][0]);
+	NewtonBodyGetMassMatrix(body, &m_mass, &m_localInertia[0], &m_localInertia[1], &m_localInertia[2]);
+
+	NewtonBodyGetOmega(body, &m_omega[0]);
+	NewtonBodyGetVelocity(body, &m_veloc[0]);
+
+	m_globalCentreOfMass = m_matrix.TransformVector(m_localFrame.m_posit);
+
+/*
+	dVector force (0.0f, 0.0f, 0.0f, 0.0f);
+	dVector torque (0.0f, 0.0f, 0.0f, 0.0f);
+	if (m_invMass > 0.0f) {
+		const NewtonBody* const otherBody = m_controller->GetBody();
+
+		NewtonBodyGetForceAcc(m_newtonBody, &force[0]);
+		NewtonBodyGetTorqueAcc (m_newtonBody, &torque[0]);
+		for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint (m_newtonBody); joint; joint = NewtonBodyGetNextContactJoint (m_newtonBody, joint)) {
+			if (NewtonJointIsActive(joint) && (NewtonJointGetBody0(joint) != otherBody) && (NewtonJointGetBody1(joint) != otherBody)) {
+			for (void* contact = NewtonContactJointGetFirstContact (joint); contact; contact = NewtonContactJointGetNextContact (joint, contact)) {
+				dVector point;
+				dVector normal;	
+				dVector tangentDir0;
+				dVector tangentDir1;
+				dVector contactForce;
+
+				NewtonMaterial* const material = NewtonContactGetMaterial (contact);
+				NewtonMaterialGetContactForce (material, m_newtonBody, &contactForce[0]);
+				NewtonMaterialGetContactPositionAndNormal (material, m_newtonBody, &point[0], &normal[0]);
+
+				force += contactForce;
+				torque += (point - m_globalCentreOfMass) * contactForce;
+			}
+		}
+	}
+	}
+
+	m_externalForce = force;
+	m_externalTorque = torque;
+
+	if (m_mass > 1.0e-3f) {
+		m_invMass = 1.0f / m_mass;
+		m_localInvInertia[0] = 1.0f / m_localInertia[0];
+		m_localInvInertia[1] = 1.0f / m_localInertia[1];
+		m_localInvInertia[2] = 1.0f / m_localInertia[2];
+	} else {
+		m_invMass = 0.0f;
+		m_localInvInertia[0] = 0.0f;
+		m_localInvInertia[1] = 0.0f;
+		m_localInvInertia[2] = 0.0f;
+	}
+*/
+
+	m_externalForce = dVector (0.0f, 0.0f, 0.0f, 0.0f);
+	m_externalTorque = dVector (0.0f, 0.0f, 0.0f, 0.0f);
+
+	m_maxExternalAccel2 = 50.0f * 50.0f;
+	m_maxExternalAlpha2 = 100.0 * 100.0f;
+
+	m_invMass = 0.0f;
+	m_localInvInertia[0] = 0.0f;
+	m_localInvInertia[1] = 0.0f;
+	m_localInvInertia[2] = 0.0f;
+	UpdateInertia();
+}
+
+void CustomVehicleControllerBodyStateContact::UpdateDynamicInputs()
+{
+	dAssert (0);
+}
+
+void CustomVehicleControllerBodyStateContact::ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega)
+{
+	if (m_invMass > 0.0f) {
+/*
+		dVector force (m_externalForce + m_foceAcc);
+		dVector torque (m_externalTorque + m_torqueAcc);
+		dVector accel (force.Scale(m_invMass));
+		dVector alpha (m_invInertia.RotateVector(torque));
+		
+		dFloat accelMag2 = accel % accel;
+		dFloat alphaMag2 = alpha % alpha;
+		for (int i = 0; (i < 8) && ((accelMag2 > m_maxExterenalAccel2) || (alphaMag2 > m_maxExterenalAlpha2)); i ++) {
+			m_foceAcc = m_foceAcc.Scale (0.9f);
+			m_torqueAcc = m_torqueAcc.Scale (0.9f);
+			force = m_externalForce + m_foceAcc;
+			torque = m_externalForce + m_torqueAcc;
+			accel = force.Scale(m_invMass);
+			alpha = m_invInertia.RotateVector(torque);
+			accelMag2 = accel % accel;
+			alphaMag2 = alpha % alpha;
+		}
+*/
+		dAssert (0);
+//		NewtonBodyAddForce(m_newtonBody, &m_foceAcc[0]);
+//		NewtonBodyAddTorque(m_newtonBody, &m_torqueAcc[0]);
+	}
+}
 
 void CustomVehicleControllerBodyStateChassis::Init (CustomVehicleController* const controller, const dMatrix& localframe)
 {
     CustomVehicleControllerBodyState::Init (controller);
     NewtonBody* const body = m_controller->GetBody();
 
-    m_localFrame = localframe;
-    m_localFrame[3] = m_com + m_comOffset;
-    m_localFrame[3][3] = 1.0f;
+	m_localFrame = localframe;
+	m_localFrame[3] = m_com + m_comOffset;
+	m_localFrame[3][3] = 1.0f;
 
-    NewtonBodySetCentreOfMass(body, &m_localFrame[3][0]);
+	NewtonBodySetCentreOfMass(body, &m_localFrame[3][0]);
 
-    NewtonBodyGetMatrix(body, &m_matrix[0][0]);
-    NewtonBodyGetMassMatrix(body, &m_mass, &m_localInertia[0], &m_localInertia[1], &m_localInertia[2]);
+	NewtonBodyGetMatrix(body, &m_matrix[0][0]);
+	NewtonBodyGetMassMatrix(body, &m_mass, &m_localInertia[0], &m_localInertia[1], &m_localInertia[2]);
 
-    NewtonBodyGetOmega(body, &m_omega[0]);
-    NewtonBodyGetVelocity(body, &m_veloc[0]);
+	NewtonBodyGetOmega(body, &m_omega[0]);
+	NewtonBodyGetVelocity(body, &m_veloc[0]);
 
-    m_invMass = 1.0f / m_mass;
-    m_localInvInertia[0] = 1.0f / m_localInertia[0];
-    m_localInvInertia[1] = 1.0f / m_localInertia[1];
-    m_localInvInertia[2] = 1.0f / m_localInertia[2];
+	m_invMass = 1.0f / m_mass;
+	m_localInvInertia[0] = 1.0f / m_localInertia[0];
+	m_localInvInertia[1] = 1.0f / m_localInertia[1];
+	m_localInvInertia[2] = 1.0f / m_localInertia[2];
 
-    UpdateInertia();
+	UpdateInertia();
 }
 
 dFloat CustomVehicleControllerBodyStateChassis::GetAerodynamicsDowforceCoeficient () const
@@ -130,15 +241,110 @@ void CustomVehicleControllerBodyStateChassis::UpdateDynamicInputs()
 	NewtonBodyGetVelocity (body, &m_veloc[0]);
 	NewtonBodyGetOmega (body, &m_omega[0]);
 
-	NewtonBodyGetForceAcc(body, &m_externalForce[0]);
-	NewtonBodyGetTorqueAcc(body, &m_externalTorque[0]);
+	NewtonBodyGetForceAcc (body, &m_externalForce[0]);
+	NewtonBodyGetTorqueAcc (body, &m_externalTorque[0]);
+	m_externalForce.m_w = 0.0f;
+	m_externalTorque.m_w = 0.0f;
+
+/*
+	dVector force;
+	dVector torque;
+	NewtonBodyGetForceAcc (body, &force[0]);
+	NewtonBodyGetTorqueAcc (body, &torque[0]);
+	const int maxContacts = int (sizeof (m_controller->m_externalContactJoints) / sizeof (m_controller->m_externalContactJoints[0]));
+	for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint (body); joint && (m_controller->m_externalChassisContactCount < maxContacts); joint = NewtonBodyGetNextContactJoint (body, joint)) {
+		NewtonBody* const otherBody = NewtonJointGetBody1(joint);
+		dAssert (NewtonJointGetBody0(joint) == body);
+		dAssert (otherBody != body);
+
+		dFloat Ixx;
+		dFloat Iyy;
+		dFloat Izz;
+		dFloat mass;
+		NewtonBodyGetMassMatrix (otherBody, &mass, &Ixx, &Iyy, &Izz);
+		if (mass > 0.0f) {
+			int count = 0;
+			NewtonWorldConvexCastReturnInfo contacts[8];
+			void* contact = NewtonContactJointGetFirstContact (joint);
+			if (contact) {
+				CustomVehicleControllerBodyStateContact* const externalBody = m_controller->GetContactBody(otherBody);
+
+				CustomVehicleControllerChassisContactJoint* const externalJoint = &m_controller->m_externalContactJoints[m_controller->m_externalChassisContactCount];
+				externalJoint->Init(m_controller, externalBody, this);
+				for (; contact && count < (sizeof (contacts) / sizeof (contacts[0])); contact = NewtonContactJointGetNextContact (joint, contact)) {
+					dVector point;
+					dVector normal;	
+					dVector tangentDir0;
+					dVector tangentDir1;
+					dVector contactForce;
+
+					NewtonMaterial* const material = NewtonContactGetMaterial (contact);
+					NewtonMaterialGetContactForce (material, otherBody, &contactForce[0]);
+					NewtonMaterialGetContactPositionAndNormal (material, otherBody, &point[0], &normal[0]);
+
+					contacts[count].m_point[0] = point.m_x;
+					contacts[count].m_point[1] = point.m_y;
+					contacts[count].m_point[2] = point.m_z;
+				
+					contacts[count].m_normal[0] = normal.m_x;
+					contacts[count].m_normal[1] = normal.m_y;
+					contacts[count].m_normal[2] = normal.m_z;
+					count ++;
+
+					force += contactForce;
+					torque += (point - m_globalCentreOfMass) * contactForce;
+
+					externalBody->m_externalForce -= contactForce;
+					externalBody->m_externalTorque -= (point - externalBody->m_globalCentreOfMass) * contactForce;
+				}
+				externalJoint->SetContacts (count, contacts);
+				m_controller->m_externalChassisContactCount ++;
+			}
+		}
+	}
+*/
 
 	dFloat frontSpeed = dMin (m_veloc % m_matrix[0], 50.0f);
 	m_externalForce -= m_matrix[1].Scale (m_aerodynamicsDownForceCoefficient * frontSpeed * frontSpeed);
 
 	m_globalCentreOfMass = m_matrix.TransformVector(m_localFrame.m_posit);
-
 	UpdateInertia();
+}
+
+void CustomVehicleControllerBodyStateChassis::PutToSleep()
+{
+	NewtonBody* const body = m_controller->GetBody();
+
+	dVector zero (0.0f, 0.0f, 0.0f, 0.0f); 
+	NewtonBodySetForce (body, &zero[0]);
+	NewtonBodySetTorque(body, &zero[0]);
+	NewtonBodySetOmega(body, &zero[0]);
+	NewtonBodySetVelocity(body, &zero[0]);
+}
+
+bool CustomVehicleControllerBodyStateChassis::IsSleeping () const
+{
+	const dFloat velocError = 1.0e-4f;
+	dFloat mag2 = m_veloc % m_veloc;
+	if (mag2 < velocError) {
+		mag2 = m_omega % m_omega;
+		if (mag2 < velocError) {
+			const dFloat accelError = 1.0e-2f;
+			NewtonBody* const body = m_controller->GetBody();
+			dVector force;
+			NewtonBodyGetForce (body, &force[0]);
+			dVector accel (force.Scale(m_invMass));
+			mag2 = accel % accel;
+			if (mag2 < accelError) {
+				dVector torque;
+				NewtonBodyGetTorque(body, &torque[0]);
+				dVector alpha (m_invInertia.RotateVector(torque));
+				mag2 = alpha % alpha;
+				return (mag2 < accelError) ? true : false;
+			}
+		}
+	}
+	return false;
 }
 
 void CustomVehicleControllerBodyStateChassis::ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega)
@@ -160,7 +366,7 @@ void CustomVehicleControllerBodyStateTire::Init (CustomVehicleController* const 
 
 	// build a normalized size collision shape and scale to math the tire size, make it is also transparent to collision  
 	NewtonCollisionSetScale (m_controller->m_tireCastShape, tireInfo.m_width, tireInfo.m_radio, tireInfo.m_radio);
-	NewtonCollisionSetCollisionMode (m_controller->m_tireCastShape, 0);
+	NewtonCollisionSetMode (m_controller->m_tireCastShape, 0);
 
 	// calculate the location of the tire matrix
 	m_localFrame = vehicleFrame * dYawMatrix(-3.141592f * 0.5f);
@@ -175,12 +381,40 @@ void CustomVehicleControllerBodyStateTire::Init (CustomVehicleController* const 
 	NewtonCompoundCollisionEndAddRemove (vehShape);	
 
 	// restore the cast shape transform to identity
-	dMatrix identMatrix (GetIdentityMatrix());
-	NewtonCollisionSetCollisionMode (m_controller->m_tireCastShape, 1);
+	dMatrix identMatrix (dGetIdentityMatrix());
+	NewtonCollisionSetMode (m_controller->m_tireCastShape, 1);
 	NewtonCollisionSetMatrix (m_controller->m_tireCastShape, &identMatrix[0][0]);
 
 	// get the collision shape
 	m_shape = NewtonCompoundCollisionGetCollisionFromNode (vehShape, tireShapeNode);
+
+	// update tire info
+	UpdateInfo (tireInfo);
+
+	// initialize the joints that connect this tire to other vehicle componets;
+	m_chassisJoint.Init(m_controller, &m_controller->m_chassisState, this);
+}
+
+void CustomVehicleControllerBodyStateTire::UpdateInfo(const TireCreationInfo& tireInfo)
+{
+	const dMatrix& vehicleFrame = m_controller->m_chassisState.m_localFrame;
+
+	// build a normalized size collision shape and scale to math the tire size, make it is also transparent to collision  
+	NewtonCollisionSetScale (m_controller->m_tireCastShape, tireInfo.m_width, tireInfo.m_radio, tireInfo.m_radio);
+	NewtonCollisionSetMode (m_controller->m_tireCastShape, 0);
+
+	// calculate the location of the tire matrix
+	m_localFrame = vehicleFrame * dYawMatrix(-3.141592f * 0.5f);
+	m_localFrame.m_posit = tireInfo.m_location + m_localFrame.m_up.Scale (tireInfo.m_suspesionlenght);
+	m_localFrame.m_posit.m_w = 1.0f;
+
+	// restore the cast shape transform to identity
+	dMatrix identMatrix (dGetIdentityMatrix());
+	NewtonCollisionSetMode (m_controller->m_tireCastShape, 1);
+	NewtonCollisionSetMatrix (m_controller->m_tireCastShape, &identMatrix[0][0]);
+
+	// get the collision shape
+	//m_shape = NewtonCompoundCollisionGetCollisionFromNode (vehShape, tireShapeNode);
 
 	// initialize all constants
 	m_userData = tireInfo.m_userData;
@@ -188,6 +422,7 @@ void CustomVehicleControllerBodyStateTire::Init (CustomVehicleController* const 
 	m_invMass = 1.0f / m_mass;
 	m_radio = tireInfo.m_radio;
 	m_width = tireInfo.m_width;
+	m_locationSign = dSign (m_localFrame.m_posit % m_localFrame.m_front);
 	m_lateralStiffness = tireInfo.m_lateralStiffness;
 	m_longitudialStiffness = tireInfo.m_longitudialStiffness;
 	m_aligningMomentTrail = tireInfo.m_aligningMomentTrail;
@@ -200,36 +435,50 @@ void CustomVehicleControllerBodyStateTire::Init (CustomVehicleController* const 
 	m_localInvInertia[1] = 1.0f / m_localInertia[1];
 	m_localInvInertia[2] = 1.0f / m_localInertia[2];
 	m_localInvInertia[3] = 0.0f;
-	
 
 	m_restSprunMass = 0.0f;
 	m_dampingRatio = tireInfo.m_dampingRatio;
 	m_springStrength = tireInfo.m_springStrength;
-	m_suspensionlenght = tireInfo.m_suspesionlenght;
-	
+	m_suspensionLenght = tireInfo.m_suspesionlenght;
+
 	// initialize all local variables to default values
-	m_breakTorque = 0.0f;
+	m_brakeTorque = 0.0f;
 	m_engineTorque = 0.0f;
-	m_rotatonSpeed = 0.0f;
+	m_rotationalSpeed = 0.0f;
 	m_rotationAngle = 0.0f;
 	m_steeringAngle = 0.0f;
-	
-	//m_adhesionCoefficient = 1.0f;
-	//m_idleRollingResistance = 0.0f;
+
 	m_tireLoad = dVector(0.0f, 0.0f, 0.0f, 0.0f);
 	m_lateralForce = dVector(0.0f, 0.0f, 0.0f, 0.0f);
 	m_longitudinalForce = dVector(0.0f, 0.0f, 0.0f, 0.0f);
 
 	m_speed = 0.0f;
-	m_posit = m_suspensionlenght;
+	m_posit = m_suspensionLenght;
 	m_matrix = CalculateSteeringMatrix ();
 
-	UpdateInertia();
+	m_lateralSlip = 0.0f;
+	m_longitudinalSlip = 0.0f;
+	m_aligningTorque = 0.0f;
+	m_contactCount = 0;
 
-	// initialize the joints that connect tghsi tire to other vehicle componets;
-	m_chassisJoint.Init(m_controller, &m_controller->m_chassisState, this);
-	m_contactJoint.Init(m_controller, &m_controller->m_staticWorld, this);
+	UpdateInertia();
 }
+
+void CustomVehicleControllerBodyStateTire::GetInfo(TireCreationInfo& tireInfo) const
+{
+	tireInfo.m_location = m_localFrame.m_posit - m_localFrame.m_up.Scale (m_suspensionLenght);
+	tireInfo.m_mass = m_mass;
+	tireInfo.m_radio = m_radio;
+	tireInfo.m_width = m_width;
+	tireInfo.m_dampingRatio = m_dampingRatio;
+	tireInfo.m_springStrength = m_springStrength;
+	tireInfo.m_suspesionlenght = m_suspensionLenght;
+	tireInfo.m_lateralStiffness = m_lateralStiffness;
+	tireInfo.m_longitudialStiffness = m_longitudialStiffness;
+	tireInfo.m_aligningMomentTrail = m_aligningMomentTrail;
+	tireInfo.m_userData = m_userData;
+}
+
 
 void* CustomVehicleControllerBodyStateTire::GetUserData() const
 {
@@ -263,13 +512,12 @@ dMatrix CustomVehicleControllerBodyStateTire::CalculateGlobalMatrix () const
 
 void CustomVehicleControllerBodyStateTire::UpdateTransform()
 {
-	//dMatrix localMatrix (CustomVehicleController::TireBodyState::CalculateSteeringMatrix ());
 	dMatrix localMatrix (CalculateLocalMatrix ());
 	NewtonCollisionSetMatrix(m_shape, &localMatrix[0][0]);	
 }
 
 
-void CustomVehicleControllerBodyStateTire::Collide (CustomControllerConvexCastPreFilter& filter, dFloat timestepInv)
+void CustomVehicleControllerBodyStateTire::Collide (CustomControllerConvexCastPreFilter& filter, dFloat timestepInv, int threadId)
 {
 	NewtonBody* const body = m_controller->GetBody();
 	NewtonWorld* const world = NewtonBodyGetWorld(body);
@@ -280,23 +528,64 @@ void CustomVehicleControllerBodyStateTire::Collide (CustomControllerConvexCastPr
 	m_posit = 0.0f;
 	m_speed = 0.0f;
 	dMatrix localMatrix (CustomVehicleControllerBodyStateTire::CalculateSteeringMatrix ());
-	m_posit = m_suspensionlenght;
+	m_posit = m_suspensionLenght;
 
 	dFloat hitParam;
 	dMatrix tireMatrix (localMatrix * controllerMatrix);
-	dVector rayDestination (tireMatrix.TransformVector(localMatrix.m_up.Scale(-m_suspensionlenght)));   
+	dVector rayDestination (tireMatrix.TransformVector(localMatrix.m_up.Scale(-m_suspensionLenght)));   
 
-	m_contactJoint.m_contactCount = 0;
+	m_contactCount = 0;
+	NewtonWorldConvexCastReturnInfo contacts[4];
+
+/*
+NewtonCollision* xxx = NewtonCreateSphere(world, 1.0f, 0, NULL);
+dMatrix xxxx0 (dGetIdentityMatrix());
+dVector xxxx1 (0.0f, 0.0f, 0.0f, 0.0f);
+xxxx0.m_posit.m_y = 2.0f;
+//NewtonCollisionSetScale (xxx, 0.3f, 0.5, 0.3f);
+int xxx3 = NewtonWorldConvexCast (world, &xxxx0[0][0], &xxxx1[0], xxx, &hitParam, &filter, CustomControllerConvexCastPreFilter::Prefilter, contacts, sizeof (contacts) / sizeof (contacts[0]), 0);
+*/
 
 	NewtonCollisionSetScale (m_controller->m_tireCastShape, m_width, m_radio, m_radio);
-	m_contactJoint.m_contactCount = NewtonWorldConvexCast (world, &tireMatrix[0][0], &rayDestination[0], m_controller->m_tireCastShape, &hitParam, &filter, CustomControllerConvexCastPreFilter::Prefilter, m_contactJoint.m_contacts, sizeof (m_contactJoint.m_contacts) / sizeof (m_contactJoint.m_contacts[0]), 0);
-	if (m_contactJoint.m_contactCount) {
-		// this tire hit something generate contact point and normals, 
-		// do not forget to filter bad contacts
-		m_posit = hitParam * m_suspensionlenght;
+	int contactCount = NewtonWorldConvexCast (world, &tireMatrix[0][0], &rayDestination[0], m_controller->m_tireCastShape, &hitParam, &filter, CustomControllerConvexCastPreFilter::Prefilter, contacts, sizeof (contacts) / sizeof (contacts[0]), threadId);
+	if (contactCount) {
+		m_posit = hitParam * m_suspensionLenght;
 		m_speed = (posit0 - m_posit) * timestepInv;
+		for (int i = 1; i < contactCount; i ++) {
+			int j = i;
+			NewtonWorldConvexCastReturnInfo tmp (contacts[i]);
+			for (; j && (contacts[j - 1].m_hitBody > tmp.m_hitBody); j --) {
+				contacts[j] = contacts[j - 1];
+			}
+			contacts[j] = tmp;
+		}
+
+		for (int index = 0; (index < contactCount) && (m_contactCount < 2); ) {
+			const NewtonBody* const body = contacts[index].m_hitBody;
+			int count = 1;
+			for (int j = index + 1; (j < contactCount) && (contacts[j].m_hitBody == body); j ++) {
+				count ++;
+			}
+			CustomVehicleControllerTireContactJoint* const joint = &m_contactJoint[m_contactCount];
+			CustomVehicleControllerBodyStateContact* const externalBody = m_controller->GetContactBody (body);
+			joint->Init(m_controller, externalBody, this);
+			joint->SetContacts (count, &contacts[index]);
+			m_contactCount ++;
+			index += count;
+		}
 	}
-	//dTrace (("%f ", m_posit));
+
+	// project contact to the surface of the tire shape
+	for (int i = 0; i < m_contactCount; i ++) {
+		CustomVehicleControllerTireContactJoint& contact = m_contactJoint[i];
+		for (int j = 0; j < contact.m_contactCount; j ++) {
+			dVector radius (contact.m_contactsPoint[j] - m_matrix[3]);
+			radius -= m_matrix[0].Scale (m_matrix[0] % radius);
+			dAssert ((radius % radius) > 0.0f);
+			radius = radius.Scale (m_radio / dSqrt (radius % radius));
+			contact.m_contactsPoint[j] = m_matrix[3] + radius;
+		}
+	}
 }
 
 
@@ -304,44 +593,28 @@ void CustomVehicleControllerBodyStateTire::UpdateDynamicInputs(dFloat timestep)
 {
 	CustomVehicleControllerBodyStateChassis& chassis = m_controller->m_chassisState;
 
-//	m_dryFrictionTorque = chassis.m_dryRollingFrictionTorque;
-
 	m_matrix = CalculateSteeringMatrix() * chassis.m_matrix;
 	m_globalCentreOfMass = m_matrix.m_posit;
 	UpdateInertia();
 
 	// get the velocity state for this tire
 	dVector relPosit (m_matrix.m_posit - chassis.m_globalCentreOfMass);
-	m_omega = chassis.m_omega + m_matrix[0].Scale (m_rotatonSpeed);
+	m_omega = chassis.m_omega + m_matrix[0].Scale (m_rotationalSpeed);
 	m_veloc = chassis.m_veloc + chassis.m_omega * relPosit + m_matrix[1].Scale (m_speed);
 
 	// set the initial force on this tire
 	m_externalForce = chassis.m_gravity.Scale (m_mass);
 	m_externalTorque = dVector (0.0f, 0.0f, 0.0f, 0.0f);
 
-	// project contact to the surface of the tire shape
-	for (int i = 0; i < m_contactJoint.m_contactCount; i ++) {
-		NewtonWorldConvexCastReturnInfo& contact = m_contactJoint.m_contacts[i];
-
-		dVector point (contact.m_point[0], contact.m_point[1], contact.m_point[2], 0.0f);
-		dVector radius (point - m_matrix[3]);
-		radius -= m_matrix[0].Scale (m_matrix[0] % radius);
-		dAssert ((radius % radius) > 0.0f);
-		radius = radius.Scale (m_radio / dSqrt (radius % radius));
-		point = m_matrix[3] + radius;
-		contact.m_point[0] = point.m_x;
-		contact.m_point[1] = point.m_y;
-		contact.m_point[2] = point.m_z;
-	}
-
-	// calculate force an torque generate by the suspension
 	m_tireLoad = dVector(0.0f, 0.0f, 0.0f, 0.0f);
 	m_lateralForce = dVector(0.0f, 0.0f, 0.0f, 0.0f);
 	m_longitudinalForce = dVector(0.0f, 0.0f, 0.0f, 0.0f);
-	if (m_contactJoint.m_contactCount) {
-		dFloat distance = m_suspensionlenght - m_posit;
+
+	// calculate force an torque generate by the suspension
+	if (m_contactCount) {
+		dFloat distance = m_suspensionLenght - m_posit;
 		dAssert (distance >= 0.0f);
-		dAssert (distance <= m_suspensionlenght);
+		dAssert (distance <= m_suspensionLenght);
 		if (distance <= dFloat(1.0e-3f)) {
 			// now calculate the tire load at the contact point, tire suspension distance also consider hard limit.
 			//dAssert (0);
@@ -357,7 +630,6 @@ void CustomVehicleControllerBodyStateTire::UpdateDynamicInputs(dFloat timestep)
 		m_tireLoad = m_matrix[1].Scale(load * m_mass);
 
 		// calculate tire force and torque spring and damper apply to the chassis
-		//dVector force (m_matrix[1].Scale(m_tireLoad));
 		dVector torque (relPosit * m_tireLoad);
 		chassis.m_externalForce += m_tireLoad;
 		chassis.m_externalTorque += torque;
@@ -365,28 +637,13 @@ void CustomVehicleControllerBodyStateTire::UpdateDynamicInputs(dFloat timestep)
 		// the spring apply the same force in the opposite direction to the tire
 		m_externalForce -= m_tireLoad;
 	}
-
-
-
 }
 
 
-/*
-dFloat CustomVehicleControllerBodyStateTire::GetAdhesionCoefficient() const
+void CustomVehicleControllerBodyStateTire::CalculateRollingResistance (dFloat topSpeed)
 {
-	return m_adhesionCoefficient * 0.5f;
+	m_maxAngularVelocity = topSpeed / m_radio;
 }
-void CustomVehicleControllerBodyStateTire::SetAdhesionCoefficient(dFloat Coefficient)
-{
-	m_adhesionCoefficient = 2.0f * dClamp (Coefficient, dFloat(0.0f), dFloat(1.0f));
-}
-
-void CustomVehicleControllerBodyStateTire::IntegrateForce (dFloat timestep, const dVector& force, const dVector& torque)
-{
-	BodyState::IntegrateForce (timestep, force, torque);
-}
-*/
-
 
 
 void CustomVehicleControllerBodyStateTire::ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega)
@@ -394,205 +651,13 @@ void CustomVehicleControllerBodyStateTire::ApplyNetForceAndTorque (dFloat invTim
 	CustomVehicleControllerBodyState::ApplyNetForceAndTorque (invTimestep, veloc, omega);
 	const CustomVehicleControllerBodyStateChassis& chassis = m_controller->m_chassisState;
 
-#if 0
-    dAssert (m_tireConstraint.m_state0 != this);
-    dAssert (m_tireConstraint.m_state1 == this);
-    const AppVehicleBodyState* const chassis = m_tireConstraint.m_state0;
-
-    dVector upPin (chassis->m_matrix[1]);
-    dVector lateralPin (m_matrix[0]);
-    dVector longitudinalPin (crossProduct (lateralPin, upPin));
-
-    const dFloat speedFactor = 2.0f;
-    dFloat tireSpeed = m_veloc.dot (longitudinalPin);
-    dFloat maxSpeed = dSqrt(m_veloc.dot(m_veloc)) * speedFactor + 2.0f;
-
-    dFloat tireRps = (m_omega - chassis->m_omega).dot (lateralPin);
-    if ((m_radius * dgAbsf(tireRps)) > maxSpeed) 
-    {
-        if ((tireRps > 0.0f) && (tireSpeed > 0.0f)) 
-        {
-            m_omega = chassis->m_omega + lateralPin * ((tireSpeed * speedFactor + 2.0f) / m_radius);
-        } 
-        else if ((tireRps < 0.0f) && (tireSpeed < 0.0f)) 
-        {
-            m_omega = chassis->m_omega + lateralPin * ((tireSpeed * speedFactor - 2.0f) / m_radius);
-        } 
-        else 
-        {
-            m_omega = chassis->m_omega + lateralPin * (dSign(tireRps) * dAbs (tireSpeed) * speedFactor / m_radius);
-        }
-    }
-
-    tireRps = (m_omega - chassis->m_omega).dot (lateralPin);
-    const dFloat maxRpsAccel = 4.0f;
-    if ((tireRps - m_prevRps) > maxRpsAccel) 
-    {
-        tireRps = m_prevRps + maxRpsAccel;
-        m_omega = chassis->m_omega + lateralPin * tireRps;
-    } 
-    else if ((tireRps - m_prevRps) < -maxRpsAccel) 
-    {
-        tireRps = m_prevRps - maxRpsAccel;
-        m_omega = chassis->m_omega + lateralPin * tireRps;
-    }
-
-    m_prevRps = tireRps;
-    m_averageRps = tireRps;
-    const int count = sizeof (m_averageRpsToople)/sizeof (m_averageRpsToople[0]);
-    for (int i = 1; i < count; i ++) 
-    {
-        m_averageRps += m_averageRpsToople[i];
-        m_averageRpsToople[i - 1] = m_averageRpsToople[i];
-    }
-    m_averageRpsToople[count - 1] = tireRps;
-    m_averageRps *= dFloat (1.0f / count);
-
-
-
-static int xxxxxxx;
-static FILE* xxx;
-if (!xxx) 
-{
-    fopen_s (&xxx, "tire_rpm.csv", "wt");
-    fprintf (xxx, "gear, rps, torque\n");
-}
-
-int gear = m_controller->GetEngine()->GetGear();
-//if ((gear == 2) && (m_myIndex == 4)) {
-if ((gear > 1) && (m_myIndex == 4)) {
-    dFloat tireRps = (m_omega - m_controller->m_chassisState.m_omega) % m_matrix[0];
-    fprintf (xxx, "%d, %f, %f,\n", gear, -tireRps, m_engineTorque);
-    fflush (xxx);
-    dTrace (("%d, %d, %f, %f,\n", xxxxxxx, gear, -tireRps, m_engineTorque));
-    xxxxxxx ++;
-}
-#endif
-
 	// integrate tires angular velocity
 	dVector relOmega (m_omega - chassis.m_omega);
-	m_rotatonSpeed = relOmega % m_matrix[0];
-	m_rotationAngle = dMod (m_rotationAngle + m_rotatonSpeed / invTimestep, 2.0f * 3.141592f);
-}
-
-
-
-void CustomVehicleControllerBodyStateEngine::Init (CustomVehicleController* const controller)
-{
-    CustomVehicleControllerBodyState::Init (controller);
-
-//  NewtonBody* const body = m_controller->GetBody();
-//  const dMatrix& vehicleFrame = m_controller->m_chassisState.m_localFrame;
-
-	CustomVehicleControllerComponentEngine* const engine = controller->GetEngine();
-
-    m_mass = 0.0f; 
-    m_invMass = 0.0f;
-    m_radianPerSecund = 0.0f;
-
-    m_localInertia[0] = engine->GetInertia();
-    m_localInertia[1] = engine->GetInertia();
-    m_localInertia[2] = engine->GetInertia();
-    m_localInertia[3] = 0.0f;
-
-    m_localInvInertia[0] = 1.0f / m_localInertia[0];
-    m_localInvInertia[1] = 1.0f / m_localInertia[1];
-    m_localInvInertia[2] = 1.0f / m_localInertia[2];
-    m_localInvInertia[3] = 0.0f;
-
-	UpdateInertia();
-
-	m_idleFriction.Init (m_controller, this, &controller->m_staticWorld);
-	m_leftTire.Init (m_controller, this, &engine->GetLeftTireNode()->GetInfo());
-    m_rightTire.Init (m_controller, this, &engine->GetRightTireNode()->GetInfo());
-}
-
-int CustomVehicleControllerBodyStateEngine::CalculateActiveJoints (CustomVehicleController* const controller, CustomVehicleControllerJoint** const jointArray)
-{
-	int count = 0;
-
-    CustomVehicleControllerComponentEngine* const engine = controller->GetEngine();
-	if (engine) {
-		int gear = engine->GetGear();
-		if (gear != CustomVehicleControllerComponentEngine::dGearBox::m_newtralGear) {
-			count = 2;
-			jointArray[0] = &m_leftTire;
-			jointArray[1] = &m_rightTire;
-		} else {
-			count = 1;
-			jointArray[0] = &m_idleFriction;
-		}
+	m_rotationalSpeed = relOmega % m_matrix[0];
+	if (dAbs (m_rotationalSpeed) > m_maxAngularVelocity) {
+		m_rotationalSpeed *= 0.9f;
+		m_omega = m_matrix[0].Scale (m_rotationalSpeed) + chassis.m_omega;
 	}
-
-    return count;
-}
-
-void CustomVehicleControllerBodyStateEngine::ApplyNetForceAndTorque (dFloat invTimestep, const dVector& veloc, const dVector& omega)
-{
-//	ApplyNetForceAndTorque (invTimestep, veloc, omega)
-	m_radianPerSecund = dMax(m_omega % m_matrix[0], 0.0f);
-	m_veloc = dVector (0.0f, 0.0f, 0.0f, 0.0f);
-	m_externalForce = dVector (0.0f, 0.0f, 0.0f, 0.0f);
-	m_externalTorque = dVector (0.0f, 0.0f, 0.0f, 0.0f);
-}
-
-void CustomVehicleControllerBodyStateEngine::Update (dFloat timestep, CustomVehicleController* const controller)
-{
-    CustomVehicleControllerComponentEngine* const engine = controller->GetEngine();
-    CustomVehicleControllerComponentEngine::dGearBox* const gearBox = engine->GetGearBox();
-
-	gearBox->Update (timestep);
-
-/*
-static int xxxx;
-xxxx ++;
-if(xxxx < 1000)
-gearBox->SetGear (CustomVehicleControllerComponentEngine::dGearBox::m_newtralGear);
-else {
-controller->GetSteering()->SetParam(-1.0f);
-gearBox->SetGear (CustomVehicleControllerComponentEngine::dGearBox::m_firstGear);
-engine->m_engineSwitch = true;
-}
-*/
-
-	int gear = gearBox->GetGear();
-if (gear > CustomVehicleControllerComponentEngine::dGearBox::m_firstGear)
-{
-gearBox->SetGear (CustomVehicleControllerComponentEngine::dGearBox::m_firstGear);
-}
-
-
-    dFloat torque = 0.0f;
-    dFloat param = engine->m_engineSwitch ? dMax (engine->GetParam(), 0.2f) : 0.0f;
-
-	dFloat nominalTorque = engine->GetTorque (m_radianPerSecund) * param;
-	dFloat resistance = engine->m_engineIdleResistance * m_radianPerSecund * m_radianPerSecund;
-	torque = nominalTorque - resistance;
-	if (gear == CustomVehicleControllerComponentEngine::dGearBox::m_newtralGear) {
-//		dFloat idleRps = engine->GetIdleRadianPerSeconds();
-//		dFloat idleTorque = engine->GetTorque (idleRps);
-//      torque = idleTorque * param;
-//      torque -= m_radianPerSecund * m_radianPerSecund * engine->GetIdleResistance();
-		m_idleFriction.m_omega = engine->m_radiansPerSecundsAtIdleTorque * (engine->m_engineSwitch ? 4.0f : 0.0f);
-		m_idleFriction.m_friction = engine->m_engineIdleFriction;
-	} else {
-torque *= 2.0f;
-        dFloat gearGain = gearBox->GetGearRatio(gear);
-        m_leftTire.m_powerTrainGain = gearGain;
-        m_rightTire.m_powerTrainGain = gearGain;
-	}
-
-    m_externalForce = dVector (0.0f, 0.0f, 0.0f, 0.0f);
-    m_externalTorque = dVector (torque, 0.0f, 0.0f, 0.0f);
-
-	CustomVehicleControllerBodyStateChassis* const chassis = &m_controller->m_chassisState;
-	dFloat sign = (gear != CustomVehicleControllerComponentEngine::dGearBox::m_newtralGear) ? ((gear == CustomVehicleControllerComponentEngine::dGearBox::m_reverseGear) ? -1.0f : 1.0f) : 0.0f;
-	// apply the engine torque on this tire
-	dVector reactionTorque (chassis->m_matrix[2].Scale (torque * sign * 0.25f));
-
-	// there is not direct joint between the tire and the chassis, but there tire inertia should apply some toque to the engine
-	// I will use an arbitrary 25% of the torque goes to the chassis.
-	chassis->m_externalTorque += reactionTorque;
-
+	m_rotationAngle = dMod (m_rotationAngle + m_rotationalSpeed / invTimestep, 2.0f * 3.141592f);
 }
 

@@ -21,8 +21,6 @@
 #include "DebugDisplay.h"
 #include "TargaToOpenGl.h"
 #include "DemoEntityManager.h"
-
-#include "DemoAIListener.h"
 #include "DemoSoundListener.h"
 #include "DemoEntityListener.h"
 #include "DemoCameraListener.h"
@@ -50,8 +48,7 @@ BEGIN_EVENT_TABLE (DemoEntityManager, wxGLCanvas)
 	EVT_ERASE_BACKGROUND(DemoEntityManager::OnEraseBackground)
 END_EVENT_TABLE()
 
-
-int DemoEntityManager::m_attributes[] = {WX_GL_DOUBLEBUFFER, WX_GL_RGBA, WX_GL_DEPTH_SIZE, 32, 0};
+int DemoEntityManager::m_attributes[] = {WX_GL_DOUBLEBUFFER, WX_GL_RGBA, WX_GL_DEPTH_SIZE, 24, 0};
 
 
 DemoEntityManager::ButtonKey::ButtonKey (bool state)
@@ -85,7 +82,7 @@ bool DemoEntityManager::ButtonKey::UpdatePushButton (const NewtonDemos* const ma
 
 
 DemoEntityManager::DemoEntityManager(NewtonDemos* const parent)
-	:wxGLCanvas(parent, wxID_ANY, wxDefaultPosition, wxSize (300, 300), wxSUNKEN_BORDER|wxFULL_REPAINT_ON_RESIZE, _("GLRenderCanvas"), m_attributes)
+	:wxGLCanvas(parent, wxID_ANY, m_attributes, wxDefaultPosition, wxSize(300, 300), wxSUNKEN_BORDER|wxFULL_REPAINT_ON_RESIZE, _("GLRenderCanvas"))
 	,dList <DemoEntity*>() 
 	,m_mainWindow(parent)
 	,m_world(NULL)
@@ -117,6 +114,7 @@ DemoEntityManager::DemoEntityManager(NewtonDemos* const parent)
 	memset (m_showProfiler, 0, sizeof (m_showProfiler));
 	m_profiler.Init(this);
 
+	m_context = new wxGLContext(this);
 }
 
 
@@ -138,6 +136,8 @@ DemoEntityManager::~DemoEntityManager(void)
 		m_world = NULL;
 	}
 	dAssert (NewtonGetMemoryUsed () == 0);
+
+	delete m_context;
 }
 
 
@@ -155,13 +155,8 @@ void DemoEntityManager::Cleanup ()
 
 	m_sky = NULL;
 
-	NewtonOnJointSerializationCallback serializeJoint = NULL;
-	NewtonOnJointDeserializationCallback deserializeJoint = NULL;
-
 	// destroy the Newton world
 	if (m_world) {
-		// get serialization call back before destroying the world
-		NewtonGetJointSerializationCallbacks (m_world, &serializeJoint, &deserializeJoint);
 		NewtonDestroy (m_world);
 		m_world = NULL;
 	}
@@ -170,14 +165,12 @@ void DemoEntityManager::Cleanup ()
 	// check that there are no memory leak on exit
 	dAssert (NewtonGetMemoryUsed () == 0);
 
+
 	// create the newton world
 	m_world = NewtonCreate();
 
 	// link the work with this user data
 	NewtonWorldSetUserData(m_world, this);
-
-	// set serialization call back
-	NewtonSetJointSerializationCallbacks (m_world, serializeJoint, deserializeJoint);
 
 	// add all physics pre and post listeners
 	//	m_preListenerManager.Append(new DemoVisualDebugerListener("visualDebuger", m_world));
@@ -235,11 +228,11 @@ void DemoEntityManager::RemoveEntity (DemoEntity* const ent)
 	}
 }
 
-void DemoEntityManager::PushTransparentMesh (const DemoMesh* const mesh)
+void DemoEntityManager::PushTransparentMesh (const DemoMeshInterface* const mesh)
 {
     dMatrix matrix;
     glGetFloat (GL_MODELVIEW_MATRIX, &matrix[0][0]);
-    TransparentMesh entry (matrix, mesh);
+    TransparentMesh entry (matrix, (DemoMesh*) mesh);
     m_tranparentHeap.Push (entry, matrix.m_posit.m_z);
 }
 
@@ -386,9 +379,14 @@ void DemoEntityManager::CreateOpenGlFont()
 
 void DemoEntityManager::InitGraphicsSystem()
 {
-	SetCurrent();
-
-	glewInit();
+	wxGLCanvas::SetCurrent(*m_context);
+	
+	GLenum err = glewInit();
+	
+	// if Glew doesn't initialize correctly.
+	if (err != GLEW_OK) {
+	  //wxMessageBox(wxString(_("GLEW Error: ")) + wxString(_((char*)glewGetErrorString(err))), _("ERROR"), wxOK | wxICON_EXCLAMATION);
+	}
 	
 #if defined (_MSC_VER)
 	if (wglSwapIntervalEXT) {
@@ -399,8 +397,8 @@ void DemoEntityManager::InitGraphicsSystem()
 		glXSwapIntervalSGI(0);  //NOTE check for GLX_SGI_swap_control extension : http://www.opengl.org/wiki/Swap_Interval#In_Linux_.2F_GLXw
 	}
 #elif defined(_MACOSX_VER)
-	// aglSetInteger (AGL_SWAP_INTERVAL, 0);
-    wglSwapIntervalEXT (GetContext()->GetWXGLContext());
+    //wglSwapIntervalEXT (GetContext()->GetWXGLContext());
+	wglSwapIntervalEXT (m_context->GetWXGLContext());
 #endif
 
 	// initialize free type library
@@ -468,14 +466,33 @@ void DemoEntityManager::BodyDeserialization (NewtonBody* const body, NewtonDeser
 	#endif
 
 	//for visual mesh we will collision mesh and convert it to a visual mesh using NewtonMesh 
-	DemoMesh* const mesh = new DemoMesh(bodyIndentification, collision, NULL, NULL, NULL);
-	entity->SetMesh(mesh, GetIdentityMatrix());
+	DemoMeshInterface* const mesh = new DemoMesh(bodyIndentification, collision, NULL, NULL, NULL);
+	entity->SetMesh(mesh, dGetIdentityMatrix());
 	mesh->Release();
 }
 
 void DemoEntityManager::SerializedPhysicScene (const char* const name)
 {
-	NewtonSerializeToFile (m_world, name, BodySerialization);
+	FILE* const file = fopen (name, "wb");
+
+	// we can save anything we want with the serialized data,
+	// I am saving the camera orientation
+	dMatrix camMatrix (m_cameraManager->GetCamera()->GetNextMatrix());
+	SerializeFile (file, &camMatrix, sizeof (camMatrix));
+
+	int bodyCount = NewtonWorldGetBodyCount(m_world);
+	NewtonBody** array = new NewtonBody*[bodyCount];
+
+	int index = 0;
+	for (NewtonBody* body = NewtonWorldGetFirstBody(m_world); body; body = NewtonWorldGetNextBody(m_world, body)) {
+		array[index] = body;
+		index ++;
+		dAssert (index <= bodyCount);
+	}
+	NewtonSerializeBodyArray(m_world, array, bodyCount, BodySerialization, SerializeFile, file);
+
+	delete[] array;
+	fclose (file);
 }
 
 void DemoEntityManager::DeserializedPhysicScene (const char* const name)
@@ -483,10 +500,19 @@ void DemoEntityManager::DeserializedPhysicScene (const char* const name)
 	// add the sky
 	CreateSkyBox();
 
-	dQuaternion rot;
-	dVector origin (-30.0f, 10.0f, 10.0f, 0.0f);
-	SetCameraMatrix(rot, origin);
-	NewtonDeserializeFromFile (m_world, name, BodyDeserialization);
+	FILE* const file = fopen (name, "rb");
+
+	if (file) {
+		dQuaternion rot;
+		dVector origin (-30.0f, 10.0f, 10.0f, 0.0f);
+		SetCameraMatrix(rot, origin);
+
+		NewtonDeserializeBodyArray(m_world, BodyDeserialization, DeserializeFile, file);
+		fclose (file);
+
+//SerializedPhysicScene ("C:/Users/julio/Downloads/serialized_world1.bin");
+		
+	}
 }
 
 
@@ -526,11 +552,11 @@ void DemoEntityManager::Set2DDisplayRenderFunction (RenderHoodCallback callback,
 void DemoEntityManager::LoadVisualScene(dScene* const scene, EntityDictionary& dictionary)
 {
 	// load all meshes into a Mesh cache for reuse
-	dTree<DemoMesh*, dScene::dTreeNode*> meshDictionary;
+	dTree<DemoMeshInterface*, dScene::dTreeNode*> meshDictionary;
 	for (dScene::dTreeNode* node = scene->GetFirstNode (); node; node = scene->GetNextNode (node)) {
 		dNodeInfo* info = scene->GetInfoFromNode(node);
 		if (info->GetTypeId() == dMeshNodeInfo::GetRttiType()) {
-			DemoMesh* const mesh = new DemoMesh(scene, node);
+			DemoMeshInterface* const mesh = new DemoMesh(scene, node);
 			meshDictionary.Insert(mesh, node);
 		}
 	}
@@ -549,9 +575,9 @@ void DemoEntityManager::LoadVisualScene(dScene* const scene, EntityDictionary& d
 	}
 
 	// release all meshes before exiting
-	dTree<DemoMesh*, dScene::dTreeNode*>::Iterator iter (meshDictionary);
+	dTree<DemoMeshInterface*, dScene::dTreeNode*>::Iterator iter (meshDictionary);
 	for (iter.Begin(); iter; iter++) {
-		DemoMesh* const mesh = iter.GetNode()->GetInfo();
+		DemoMeshInterface* const mesh = iter.GetNode()->GetInfo();
 		mesh->Release();
 	}
 }
@@ -779,11 +805,6 @@ void DemoEntityManager::RenderFrame ()
 	dFloat timestep = dGetElapsedSeconds();	
 	m_mainWindow->CalculateFPS(timestep);
 
-	SetCurrent();
-	if (!GetContext()) {
-		return;
-	}
-
 	// update the the state of all bodies in the scene
 	unsigned64 time0 = dGetTimeInMicrosenconds ();
 	UpdatePhysics(timestep);
@@ -939,7 +960,7 @@ void DemoEntityManager::RenderFrame ()
 	if (m_mainWindow->m_showStatistics) {
 		dVector color (1.0f, 1.0f, 1.0f, 0.0f);
 		Print (color, 10,  20, "render fps: %7.2f", m_mainWindow->m_fps);
-		Print (color, 10,  42, "physics time on main thread: %d ms", int (GetPhysicsTime() * 1000000.0f));
+		Print (color, 10,  42, "physics time on main thread: %7.2f ms", GetPhysicsTime() * 1000.0f);
 		Print (color, 10,  64, "total memory: %d kbytes", NewtonGetMemoryUsed() / (1024));
 		Print (color, 10,  86, "number of bodies: %d", NewtonWorldGetBodyCount(GetNewton()));
 		Print (color, 10, 108, "number of threads: %d", NewtonGetThreadsCount(GetNewton()));

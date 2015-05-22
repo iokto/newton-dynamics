@@ -77,23 +77,32 @@ class CustomJoint: public CustomAlloc
 		}
 	};
 
-	struct AngularIntegration
+	class AngularIntegration
 	{
+		public:
 		AngularIntegration()
-			:m_angle(0.0f)
-			,m_sinJointAngle(0.0f)
-			,m_cosJointAngle(1.0f)
 		{
+			SetAngle (0.0f);
 		}
 
 		AngularIntegration(dFloat angle)
-			:m_angle(angle)
-			,m_sinJointAngle(dSin (angle))
-			,m_cosJointAngle(dCos (angle))
 		{
+			SetAngle (angle);
 		}
 
-		dFloat CalculateJointAngle (dFloat newAngleCos, dFloat newAngleSin)
+		dFloat GetAngle () const
+		{
+			return m_angle;
+		}
+
+		void SetAngle (dFloat angle)
+		{
+			m_angle = angle;
+			m_sinJointAngle = dSin(angle);
+			m_cosJointAngle = dCos(angle);
+		}
+
+		dFloat Update (dFloat newAngleCos, dFloat newAngleSin)
 		{
 			dFloat sin_da = newAngleSin * m_cosJointAngle - newAngleCos * m_sinJointAngle; 
 			dFloat cos_da = newAngleCos * m_cosJointAngle + newAngleSin * m_sinJointAngle; 
@@ -117,18 +126,21 @@ class CustomJoint: public CustomAlloc
 			dFloat sin_da = angle.m_sinJointAngle * m_cosJointAngle - angle.m_cosJointAngle * m_sinJointAngle; 
 			dFloat cos_da = angle.m_cosJointAngle * m_cosJointAngle + angle.m_sinJointAngle * m_sinJointAngle; 
 			dFloat angle_da = dAtan2 (sin_da, cos_da);
-			return AngularIntegration (m_angle + angle_da);
+			return AngularIntegration (angle_da);
 		}
 
-		dFloat CalculateJointAngle (dFloat angle)
+
+		dFloat Update (dFloat angle)
 		{
-			return CalculateJointAngle (dCos (angle), dSin (angle));
+			return Update (dCos (angle), dSin (angle));
 		}
 
+		private:
 		dFloat m_angle;
 		dFloat m_sinJointAngle;
 		dFloat m_cosJointAngle;
 	};
+
 
 	CUSTOM_JOINTS_API CustomJoint();
 	CUSTOM_JOINTS_API CustomJoint(int maxDOF, NewtonBody* const body0, NewtonBody* const body1);

@@ -105,6 +105,7 @@ void CustomJoint::Init (int maxDOF, NewtonBody* const body0, NewtonBody* const b
 	m_userData = NULL;
 	m_userDestructor = NULL;
 	m_userConstrationCallback = NULL;
+
 }
 
 
@@ -148,6 +149,7 @@ void  CustomJoint::SubmitConstraints (const NewtonJoint* const me, dFloat timest
 	if (joint->m_userConstrationCallback) {
 		joint->m_userConstrationCallback ((const NewtonUserJoint*) joint, timestep, threadIndex);
 	}
+
 }
 
 void CustomJoint::GetInfo (const NewtonJoint* const me, NewtonJointRecord* info)
@@ -191,7 +193,7 @@ void CustomJoint::CalculateLocalMatrix (const dMatrix& pinsAndPivotFrame, dMatri
 
 	// Get the global matrices of each rigid body.
 	NewtonBodyGetMatrix(m_body0, &matrix0[0][0]);
-	dMatrix matrix1 (GetIdentityMatrix());
+	dMatrix matrix1 (dGetIdentityMatrix());
 	if (m_body1) {
 		NewtonBodyGetMatrix(m_body1, &matrix1[0][0]);
 	}
@@ -210,7 +212,7 @@ void CustomJoint::CalculateGlobalMatrix (const dMatrix& localMatrix0, const dMat
 	// Get the global matrices of each rigid body.
 	NewtonBodyGetMatrix(m_body0, &body0Matrix[0][0]);
 
-	dMatrix body1Matrix (GetIdentityMatrix());
+	dMatrix body1Matrix (dGetIdentityMatrix());
 	if (m_body1) {
 		NewtonBodyGetMatrix(m_body1, &body1Matrix[0][0]);
 	}

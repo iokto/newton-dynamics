@@ -18,9 +18,10 @@
 #define D_CUSTOM_VEHICLE_CONTROLLER_COMPONENT_H_
 
 #include <CustomJointLibraryStdAfx.h>
+#include <CustomVehicleControllerJoint.h>
 #include <CustomAlloc.h>
 
-
+class dBilateralJoint;
 class CustomVehicleController;
 class CustomVehicleControllerBodyState;
 class CustomVehicleControllerBodyStateTire;
@@ -57,6 +58,7 @@ class CustomVehicleControllerComponent: public CustomAlloc
 
 	void SetParam(dFloat param)
 	{
+		m_paramMemory = m_param;
 		m_param = param;
 	}
 
@@ -69,6 +71,8 @@ class CustomVehicleControllerComponent: public CustomAlloc
 	CustomVehicleControllerComponent (CustomVehicleController* const controller)
 		:m_controller(controller)
 		,m_param(0.0f)
+		,m_paramMemory(0.0f)
+		,m_timer(60)
 	{
 	}
 
@@ -76,18 +80,123 @@ class CustomVehicleControllerComponent: public CustomAlloc
 	{
 	}
 
-	CUSTOM_JOINTS_API virtual void Update (dFloat timestep) = 0;
+	bool ParamChanged()
+	{
+		m_timer --;
+		if (dAbs (m_paramMemory - m_param) > 1.e-3f) {
+			m_timer = 60;
+		}
+		return m_timer > 0;
+	}
+
+	virtual void Update (dFloat timestep) = 0;
 
 	CustomVehicleController* m_controller; 
 	dFloat m_param;
+	dFloat m_paramMemory;
+	int m_timer;
+
+	friend class CustomVehicleController;
 };
 
 class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComponent
 {
 	public:
-	class dGearBox: public CustomAlloc
+	class dDifferential: public CustomAlloc  
 	{
 		public:
+		CUSTOM_JOINTS_API dDifferential (CustomVehicleController* const controller);
+		CUSTOM_JOINTS_API virtual ~dDifferential (){}
+
+		CUSTOM_JOINTS_API dFloat GetShaftOmega() const;
+		CUSTOM_JOINTS_API void ApplyTireTorque (dFloat shaftTorque, dFloat shaftOmega) const;
+		
+		CUSTOM_JOINTS_API virtual int GetAxelCount () const = 0;
+		CUSTOM_JOINTS_API virtual int GetGainArray (dFloat * const gains) const = 0;
+		CUSTOM_JOINTS_API virtual int GetTireArray(CustomVehicleControllerBodyStateTire** const array) const = 0;
+		CUSTOM_JOINTS_API virtual int GetDifferentialJoints (dComplemtaritySolver::dBilateralJoint** const buffer) = 0;
+	};
+
+	class dSingleAxelDifferential: public dDifferential
+	{
+		public:
+		CUSTOM_JOINTS_API dSingleAxelDifferential (CustomVehicleController* const controller, CustomVehicleControllerBodyStateTire* const leftTire, CustomVehicleControllerBodyStateTire* const rightTire);
+		CUSTOM_JOINTS_API virtual ~dSingleAxelDifferential (){}
+
+		CUSTOM_JOINTS_API virtual int GetAxelCount () const;
+		CUSTOM_JOINTS_API virtual int GetGainArray (dFloat * const gains) const;
+		CUSTOM_JOINTS_API virtual int GetTireArray(CustomVehicleControllerBodyStateTire** const array) const;
+		CUSTOM_JOINTS_API virtual int GetDifferentialJoints (dComplemtaritySolver::dBilateralJoint** const buffer);
+
+		protected:
+		dFloat m_gain0;
+		dFloat m_gain1;
+		CustomVehicleControllerBodyStateTire* m_tire0;
+		CustomVehicleControllerBodyStateTire* m_tire1;
+		CustomVehicleControllerEngineDifferencialJoint m_differentialJoint;
+		friend class dMultiAxelDifferential;
+	};
+
+	class dMultiAxelDifferential: public dDifferential
+	{
+		public:
+		class dGainAxelPair
+		{
+			public:
+			dGainAxelPair ()
+				:m_gain (0.0f)
+				,m_axel(NULL)
+			{
+			}
+
+			dGainAxelPair (const dGainAxelPair& copy)
+			{
+			}
+
+			~dGainAxelPair()
+			{
+				if (m_axel) {
+					delete m_axel;
+				}
+			}
+
+			dFloat m_gain;
+			dSingleAxelDifferential* m_axel;
+		};
+
+		CUSTOM_JOINTS_API dMultiAxelDifferential (CustomVehicleController* const controller, int count, dSingleAxelDifferential** const dDifferencialArray);
+		CUSTOM_JOINTS_API virtual ~dMultiAxelDifferential();
+		
+		CUSTOM_JOINTS_API virtual int GetAxelCount () const;
+		CUSTOM_JOINTS_API virtual int GetGainArray (dFloat * const gains) const;
+		CUSTOM_JOINTS_API virtual int GetTireArray(CustomVehicleControllerBodyStateTire** const array) const;
+		CUSTOM_JOINTS_API virtual int GetDifferentialJoints (dComplemtaritySolver::dBilateralJoint** const buffer);
+
+		protected:
+		dList<dGainAxelPair> m_list;
+	};
+
+	class dTracksSkidDifferential: public dDifferential
+	{
+		public:
+		CUSTOM_JOINTS_API dTracksSkidDifferential (CustomVehicleController* const controller, CustomVehicleControllerBodyStateTire* const leftTire, CustomVehicleControllerBodyStateTire* const rightTire);
+		CUSTOM_JOINTS_API virtual ~dTracksSkidDifferential (){}
+
+		CUSTOM_JOINTS_API virtual int GetAxelCount () const;
+		CUSTOM_JOINTS_API virtual int GetGainArray (dFloat * const gains) const;
+		CUSTOM_JOINTS_API virtual int GetTireArray(CustomVehicleControllerBodyStateTire** const array) const;
+		CUSTOM_JOINTS_API virtual int GetDifferentialJoints (dComplemtaritySolver::dBilateralJoint** const buffer);
+
+		protected:
+		dFloat m_gain0;
+		dFloat m_gain1;
+		CustomVehicleControllerBodyStateTire* m_tire0;
+		CustomVehicleControllerBodyStateTire* m_tire1;
+	};
+
+	class dGearBox: public CustomAlloc
+	{
+	public:
 		enum dGearID
 		{
 			m_reverseGear = 0,
@@ -98,7 +207,7 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 
 		class dGearState: public CustomAlloc  
 		{
-			public:
+		public:
 			dGearState (dFloat ratio, dFloat shiftUp, dFloat shiftDown, dGearID id) 
 				:m_ratio(ratio)
 				,m_shiftUp (shiftUp)
@@ -126,21 +235,17 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 
 		class dReverseGearState: public dGearState
 		{
-			public:
+		public:
 			dReverseGearState (dFloat ratio)
-				:dGearState(ratio, 1000.0f, -1000.0f, m_reverseGear)
+				:dGearState(-dAbs(ratio), 1000.0f, -1000.0f, m_reverseGear)
 			{
 			}
-
-			dGearState* Update(CustomVehicleController* const vehicle)
-			{
-				return NULL;
-			}
+			virtual dGearState* Update(CustomVehicleController* const vehicle);
 		};
 
 		class dNeutralGearState: public dGearState
 		{
-			public:
+		public:
 			dNeutralGearState (dGearState* const first, dGearState* const reverse)
 				:dGearState(0.0f, 1000.0f, -1000.0f, m_newtralGear)
 			{
@@ -166,18 +271,18 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 		dGearState* m_gears[m_maxGears];
 		dGearState* m_currentGear;
 		CustomVehicleController* m_controller;
+		dFloat m_shiftTimer; 
 		int m_gearsCount;
+
 		bool m_automatic;
 	};
 
-
-	CUSTOM_JOINTS_API CustomVehicleControllerComponentEngine (CustomVehicleController* const controller, dGearBox* const gearBox, CustomVehicleControllerBodyStateTire* const leftTire, CustomVehicleControllerBodyStateTire* const righTire);
+	CUSTOM_JOINTS_API CustomVehicleControllerComponentEngine (CustomVehicleController* const controller, dGearBox* const gearBox, dDifferential* const differencial);
 	CUSTOM_JOINTS_API ~CustomVehicleControllerComponentEngine();
 
 	CUSTOM_JOINTS_API virtual void Update (dFloat timestep);
 
-	CUSTOM_JOINTS_API void InitEngineTorqueCurve (
-		dFloat vehicleSpeedInKilometerPerHours, dFloat engineMomentOfInertia,
+	CUSTOM_JOINTS_API void InitEngineTorqueCurve (dFloat vehicleSpeedInKilometerPerHours,
 		dFloat idleTorqueInPoundFoot, dFloat revolutionsPerMinutesAtIdleTorque, 
 		dFloat peakTorqueInPoundFoot, dFloat revolutionsPerMinutesAtPeakTorque, 
 		dFloat peakHorsePower, dFloat revolutionsPerMinutesAtPeakHorsePower, 
@@ -192,50 +297,43 @@ class CustomVehicleControllerComponentEngine: public CustomVehicleControllerComp
 	CUSTOM_JOINTS_API dFloat GetRedLineRPM () const;
 	CUSTOM_JOINTS_API dFloat GetSpeed () const;
 	CUSTOM_JOINTS_API dFloat GetTopSpeed () const;
-	CUSTOM_JOINTS_API dFloat GetInertia() const;
-	CUSTOM_JOINTS_API void SetInertia(dFloat inertia);
 	CUSTOM_JOINTS_API bool GetTransmissionMode () const;
 	CUSTOM_JOINTS_API void SetTransmissionMode (bool mode);
 
-
 	dGearBox* GetGearBox() const;
-//	dFloat GetIdleResistance () const;
-//	dFloat GetRedLineResistance () const;
-//	dFloat GetIdleRadianPerSeconds () const;
-//	dFloat GetDifferencialGearRatio () const;
 	dFloat GetTorque (dFloat radianPerSeconds) const;
 
 	void SetTopSpeed (dFloat topSpeedMeterPerSecunds, dFloat rpsAtPeckPower);
-	dList<CustomVehicleControllerBodyStateTire>::dListNode* GetLeftTireNode() const;
-	dList<CustomVehicleControllerBodyStateTire>::dListNode* GetRightTireNode() const;
+
+	int AddDifferentialJoints (dComplemtaritySolver::dBilateralJoint** const buffer );
 
 	protected:
-	void ConvertToMetricSystem (
-			dFloat& vehicleSpeedInKilometerPerHours, dFloat& engineMomentOfInertia,
+	void ConvertToMetricSystem (dFloat& vehicleSpeedInKilometerPerHours,
 			dFloat& idleTorqueInPoundFoot, dFloat& revolutionsPerMinutesAtIdleTorque, 
 			dFloat& peakTorqueInPoundFoot, dFloat& revolutionsPerMinutesAtPeakTorque, 
 			dFloat& peakHorsePower, dFloat& revolutionsPerMinutesAtPeakHorsePower, 
 			dFloat& torqueArRedLineInPoundFoot, dFloat& revolutionsPerMinutesAtRedLineTorque) const;
 
 	dGearBox* m_gearBox;
-	dList<CustomVehicleControllerBodyStateTire>::dListNode* m_leftTire;
-	dList<CustomVehicleControllerBodyStateTire>::dListNode* m_righTire;
+	dDifferential* m_differencial;
 	dInterpolationCurve m_torqueCurve;
 
 	dFloat m_speedMPS;
+	dFloat m_engineRPS;
 	dFloat m_topSpeedMPS;
+	dFloat m_engineToque;
 	dFloat m_crownGearRatio;
-	dFloat m_momentOfInertia;
-//	dFloat m_engineResistance;
-	dFloat m_engineIdleFriction;
-	dFloat m_engineIdleResistance;
+	dFloat m_engineIdleInvInertia;
+	dFloat m_engineIdleResistance1;
+	dFloat m_engineIdleResistance2;
+	dFloat m_engineInternalFriction;
+	dFloat m_clutchTorqueCouplingTime;
 	dFloat m_radiansPerSecundsAtRedLine;
 	dFloat m_radiansPerSecundsAtPeakPower;
 	dFloat m_radiansPerSecundsAtIdleTorque;
 	bool m_engineSwitch;
 
 	friend class CustomVehicleControllerBodyStateTire;
-	friend class CustomVehicleControllerBodyStateEngine;
 	friend class CustomVehicleControllerBodyStateChassis;
 };
 
@@ -250,32 +348,42 @@ class CustomVehicleControllerComponentBrake: public CustomVehicleControllerCompo
 	dList<dList<CustomVehicleControllerBodyStateTire>::dListNode*> m_brakeTires;
 
 	friend class CustomVehicleControllerBodyStateTire;
-	friend class CustomVehicleControllerBodyStateEngine;
 	friend class CustomVehicleControllerBodyStateChassis;
 };
 
 class CustomVehicleControllerComponentSteering: public CustomVehicleControllerComponent
 {
 	public:
-	class dTireSignPair
-	{
-		public:
-		dFloat m_sign;
-		dList<CustomVehicleControllerBodyStateTire>::dListNode* m_tireNode;
-	};
-
 	CUSTOM_JOINTS_API CustomVehicleControllerComponentSteering (CustomVehicleController* const controller, dFloat maxAngleInRadians);
-	CUSTOM_JOINTS_API void AddSteeringTire (CustomVehicleControllerBodyStateTire* const tire, dFloat sign);
-	CUSTOM_JOINTS_API virtual void Update (dFloat timestep);
+	CUSTOM_JOINTS_API void AddSteeringTire (CustomVehicleControllerBodyStateTire* const tire);
 
-	dList<dTireSignPair> m_steeringTires;
+	CUSTOM_JOINTS_API dFloat GetMaxSteeringAngle () const;
+	CUSTOM_JOINTS_API virtual void Update (dFloat timestep);
+	CUSTOM_JOINTS_API void CalculateAkermanParameters (const CustomVehicleControllerBodyStateTire* const rearLeftTire, const CustomVehicleControllerBodyStateTire* const rearRightTire, 
+													   const CustomVehicleControllerBodyStateTire* const frontLeftTire, const CustomVehicleControllerBodyStateTire* const frontRightTire); 
+
+
+	dList<CustomVehicleControllerBodyStateTire*> m_steeringTires;
 	dFloat m_maxAngle;
+	dFloat m_akermanWheelBaseWidth;
+	dFloat m_akermanAxelSeparation;
 
 	friend class CustomVehicleControllerBodyStateTire;
-	friend class CustomVehicleControllerBodyStateEngine;
 	friend class CustomVehicleControllerBodyStateChassis;
 };
 
+class CustomVehicleControllerComponentTrackSkidSteering: public CustomVehicleControllerComponentSteering
+{
+	public:
+	CUSTOM_JOINTS_API CustomVehicleControllerComponentTrackSkidSteering (CustomVehicleController* const controller, dFloat steeringRPM, dFloat teeringTorque);
+
+	protected:
+	CUSTOM_JOINTS_API virtual void Update (dFloat timestep);
+
+	dFloat m_steeringRPM;
+	dFloat m_steeringTorque;
+	dFloat m_differencialTurnRate;
+};
 
 #endif 
 

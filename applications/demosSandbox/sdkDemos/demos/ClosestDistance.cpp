@@ -32,10 +32,10 @@ class dClosestDistanceRecord: public CustomControllerBase
 			NewtonWorld* const world = scene->GetNewton();
 
 			dVector size(1.0f, 1.0f, 1.0f, 0.0f);
-			m_castingShape = CreateConvexCollision (world, GetIdentityMatrix(), size, castingShapeType, 0);
+			m_castingShape = CreateConvexCollision (world, dGetIdentityMatrix(), size, castingShapeType, 0);
 
 			DemoMesh* const geometry = new DemoMesh("convexShape", m_castingShape, "smilli.tga", "smilli.tga", "smilli.tga");
-			SetMesh(geometry, GetIdentityMatrix());
+			SetMesh(geometry, dGetIdentityMatrix());
 			geometry->Release();
 
 			scene->Append(this);
@@ -125,9 +125,9 @@ class dClosestDistanceRecord: public CustomControllerBase
 
 		// create the shape and visual mesh as a common data to be re used
 		dVector size(0.5f, 0.5f, 0.75f, 0.0f);
-		NewtonCollision* const collision = CreateConvexCollision (world, GetIdentityMatrix(), size, shapeType, materialID);
+		NewtonCollision* const collision = CreateConvexCollision (world, dGetIdentityMatrix(), size, shapeType, materialID);
 
-		//	DemoMesh* const geometry = new DemoMesh("cylinder_1", collision, "wood_0.tga", "wood_0.tga", "wood_1.tga");
+		//	DemoMesh____* const geometry = new DemoMesh____("cylinder_1", collision, "wood_0.tga", "wood_0.tga", "wood_1.tga");
 		DemoMesh* const geometry = new DemoMesh("convexShape", collision, "smilli.tga", "smilli.tga", "smilli.tga");
 		m_body = CreateSimpleSolid (scene, geometry, 1.0f, matrix, collision, materialID);
 
@@ -187,7 +187,7 @@ void ClosestDistance (DemoEntityManager* const scene)
 	// set a user friction variable in the body for variable friction demos
 	// later this will be done using LUA script
 	NewtonWorld* const world = scene->GetNewton();
-	dMatrix offsetMatrix (GetIdentityMatrix());
+	dMatrix offsetMatrix (dGetIdentityMatrix());
 
 	CreateLevelMesh (scene, "flatPlane.ngd", 1);
 	//	CreateLevelMesh (scene, "playground.ngd", 0);
@@ -200,13 +200,14 @@ void ClosestDistance (DemoEntityManager* const scene)
 //	PrimitiveType castinShapeType = _SPHERE_PRIMITIVE;
 //	PrimitiveType castinShapeType = _BOX_PRIMITIVE;
 //	PrimitiveType castinShapeType = _CAPSULE_PRIMITIVE;
-	PrimitiveType castinShapeType = _CYLINDER_PRIMITIVE;
+//	PrimitiveType castinShapeType = _CYLINDER_PRIMITIVE;
 //	PrimitiveType castinShapeType = _CONE_PRIMITIVE;
 //	PrimitiveType castinShapeType = _TAPERED_CAPSULE_PRIMITIVE;
 //	PrimitiveType castinShapeType = _TAPERED_CYLINDER_PRIMITIVE;
 //	PrimitiveType castinShapeType = _CHAMFER_CYLINDER_PRIMITIVE;
 //	PrimitiveType castinShapeType = _RANDOM_CONVEX_HULL_PRIMITIVE;
 //	PrimitiveType castinShapeType = _REGULAR_CONVEX_HULL_PRIMITIVE;
+	PrimitiveType castinShapeType = _COMPOUND_CONVEX_CRUZ_PRIMITIVE;
 
 
 //	ClosestDistanceEntityManager* const parallelManager = new ClosestDistanceEntityManager (scene);
@@ -214,8 +215,8 @@ void ClosestDistance (DemoEntityManager* const scene)
 	dClosestDistanceManager* const castManager = new dClosestDistanceManager (scene);
 
 	int count = 5;
-	castManager->AddPrimitives (count, dVector (  0, 0, 0), _SPHERE_PRIMITIVE, materialID, castinShapeType);
-	castManager->AddPrimitives (count, dVector (  2, 0, 2), _BOX_PRIMITIVE, materialID, castinShapeType);
+//	castManager->AddPrimitives (count, dVector (  0, 0, 0), _SPHERE_PRIMITIVE, materialID, castinShapeType);
+//	castManager->AddPrimitives (count, dVector (  2, 0, 2), _BOX_PRIMITIVE, materialID, castinShapeType);
 //	castManager->AddPrimitives (count, dVector (  4, 0, 4), _CAPSULE_PRIMITIVE, materialID, castinShapeType);
 //	castManager->AddPrimitives (count, dVector (  8, 0, 8), _CYLINDER_PRIMITIVE, materialID, castinShapeType);
 //	castManager->AddPrimitives (count, dVector ( 10, 0, 10), _CHAMFER_CYLINDER_PRIMITIVE, materialID, castinShapeType);
@@ -223,11 +224,13 @@ void ClosestDistance (DemoEntityManager* const scene)
 //	castManager->AddPrimitives (count, dVector (- 6, 0, -6), _TAPERED_CAPSULE_PRIMITIVE, materialID, castinShapeType);
 //	castManager->AddPrimitives (count, dVector (- 8, 0, -8), _TAPERED_CYLINDER_PRIMITIVE, materialID, castinShapeType);
 //	castManager->AddPrimitives (count, dVector (-10, 0, -10), _REGULAR_CONVEX_HULL_PRIMITIVE, materialID, castinShapeType);
+	castManager->AddPrimitives (count, dVector (-12, 0, -12), _COMPOUND_CONVEX_CRUZ_PRIMITIVE, materialID, castinShapeType);
+	
 	
 
 	// place camera into position
 	//dMatrix camMatrix (dYawMatrix(90.0f * 3.1416f /180.0f));
-	dMatrix camMatrix (GetIdentityMatrix());
+	dMatrix camMatrix (dGetIdentityMatrix());
 	dQuaternion rot (camMatrix);
 	dVector origin (-30.0f, 10.0f, 0.0f, 0.0f);
 	scene->SetCameraMatrix(rot, origin);

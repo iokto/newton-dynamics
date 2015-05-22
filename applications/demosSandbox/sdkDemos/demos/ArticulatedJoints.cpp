@@ -17,16 +17,10 @@
 #include "PhysicsUtils.h"
 #include "TargaToOpenGl.h"
 #include "DemoEntityManager.h"
-#include "CustomBallAndSocket.h"
-#include "DebugDisplay.h"
 
-#include "CustomHinge.h"
-#include "CustomInputManager.h"
-#include "CustomHingeActuator.h"
-#include "CustomSliderActuator.h"
+#include "DebugDisplay.h"
 #include "HeightFieldPrimitive.h"
-#include "CustomUniversalActuator.h"
-#include "CustomArcticulatedTransformManager.h"
+
 
 #define ARTICULATED_VEHICLE_CAMERA_EYEPOINT			1.5f
 #define ARTICULATED_VEHICLE_CAMERA_HIGH_ABOVE_HEAD	2.0f
@@ -84,7 +78,7 @@ class ArticulatedEntityModel: public DemoEntity
 	};
 
 	ArticulatedEntityModel (DemoEntityManager* const scene, const char* const name)
-		:DemoEntity(GetIdentityMatrix(), NULL)
+		:DemoEntity(dGetIdentityMatrix(), NULL)
 		,m_rearTiresCount(0)
 		,m_frontTiresCount(0)
 		,m_angularActuatorsCount(0)
@@ -399,7 +393,8 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 		dFloat maxWidth = 0.0f;
 		dFloat minWidth = 0.0f;
 
-		DemoMesh* const mesh = bodyPart->GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)bodyPart->GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 		const dMatrix& matrix = bodyPart->GetMeshMatrix();
 		dFloat* const array = mesh->m_vertex;
 		for (int i = 0; i < mesh->m_vertexCount; i ++) {
@@ -418,7 +413,8 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 	{
 		dVector points[1024 * 16];
 
-		DemoMesh* const mesh = bodyPart->GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)bodyPart->GetMesh();
+		dAssert (mesh->IsType(DemoMesh::GetRttiType()));
 		dAssert (mesh->m_vertexCount && (mesh->m_vertexCount < int (sizeof (points)/ sizeof (points[0]))));
 
 		// go over the vertex array and find and collect all vertices's weighted by this bone.
@@ -435,7 +431,9 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 
 	NewtonCollision* MakeConvexHullAggregate(DemoEntity* const bodyPart) const
 	{
-		NewtonMesh* const mesh = bodyPart->GetMesh()->CreateNewtonMesh (GetWorld(), bodyPart->GetMeshMatrix());
+		dAssert (bodyPart->GetMesh()->IsType(DemoMesh::GetRttiType()));
+		NewtonMesh* const mesh = ((DemoMesh*)bodyPart->GetMesh())->CreateNewtonMesh (GetWorld(), bodyPart->GetMeshMatrix());
+		
 		NewtonMesh* const convexApproximation = NewtonMeshApproximateConvexDecomposition (mesh, 0.01f, 0.2f, 32, 100, NULL, NULL);
 		
 		NewtonCollision* const compound = NewtonCreateCompoundCollisionFromMesh (GetWorld(), convexApproximation, 0.001f, 0, 0);
@@ -515,7 +513,7 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 
 		dVector p0;
 		dVector p1;
-		CalculateAABB (tireShape, GetIdentityMatrix(), p0, p1);
+		CalculateAABB (tireShape, dGetIdentityMatrix(), p0, p1);
 
 		dFloat Ixx;
 		dFloat Iyy;
@@ -561,7 +559,7 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 		//NewtonBodySetMassMatrix(rootBody, 0,0,0,0);
 
 		// add the root bone to the articulation manager
-		CustomArticulatedTransformController::dSkeletonBone* const bone = controller->AddBone (rootBody, GetIdentityMatrix());
+		CustomArticulatedTransformController::dSkeletonBone* const bone = controller->AddBone (rootBody, dGetIdentityMatrix());
 		// save the bone as the shape use data for self collision test
 		NewtonCollisionSetUserData (NewtonBodyGetCollision(rootBody), bone);
 
@@ -637,12 +635,12 @@ class AriculatedJointInputManager: public CustomInputManager
 
 		NewtonDemos* const mainWindow = m_scene->GetRootWindow();
 		ArticulatedEntityModel* const vehicleModel = (ArticulatedEntityModel*) m_player->GetUserData();
-
-		inputs.m_steerValue = int (mainWindow->GetKeyState ('A')) - int (mainWindow->GetKeyState ('D'));
-		inputs.m_throttleValue = int (mainWindow->GetKeyState ('W')) - int (mainWindow->GetKeyState ('S'));
+		
 		inputs.m_tiltValue = int (mainWindow->GetKeyState ('Z')) - int (mainWindow->GetKeyState ('X'));
 		inputs.m_liftValue = int (mainWindow->GetKeyState ('Q')) - int (mainWindow->GetKeyState ('E'));
 		inputs.m_openValue = int (mainWindow->GetKeyState ('F')) - int (mainWindow->GetKeyState ('G'));
+		inputs.m_steerValue = int (mainWindow->GetKeyState ('D')) - int (mainWindow->GetKeyState ('A'));
+		inputs.m_throttleValue = int (mainWindow->GetKeyState ('W')) - int (mainWindow->GetKeyState ('S'));
 
 		// check if we must activate the player
 		if (mainWindow->GetKeyState ('A') || 
@@ -751,9 +749,10 @@ static void LoadLumberYardMesh (DemoEntityManager* const scene, const DemoEntity
 
 	int defaultMaterialID = NewtonMaterialGetDefaultGroupID (scene->GetNewton());	
 	for (DemoEntity* child = entity.GetFirst(); child; child = child->GetNext()) {
-		DemoMesh* const mesh = child->GetMesh();
+		DemoMesh* const mesh = (DemoMesh*)child->GetMesh();
 		if (mesh) {
-			dTree<NewtonCollision*, DemoMesh*>::dTreeNode* node = filter.Find(mesh);
+            dAssert (mesh->IsType(DemoMesh::GetRttiType()));
+  			dTree<NewtonCollision*, DemoMesh*>::dTreeNode* node = filter.Find(mesh);
 			if (!node) {
 				// make a collision shape only for and instance
 				dFloat* const array = mesh->m_vertex;
@@ -772,7 +771,7 @@ static void LoadLumberYardMesh (DemoEntityManager* const scene, const DemoEntity
 				}
 
 				dVector size (maxBox - minBox);
-				dMatrix offset (GetIdentityMatrix());
+				dMatrix offset (dGetIdentityMatrix());
 				offset.m_posit = (maxBox + minBox).Scale (0.5f);
 				//NewtonCollision* const shape = NewtonCreateBox(world, size.m_x, size.m_y, size.m_z, 0, NULL);
 				NewtonCollision* const shape = NewtonCreateBox(world, size.m_x, size.m_y, size.m_z, 0, &offset[0][0]);
@@ -817,14 +816,14 @@ void ArticulatedJoints (DemoEntityManager* const scene)
 	NewtonWorld* const world = scene->GetNewton();
 	dVector origin (FindFloor (world, dVector (-10.0f, 50.0f, 0.0f, 1.0f), 2.0f * 50.0f));
 
-	dMatrix matrix (GetIdentityMatrix());
+	dMatrix matrix (dGetIdentityMatrix());
 	matrix.m_posit = FindFloor (world, origin, 100.0f);
 	matrix.m_posit.m_y += 0.75f;
 	inputManager->AddPlayer (vehicleManager->CreateForklift (matrix, &forkliffModel, sizeof(forkliftDefinition) / sizeof (forkliftDefinition[0]), forkliftDefinition));
 
 
 	// add some object to play with
-	DemoEntity entity (GetIdentityMatrix(), NULL);
+	DemoEntity entity (dGetIdentityMatrix(), NULL);
 	entity.LoadNGD_mesh ("lumber.ngd", scene->GetNewton());
 	LoadLumberYardMesh (scene, entity, dVector(10.0f, 0.0f, 0.0f, 0.0f));
 	

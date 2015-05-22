@@ -24,29 +24,49 @@
 class CustomControllerConvexCastPreFilter
 {	
 	public:
-	CUSTOM_JOINTS_API CustomControllerConvexCastPreFilter (const NewtonBody* const me)
-		:m_bodiesToSkipCount(1)
+	CUSTOM_JOINTS_API CustomControllerConvexCastPreFilter ()
+		:m_me(NULL)
 	{
-		m_bodiesToSkip[0] = me;
 	}
 
+	CUSTOM_JOINTS_API CustomControllerConvexCastPreFilter (const NewtonBody* const me)
+		:m_me(me)
+	{
+	}
+
+
+	CUSTOM_JOINTS_API ~CustomControllerConvexCastPreFilter ()
+	{
+	}
+
+	CUSTOM_JOINTS_API virtual unsigned Prefilter(const NewtonBody* const body, const NewtonCollision* const myCollision)
+	{
+		const NewtonCollision* const collision = NewtonBodyGetCollision(body);
+		unsigned retValue = NewtonCollisionGetMode(collision);
+		//if (retValue) {
+		//	for (int i = 0; i < m_bodiesToSkipCount; i ++) {
+		//		if (body == m_bodiesToSkip[i]) {
+		//			return 0;
+		//		}
+		//	}
+		//	return 1;
+		//}
+		return retValue;
+	}
+
+	private:
 	CUSTOM_JOINTS_API static unsigned Prefilter(const NewtonBody* const body, const NewtonCollision* const myCollision, void* const userData)
 	{
 		CustomControllerConvexCastPreFilter* const filter = (CustomControllerConvexCastPreFilter*) userData;
-		const NewtonCollision* const collision = NewtonBodyGetCollision(body);
-		if (NewtonCollisionGetMode(collision)) {
-			for (int i = 0; i < filter->m_bodiesToSkipCount; i ++) {
-				if (body == filter->m_bodiesToSkip[i]) {
-					return 0;
-				}
-			}
-			return 1;
-		}
-		return 0;
+		return (body != filter->m_me) ? filter->Prefilter (body, myCollision) : 0;
 	}
 
-	const NewtonBody* m_bodiesToSkip[16];
-	int m_bodiesToSkipCount;
+	protected:
+	//const NewtonBody* m_bodiesToSkip[16];
+	const NewtonBody* m_me;
+//	int m_bodiesToSkipCount;
+	friend class CustomPlayerController;
+	friend class CustomVehicleControllerBodyStateTire;
 };
 
 
@@ -54,18 +74,20 @@ class CustomControllerConvexRayFilter: public CustomControllerConvexCastPreFilte
 {	
 	public:
 	CUSTOM_JOINTS_API CustomControllerConvexRayFilter (const NewtonBody* const me)
-		:CustomControllerConvexCastPreFilter(me)
+		:CustomControllerConvexCastPreFilter()
 		,m_hitBody(NULL)
 		,m_shapeHit(NULL)
 		,m_collisionID(0) 
 		,m_intersectParam(1.2f)
 	{
+		m_me = me;
 	}
 
 	CUSTOM_JOINTS_API static dFloat Filter (const NewtonBody* const body, const NewtonCollision* const shapeHit, const dFloat* const hitContact, const dFloat* const hitNormal, dLong collisionID, void* const userData, dFloat intersectParam)
 	{
 		CustomControllerConvexRayFilter* const filter = (CustomControllerConvexRayFilter*) userData;
-		dAssert (body != filter->m_bodiesToSkip[0]);
+//		dAssert (body != filter->m_bodiesToSkip[0]);
+		dAssert (body != filter->m_me);
 		if (intersectParam < filter->m_intersectParam) {
 			filter->m_hitBody = body;	
 			filter->m_shapeHit = shapeHit;
@@ -120,6 +142,12 @@ class CustomControllerBase
 		return m_manager;
 	}
 
+	bool operator== (const CustomControllerBase& copy) const
+	{
+		dAssert (0);
+		return false;
+	}
+
 	virtual void PreUpdate (dFloat timestep, int threadIndex) = 0;
 	virtual void PostUpdate (dFloat timestep, int threadIndex) = 0;
 
@@ -147,10 +175,14 @@ class CustomControllerManager: public dList<CONTROLLER_BASE>
 
 	virtual CONTROLLER_BASE* CreateController ();
 	virtual void DestroyController (CONTROLLER_BASE* const controller);
+	virtual void OnDestroyBody (NewtonBody* const body) 
+	{
+	}
 
     virtual void Debug () const;
 	virtual void PreUpdate(dFloat timestep);
 	virtual void PostUpdate(dFloat timestep);
+
 
 	private:
 	void DestroyAllController ();
@@ -158,6 +190,7 @@ class CustomControllerManager: public dList<CONTROLLER_BASE>
 	static void Destroy (const NewtonWorld* const world, void* const listenerUserData);
 	static void PreUpdate (const NewtonWorld* const world, void* const listenerUserData, dFloat timestep);
 	static void PostUpdate (const NewtonWorld* const world, void* const listenerUserData, dFloat timestep);
+	static void OnBodyDestroy (const NewtonWorld* const world, void* const listener, NewtonBody* const body);
 
 	static void PreUpdateKernel (NewtonWorld* const world, void* const context, int threadIndex);
 	static void PostUpdateKernel (NewtonWorld* const world, void* const context, int threadIndex);
@@ -173,8 +206,9 @@ CustomControllerManager<CONTROLLER_BASE>::CustomControllerManager(NewtonWorld* c
 	:m_world(world)
 	,m_curTimestep(0.0f)
 {
-	NewtonWorldAddPreListener (world, managerName, this, PreUpdate, NULL);
+	void* const prelistener = NewtonWorldAddPreListener (world, managerName, this, PreUpdate, NULL);
 	NewtonWorldAddPostListener (world, managerName, this, PostUpdate, Destroy);
+	NewtonWorldListenerSetBodyDestroyCallback (world, prelistener, OnBodyDestroy);
 }
 
 template<class CONTROLLER_BASE>
@@ -238,6 +272,22 @@ void CustomControllerManager<CONTROLLER_BASE>::Destroy (const NewtonWorld* const
 	delete me;
 }
 
+template<class CONTROLLER_BASE>
+void CustomControllerManager<CONTROLLER_BASE>::OnBodyDestroy (const NewtonWorld* const world, void* const listener, NewtonBody* const body)
+{
+	CustomControllerManager* const me = (CustomControllerManager*) NewtonWorldGetListenerUserData(world, listener);
+	me->OnDestroyBody(body);
+/*
+	for (typename dList<CONTROLLER_BASE>::dListNode* node = me->GetFirst(); node; node = node->GetNext()) {
+		CONTROLLER_BASE& controller = node->GetInfo();
+		if (controller.GetBody() == body) {
+			me->DestroyController (&controller);
+		}
+	}
+*/
+}
+
+
 
 template<class CONTROLLER_BASE>
 void CustomControllerManager<CONTROLLER_BASE>::PreUpdateKernel (NewtonWorld* const world, void* const context, int threadIndex)
@@ -252,8 +302,6 @@ void CustomControllerManager<CONTROLLER_BASE>::PostUpdateKernel (NewtonWorld* co
 	class CustomControllerBase* const controller = (CustomControllerBase*) context;
 	controller->PostUpdate(((CustomControllerManager*)controller->m_manager)->GetTimeStep(), threadIndex);
 }
-
-
 
 template<class CONTROLLER_BASE>
 CONTROLLER_BASE* CustomControllerManager<CONTROLLER_BASE>::CreateController ()
@@ -270,6 +318,8 @@ void CustomControllerManager<CONTROLLER_BASE>::DestroyController (CONTROLLER_BAS
 	typename CustomControllerManager<CONTROLLER_BASE>::dListNode* const node = CustomControllerManager<CONTROLLER_BASE>::GetNodeFromInfo (*controller);
 	CustomControllerManager<CONTROLLER_BASE>::Remove (node);
 }
+
+
 
 #endif 
 

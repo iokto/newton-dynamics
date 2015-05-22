@@ -90,7 +90,7 @@ bool dfbxImport::Import (const char* const fileName, dPluginInterface* const int
 		// Convert the scene to meters using the defined options.
 		FbxGlobalSettings& settings = fbxScene->GetGlobalSettings();
 
-		dMatrix convertMatrix (GetIdentityMatrix());
+		dMatrix convertMatrix (dGetIdentityMatrix());
 
 		const FbxSystemUnit& systemUnit = settings.GetSystemUnit();
 		dFloat scaleFactor = systemUnit.GetScaleFactor();
@@ -121,7 +121,7 @@ bool dfbxImport::Import (const char* const fileName, dPluginInterface* const int
 			}
 		}
 
-		dMatrix axisMatrix (GetIdentityMatrix());
+		dMatrix axisMatrix (dGetIdentityMatrix());
 		axisMatrix.m_front = frontVector;
 		axisMatrix.m_up = upVector;
 		axisMatrix.m_right = frontVector * upVector;
@@ -154,6 +154,12 @@ bool dfbxImport::Import (const char* const fileName, dPluginInterface* const int
 	return ret;
 }
 
+bool dfbxImport::ProgressCallback (float pPercentage, FbxString pStatus)
+{
+	return  m_interface->UpdateProgress(pPercentage * 0.01f);
+}
+
+
 
 void dfbxImport::PopulateScene (FbxScene* const fbxScene, dPluginScene* const ngdScene)
 {
@@ -185,8 +191,24 @@ void dfbxImport::PopulateScene (FbxScene* const fbxScene, dPluginScene* const ng
 					ImportMeshNode (fbxScene, ngdScene, fbxNode, node, meshCache, materialCache, textureCache, usedMaterials);
 					break;
 				}
+				case FbxNodeAttribute::eLine:
+				{
+					ImportLineShape (fbxScene, ngdScene, fbxNode, node, meshCache, materialCache, textureCache, usedMaterials);
+					break;
+				}
+
+				case FbxNodeAttribute::eNurbsCurve:
+				{
+					ImportNurbCurveShape (fbxScene, ngdScene, fbxNode, node, meshCache, materialCache, textureCache, usedMaterials);
+					break;
+				}
 
 				case FbxNodeAttribute::eNull:
+				{
+
+					break;
+				}
+				
 				case FbxNodeAttribute::eMarker:
 				case FbxNodeAttribute::eSkeleton: 
 				case FbxNodeAttribute::eNurbs: 
@@ -197,7 +219,7 @@ void dfbxImport::PopulateScene (FbxScene* const fbxScene, dPluginScene* const ng
 				case FbxNodeAttribute::eLight:
 				case FbxNodeAttribute::eOpticalReference:
 				case FbxNodeAttribute::eOpticalMarker:
-				case FbxNodeAttribute::eNurbsCurve:
+				
 				case FbxNodeAttribute::eTrimNurbsSurface:
 				case FbxNodeAttribute::eBoundary:
 				case FbxNodeAttribute::eNurbsSurface:
@@ -205,7 +227,6 @@ void dfbxImport::PopulateScene (FbxScene* const fbxScene, dPluginScene* const ng
 				case FbxNodeAttribute::eLODGroup:
 				case FbxNodeAttribute::eSubDiv:
 				case FbxNodeAttribute::eCachedEffect:
-				case FbxNodeAttribute::eLine:
 				case FbxNodeAttribute::eUnknown:
 				default:
 					dAssert(0);
@@ -236,7 +257,7 @@ void dfbxImport::PopulateScene (FbxScene* const fbxScene, dPluginScene* const ng
 
 void dfbxImport::ImportMeshNode (FbxScene* const fbxScene, dPluginScene* const ngdScene, FbxNode* const fbxMeshNode, dPluginScene::dTreeNode* const node, GlobalMeshMap& meshCache, GlobalMaterialMap& materialCache, GlobalTextureMap& textureCache, UsedMaterials& usedMaterials)
 {
-	dTree<dPluginScene::dTreeNode*, FbxMesh*>::dTreeNode* instanceNode = meshCache.Find(fbxMeshNode->GetMesh());
+	GlobalMeshMap::dTreeNode* instanceNode = meshCache.Find(fbxMeshNode->GetMesh());
 	if (instanceNode) {
 		dScene::dTreeNode* const meshInstance = instanceNode->GetInfo();
 		ngdScene->AddReference (node, meshInstance);
@@ -348,7 +369,7 @@ void dfbxImport::ImportMeshNode (FbxScene* const fbxScene, dPluginScene* const n
 											   &uv0Array[0].m_x, sizeof (dVector), uv0Index,
 											   &uv1Array[0].m_x, sizeof (dVector), uv1Index);
 
-		// some meshes has degenerated faces we must repair them to be leagal manifold
+		// some meshes has degenerated faces we must repair them to be legal manifold
 		instance->RepairTJoints();
 
 		delete[] uv1Array;
@@ -579,7 +600,7 @@ void dfbxImport::LoadHierarchy  (FbxScene* const fbxScene, dPluginScene* const n
 	if(rootNode) {
 		int count = rootNode->GetChildCount();
 		for(int i = 0; i < count; i++) {
-			nodeStack.Append(ImportStackData (GetIdentityMatrix(), rootNode->GetChild(count - i - 1), ngdScene->GetRootNode()));
+			nodeStack.Append(ImportStackData (dGetIdentityMatrix(), rootNode->GetChild(count - i - 1), ngdScene->GetRootNode()));
 		}
 	}
 
@@ -603,7 +624,7 @@ void dfbxImport::LoadHierarchy  (FbxScene* const fbxScene, dPluginScene* const n
 		dVector pivotTranslation (dFloat(fbxPivotTranslation[0]), dFloat(fbxPivotTranslation[1]), dFloat(fbxPivotTranslation[2]), 1.0f);
 		dVector pivotRotation (dFloat(fbxPivotRotation[0] * 3.14159265359 / 180.0), dFloat(fbxPivotRotation[1] * 3.14159265359 / 180.0), dFloat(fbxPivotRotation[2] * 3.14159265359 / 180.0), 0.0f);
 
-		dMatrix pivotScale (GetIdentityMatrix());
+		dMatrix pivotScale (dGetIdentityMatrix());
 		pivotScale[0][0] = dFloat(fbxPivotScaling[0]);
 		pivotScale[1][1] = dFloat(fbxPivotScaling[1]);
 		pivotScale[2][2] = dFloat(fbxPivotScaling[2]);
@@ -614,12 +635,211 @@ void dfbxImport::LoadHierarchy  (FbxScene* const fbxScene, dPluginScene* const n
 
 		int count = data.m_fbxNode->GetChildCount();
 		for(int i = 0; i < count; i++) {
-			nodeStack.Append(ImportStackData (GetIdentityMatrix(), data.m_fbxNode->GetChild(count - i - 1), node));	
+			nodeStack.Append(ImportStackData (dGetIdentityMatrix(), data.m_fbxNode->GetChild(count - i - 1), node));	
 		}
 	}
 }
 
-bool dfbxImport::ProgressCallback (float pPercentage, FbxString pStatus)
+
+void dfbxImport::ImportLineShape (FbxScene* const fbxScene, dPluginScene* const ngdScene, FbxNode* const fbxNode, dPluginScene::dTreeNode* const node, GlobalMeshMap& meshCache, GlobalMaterialMap& materialCache, GlobalTextureMap& textureCache, UsedMaterials& usedMaterials)
 {
-	return  m_interface->UpdateProgress(pPercentage * 0.01f);
+	GlobalMeshMap::dTreeNode* instanceNode = meshCache.Find(fbxNode->GetLine());
+	if (instanceNode) {
+dAssert (0);
+		dScene::dTreeNode* const meshInstance = instanceNode->GetInfo();
+		ngdScene->AddReference (node, meshInstance);
+	} else {
+		FbxLine* const fbxLine = fbxNode->GetLine();
+
+		dScene::dTreeNode* const lineNode = ngdScene->CreateLineNode(node);
+		meshCache.Insert (lineNode, fbxLine);
+
+		dLineNodeInfo* const instance = (dLineNodeInfo*) ngdScene->GetInfoFromNode (lineNode);
+
+		char name[256];
+		sprintf (name, "%s_line", fbxNode->GetName());
+		instance->SetName(name);
+
+		FbxAMatrix pivotMatrix;
+		fbxLine->GetPivot(pivotMatrix);
+
+		dMatrix matrix (pivotMatrix);
+		instance->SetPivotMatrix(matrix);
+		dAssert (matrix[1][1] == 1.0f);
+
+	    //int pointsCount = fbxLine->GetControlPointsCount();
+		const FbxVector4* const controlPoints = fbxLine->GetControlPoints();
+dAssert (0);		
+		const int indexCount = fbxLine->GetIndexArraySize();
+		dVector* const vertexArray = new dVector[indexCount]; 
+		for (int i = 0; i < indexCount; i ++) {
+			int index = fbxLine->GetPointIndexAt(i);
+			const FbxVector4& p = controlPoints[index];
+			vertexArray[i] = dVector (dFloat(p[0]), dFloat(p[1]), dFloat(p[2]), 0.0f);
+		}
+		
+/*
+		int faceCount = fbxMesh->GetPolygonCount();
+		int indexCount = 0;
+		for (int i = 0; i < faceCount; i ++) {
+			indexCount += fbxMesh->GetPolygonSize(i);
+		}
+
+		int* const faceIndexList = new int [faceCount];
+		int* const materialIndex = new int [faceCount];
+		int* const vertexIndex = new int [indexCount];
+		int* const normalIndex = new int [indexCount];
+		int* const uv0Index = new int [indexCount];
+		int* const uv1Index = new int [indexCount];
+
+		dVector* const vertexArray = new dVector[fbxMesh->GetControlPointsCount()]; 
+		dVector* const normalArray = new dVector[indexCount];
+		dVector* const uv0Array = new dVector[indexCount];
+		dVector* const uv1Array = new dVector[indexCount];
+
+		const FbxVector4* const controlPoints = fbxMesh->GetControlPoints();
+		for (int i = 0; i < fbxMesh->GetControlPointsCount(); i ++) {
+			const FbxVector4& p = controlPoints[i];
+			vertexArray[i] = dVector (dFloat(p[0]), dFloat(p[1]), dFloat(p[2]), 0.0f);
+		}
+
+		FbxGeometryElementUV* const uvArray = fbxMesh->GetElementUV ();
+		FbxLayerElement::EMappingMode uvMapingMode = uvArray ? uvArray->GetMappingMode() : FbxGeometryElement::eNone;
+		FbxLayerElement::EReferenceMode uvRefMode = uvArray ? uvArray->GetReferenceMode() : FbxGeometryElement::eIndex;
+
+		FbxGeometryElementMaterial* const materialArray = fbxMesh->GetElementMaterial();
+		FbxLayerElement::EMappingMode materialMapingMode = materialArray ? materialArray->GetMappingMode() : FbxGeometryElement::eNone;
+		FbxLayerElement::EReferenceMode materialRefMode = materialArray ? materialArray->GetReferenceMode() : FbxGeometryElement::eIndex;
+
+		int index = 0;
+		for (int i = 0; i < faceCount; i ++) {
+			int polygonIndexCount = fbxMesh->GetPolygonSize(i);
+
+			int materialID = DEFUALT_MATERIAL_ID;
+			if (materialArray) {
+				if (materialMapingMode == FbxGeometryElement::eByPolygon) {
+					materialID = (materialRefMode == FbxGeometryElement::eDirect) ? i : materialArray->GetIndexArray().GetAt(i);
+				} else {
+					materialID = (materialRefMode == FbxGeometryElement::eDirect) ? 0 : materialArray->GetIndexArray().GetAt(0);
+				}
+			}
+			LocalMaterialMap::dTreeNode* const matNode = localMaterialIndex.Find(materialID);
+			dAssert (matNode);
+			dMaterialNodeInfo* const material = (dMaterialNodeInfo*) ngdScene->GetInfoFromNode(matNode->GetInfo());
+			materialIndex[i] = material->GetId();
+
+			dAssert (usedMaterials.Find(matNode->GetInfo()));
+			usedMaterials.Find(matNode->GetInfo())->GetInfo() += 1;
+
+			faceIndexList[i] = polygonIndexCount;
+			for (int j = 0; j < polygonIndexCount; j ++) {
+				vertexIndex[index] = fbxMesh->GetPolygonVertex (i, j);
+				FbxVector4 n(0, 1, 0, 0);
+				fbxMesh->GetPolygonVertexNormal (i, j, n);
+				normalArray[index] = dVector (dFloat(n[0]), dFloat(n[1]), dFloat(n[2]), 0.0f);
+				normalIndex[index] = index;
+
+				FbxVector2 uv(0, 0);
+				if (uvMapingMode == FbxGeometryElement::eByPolygonVertex) {
+					int textIndex = (uvRefMode == FbxGeometryElement::eDirect) ? index :  uvArray->GetIndexArray().GetAt(index);
+					uv = uvArray->GetDirectArray().GetAt(textIndex);
+				}
+				uv0Index[index] = index;
+				uv0Array[index] = dVector (dFloat(uv[0]), dFloat(uv[1]), 0.0f, 0.0f);
+
+				uv1Index[index] = 0;
+				uv1Array[index] = dVector (0.0f, 0.0f, 0.0f, 0.0f);
+
+				index ++;
+				dAssert (index <= indexCount);
+			}
+		}
+
+		instance->BuildFromVertexListIndexList(faceCount, faceIndexList, materialIndex, 
+			&vertexArray[0].m_x, sizeof (dVector), vertexIndex, 
+			&normalArray[0].m_x, sizeof (dVector), normalIndex,
+			&uv0Array[0].m_x, sizeof (dVector), uv0Index,
+			&uv1Array[0].m_x, sizeof (dVector), uv1Index);
+
+		// some meshes has degenerated faces we must repair them to be legal manifold
+		instance->RepairTJoints();
+
+		delete[] uv1Array;
+		delete[] uv0Array;
+		delete[] normalArray;
+		
+		delete[] uv1Index;
+		delete[] uv0Index;
+		delete[] normalIndex;
+		delete[] vertexIndex;
+		delete[] materialIndex;
+		delete[] faceIndexList;
+*/
+		delete[] vertexArray;
+	}
 }
+
+
+void dfbxImport::ImportNurbCurveShape (FbxScene* const fbxScene, dPluginScene* const ngdScene, FbxNode* const fbxNode, dPluginScene::dTreeNode* const node, GlobalMeshMap& meshCache, GlobalMaterialMap& materialCache, GlobalTextureMap& textureCache, UsedMaterials& usedMaterials)
+{
+	GlobalMeshMap::dTreeNode* instanceNode = meshCache.Find(fbxNode->GetLine());
+	if (instanceNode) {
+		dScene::dTreeNode* const meshInstance = instanceNode->GetInfo();
+		ngdScene->AddReference (node, meshInstance);
+	} else {
+		FbxNurbsCurve* const fbxCurve = fbxNode->GetNurbsCurve();
+
+		dScene::dTreeNode* const lineNode = ngdScene->CreateLineNode(node);
+		meshCache.Insert (lineNode, fbxCurve);
+
+		dLineNodeInfo* const instance = (dLineNodeInfo*) ngdScene->GetInfoFromNode (lineNode);
+
+		char name[256];
+		sprintf (name, "%s_line", fbxNode->GetName());
+		instance->SetName(name);
+
+		FbxAMatrix pivotMatrix;
+		fbxCurve->GetPivot(pivotMatrix);
+
+		dMatrix matrix (pivotMatrix);
+		instance->SetPivotMatrix(matrix);
+		dAssert (matrix[1][1] == 1.0f);
+
+		dAssert ((fbxCurve->GetOrder() - 1) <= 3); 
+		int degree = fbxCurve->GetOrder() - 1;
+
+//		bool xxx = fbxCurve->IsBezier();
+
+	    int pointsCount = fbxCurve->GetControlPointsCount();
+		const FbxVector4* const controlPoints = fbxCurve->GetControlPoints();
+		dBigVector* const vertexArray = new dBigVector[pointsCount + 1]; 
+
+		for (int i = 0; i < pointsCount; i ++) {
+			const FbxVector4& p = controlPoints[i];
+			vertexArray[i] = dVector (dFloat(p[0]), dFloat(p[1]), dFloat(p[2]), 1.0f);
+		}
+		FbxNurbsCurve::EType type = fbxCurve->GetType();
+		if ((type == FbxNurbsCurve::eClosed) || (type == FbxNurbsCurve::ePeriodic)) {
+			vertexArray[pointsCount] = vertexArray[0];
+			pointsCount ++;
+		}
+
+
+		const int knotCount = fbxCurve->GetKnotCount();
+		const double* const knots = fbxCurve->GetKnotVector();
+		double scale = 1.0 / knots[knotCount - 1];
+		dAssert (pointsCount == knotCount - 2 * (degree - 1));
+
+		dFloat64* const knotArray = new dFloat64[pointsCount]; 
+		for (int i = 0; i < knotCount - degree * 2; i ++) {
+			double val = knots[i + degree];
+			knotArray[i] = dFloat (val * scale);
+		}
+
+		instance->m_curve.CreateFromKnotVectorAndControlPoints(degree, knotCount - degree * 2, knotArray, vertexArray);
+
+		delete[] knotArray;
+		delete[] vertexArray;
+	}
+}
+

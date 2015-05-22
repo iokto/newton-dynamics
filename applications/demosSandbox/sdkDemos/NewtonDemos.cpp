@@ -22,11 +22,14 @@
 #include "DemoEntityManager.h"
 
 
+#define DEMO_WIDTH	1280
+#define DEMO_HEIGHT  960
+
 
 //#define DEFAULT_SCENE	0			// using NetwonMesh Tool
 //#define DEFAULT_SCENE	1			// Coefficients of friction
 //#define DEFAULT_SCENE	2			// Coefficients of restitution
-//#define DEFAULT_SCENE	3			// Precessing tops
+#define DEFAULT_SCENE	3			// Precessing tops
 //#define DEFAULT_SCENE	4			// closest distance
 //#define DEFAULT_SCENE	5			// primitive collision
 //#define DEFAULT_SCENE	6 			// Kinematic bodies
@@ -48,18 +51,19 @@
 //#define DEFAULT_SCENE	22			// simple convex fracturing 
 //#define DEFAULT_SCENE	23			// structured convex fracturing 
 //#define DEFAULT_SCENE	24			// multi ray casting using the threading Job scheduler
-//#define DEFAULT_SCENE	25			// continue collision
-//#define DEFAULT_SCENE	26			// paper wall continue collision
-//#define DEFAULT_SCENE	27			// puck slide continue collision
-#define DEFAULT_SCENE	28          // standard joints
+//#define DEFAULT_SCENE	25			// continuous collision
+//#define DEFAULT_SCENE	26			// paper wall continuous collision
+//#define DEFAULT_SCENE	27			// puck slide continuous collision
+//#define DEFAULT_SCENE	28          // standard joints
 //#define DEFAULT_SCENE	29			// articulated joints
 //#define DEFAULT_SCENE	30			// basic rag doll
-//#define DEFAULT_SCENE	31			// basic car
-//#define DEFAULT_SCENE	32			// high performance super car
-//#define DEFAULT_SCENE	33			// basic player controller
-//#define DEFAULT_SCENE	34			// advanced player controller
-//#define DEFAULT_SCENE	35			// cloth patch			
-//#define DEFAULT_SCENE	36			// soft bodies			
+//#define DEFAULT_SCENE	31			// basic Car
+//#define DEFAULT_SCENE	32			// heavy vehicles
+//#define DEFAULT_SCENE	33			// super Car
+//#define DEFAULT_SCENE	34			// basic player controller
+//#define DEFAULT_SCENE	35			// advanced player controller
+//#define DEFAULT_SCENE	36			// cloth patch			
+//#define DEFAULT_SCENE	37			// soft bodies			
 
 
 void Friction (DemoEntityManager* const scene);
@@ -69,7 +73,7 @@ void ClosestDistance (DemoEntityManager* const scene);
 void ConvexCast (DemoEntityManager* const scene);
 void PrimitiveCollision (DemoEntityManager* const scene);
 void KinematicPlacement (DemoEntityManager* const scene);
-void ClothPath(DemoEntityManager* const scene);
+void ClothPatch(DemoEntityManager* const scene);
 void SoftBodies (DemoEntityManager* const scene);
 void BasicBoxStacks (DemoEntityManager* const scene);
 void SimpleMeshLevelCollision (DemoEntityManager* const scene);
@@ -77,8 +81,8 @@ void OptimizedMeshLevelCollision (DemoEntityManager* const scene);
 void UniformScaledCollision (DemoEntityManager* const scene);
 void NonUniformScaledCollision (DemoEntityManager* const scene);
 void ScaledMeshCollision (DemoEntityManager* const scene);
-void ContinueCollision (DemoEntityManager* const scene);
-void ContinueCollision1 (DemoEntityManager* const scene);
+void ContinuousCollision (DemoEntityManager* const scene);
+void ContinuousCollision1 (DemoEntityManager* const scene);
 void PuckSlide (DemoEntityManager* const scene);
 void SceneCollision (DemoEntityManager* const scene);
 void CompoundCollision(DemoEntityManager* const scene);
@@ -90,6 +94,8 @@ void StructuredConvexFracturing (DemoEntityManager* const scene);
 void UsingNewtonMeshTool (DemoEntityManager* const scene);
 void MultiRayCast (DemoEntityManager* const scene);
 void BasicCar (DemoEntityManager* const scene);
+void SuperCar (DemoEntityManager* const scene);
+void MilitaryTransport (DemoEntityManager* const scene);
 void BasicPlayerController (DemoEntityManager* const scene);
 void AdvancedPlayerController (DemoEntityManager* const scene);
 void HeightFieldCollision (DemoEntityManager* const scene);
@@ -117,7 +123,7 @@ NewtonDemos::SDKDemos NewtonDemos::m_demosSelection[] =
 	{wxT("User infinite Plane collision mesh"), wxT("show high file collision mesh"), UserPlaneCollision},
 	{wxT("User Height field collision mesh"), wxT("show high file collision mesh"), UserHeightFieldCollision},
 	{wxT("Compound collision shape"), wxT("demonstrate compound collision"), CompoundCollision},
-	{wxT("Alchemedes Buoyancy"), wxT("show Alchemedes Buoyancy using the trigger volumen manager"), AlchimedesBuoyancy},
+	{wxT("Archimedes Buoyancy"), wxT("show Archimedes Buoyancy using the trigger volume manager"), AlchimedesBuoyancy},
 	{wxT("Uniform scaled collision shape"), wxT("demonstrate scaling shape"), UniformScaledCollision},
 	{wxT("Non uniform scaled collision shape"), wxT("demonstrate scaling shape"), NonUniformScaledCollision},
 	{wxT("Scaled mesh collision"), wxT("demonstrate scaling mesh scaling collision"), ScaledMeshCollision},
@@ -127,17 +133,18 @@ NewtonDemos::SDKDemos NewtonDemos::m_demosSelection[] =
 	{wxT("Simple convex fracture"), wxT("demonstrate simple fracture destruction using Voronoi partition"), SimpleConvexFracturing},
 	{wxT("Structured convex fracture"), wxT("demonstrate structured fracture destruction using Voronoi partition"), StructuredConvexFracturing},
 	{wxT("Parallel ray cast"), wxT("using the threading Job scheduler"), MultiRayCast},
-	{wxT("Continue collision"), wxT("show continue collision"), ContinueCollision},
-    {wxT("Paperwall continue collision"), wxT("show fast continue collision"), ContinueCollision1},
-	{wxT("Puck slide"), wxT("show continue collision"), PuckSlide},
-    {wxT("Starndard Joints"), wxT("show sme of teh common joints"), StandardJoints},
+	{wxT("Continuous collision"), wxT("show continuous collision"), ContinuousCollision},
+    {wxT("Paper wall continuous collision"), wxT("show fast continuous collision"), ContinuousCollision1},
+	{wxT("Puck slide"), wxT("show continuous collision"), PuckSlide},
+    {wxT("Standard Joints"), wxT("show some of the common joints"), StandardJoints},
 	{wxT("Articulated robotic actuators joints"), wxT("demonstrate complex array of bodies interconnect by joints"), ArticulatedJoints},
 	{wxT("Basic rag doll"), wxT("demonstrate simple rag doll"), DescreteRagDoll},
-	{wxT("Basic car"), wxT("implement a basic car"), BasicCar},
-	{wxT("High performance super car"), wxT("implement a high performance ray cast car"), BasicCar},
+	{wxT("Basic Car"), wxT("show how to set up a vehicle controller"), BasicCar},
+	{wxT("Heavy vehicles"), wxT("implement military type heavy Vehicles"), MilitaryTransport},
+	{wxT("Super car"), wxT("implement a hight performance sport car"), SuperCar},
 	{wxT("Basic player controller"), wxT("demonstrate simple player controller"), BasicPlayerController},
 	{wxT("Advanced player controller"), wxT("demonstrate player interacting with other objects"), AdvancedPlayerController},
-	{wxT("Simple cloth Path"), wxT("show simple cloth path"), ClothPath},
+	{wxT("Simple cloth Patch"), wxT("show simple cloth patch"), ClothPatch},
 	{wxT("Simple soft Body"), wxT("show simple soft body"), SoftBodies},
     
 
@@ -166,20 +173,19 @@ class NewtonDemosApp: public wxApp
 		NewtonSetMemorySystem (PhysicsAlloc, PhysicsFree);
 
 		int version = NewtonWorldGetVersion();
-		wxString tittle;
-		tittle.Printf (wxT ("Newton %d.%02d SDK demos"), version / 100, version % 100);
-		NewtonDemos* const frame = new NewtonDemos(tittle, wxDefaultPosition, wxSize(1024, 768));
-		
+		wxString title;
+		title.Printf (wxT ("Newton %d.%02d SDK demos"), version / 100, version % 100);
+		NewtonDemos* const frame = new NewtonDemos(title, wxDefaultPosition, wxSize(DEMO_WIDTH, DEMO_HEIGHT));
 
 		frame->Show(true);
 		SetTopWindow(frame);
 
-		// initialize open gl graphics
+		// initialize opengl graphics
 		if (frame->m_scene) {
 			frame->m_scene->InitGraphicsSystem();
 		}
 
-		// load the default Scene		
+		// load the default Scene
 		wxMenuEvent loadDemo (wxEVT_COMMAND_MENU_SELECTED, NewtonDemos::ID_RUN_DEMO + DEFAULT_SCENE);
 		frame->GetEventHandler()->ProcessEvent(loadDemo);
 
@@ -256,6 +262,7 @@ BEGIN_EVENT_TABLE(NewtonDemos, wxFrame)
 	EVT_MENU(ID_SERIALIZE, NewtonDemos::OnSerializeWorld)
 	EVT_MENU(ID_DESERIALIZE, NewtonDemos::OnDeserializeWorld)
 
+	EVT_JOYSTICK_EVENTS (NewtonDemos::OnJoystickEvent)
 
 
 //	FXMAPFUNC(SEL_COMMAND,		NewtonDemos::ID_LOAD,								NewtonDemos::onLoad),
@@ -267,8 +274,8 @@ END_EVENT_TABLE()
 
 NewtonDemos::NewtonDemos(const wxString& title, const wxPoint& pos, const wxSize& size)
 	:wxFrame(NULL, -1, title, pos, size)
-//	,m_joystick()
 	,m_mainMenu(NULL)
+	,m_joystick(NULL)
 	,m_statusbar(NULL)
 	,m_scene(NULL)
 	,m_physicsUpdateMode(0)
@@ -285,6 +292,8 @@ NewtonDemos::NewtonDemos(const wxString& title, const wxPoint& pos, const wxSize
 	,m_concurrentProfilerState(false)
 	,m_threadProfilerState(false)
 	,m_hasJoysticController(false)
+	,m_shiftKey(false)
+	,m_controlKey(false)
 	,m_solverModeIndex(1)
 	,m_debugDisplayMode(0)
 	,m_mousePosX(0)
@@ -298,9 +307,17 @@ NewtonDemos::NewtonDemos(const wxString& title, const wxPoint& pos, const wxSize
 	,m_timestepAcc(0)
 	,m_fps(0.0f)
 {
-//m_showNormalForces = true;
+//m_microthreadIndex = 1;
+//m_useParallelSolver = true;
+//m_threadProfilerState = true;
+m_showNormalForces = true;
 //m_showCenterOfMass = true;
 //m_hideVisualMeshes = true;
+//m_physicsUpdateMode = 1;
+//m_showContactPoints = true;
+//m_hardwareDevice = 2;
+//m_debugDisplayMode = 2;
+
 
 	memset (m_profilerTracksMenu, 0, sizeof (m_profilerTracksMenu));
 
@@ -358,11 +375,17 @@ m_autoSleepState = false;
 //m_useParallelSolver = true;
 //m_scene->m_showProfiler[6] = 1;
 m_scene->m_showProfiler[0] = 1;
+
+//	fucking wxwidget require a fucking library just to read a fucking joystick fuck you WxWidget
+//	m_joystick = new wxJoystick(wxJOYSTICK1); 
+//	m_joystick->SetCapture(this, 10); 
 }
 
 
 NewtonDemos::~NewtonDemos()
 {
+//	m_joystick->ReleaseCapture(); 
+//	delete m_joystick;
 }
 
 
@@ -556,8 +579,7 @@ void NewtonDemos::LoadDemo (int index)
 	BEGIN_MENU_OPTION();
 
 	m_scene->Cleanup();
-
-	m_scene->SetCurrent();
+    
 	m_demosSelection[index].m_launchDemoCallback (m_scene);
 	m_scene->SwapBuffers(); 
 
@@ -565,6 +587,17 @@ void NewtonDemos::LoadDemo (int index)
 	m_scene->ResetTimer();
 
 	END_MENU_OPTION();
+}
+
+
+bool NewtonDemos::IsShiftKeyDown () const
+{
+	return m_shiftKey;
+}
+
+bool NewtonDemos::IsControlKeyDown () const
+{
+	return m_controlKey;
 }
 
 
@@ -578,21 +611,26 @@ void NewtonDemos::KeyDown(const wxKeyEvent &event)
 		GetEventHandler()->ProcessEvent(exitEvent);
 	}
 
+	m_shiftKey = event.ShiftDown();
+	m_controlKey = event.ControlDown();
 
-	if (!event.GetModifiers()) {
+//	if (!event.GetModifiers()) {
 		int code = keyCode & 0xff; 
 		m_key[m_keyMap[code]] = true;
-	}
+//	}
 }
 
 
 void NewtonDemos::KeyUp(const wxKeyEvent &event)
 {
-	if (!event.GetModifiers()) {
+	m_shiftKey = event.ShiftDown();
+	m_controlKey = event.ControlDown();
+
+//	if (!event.GetModifiers()) {
 		int keyCode = event.GetKeyCode();
 		int code = keyCode & 0xff;
 		m_key[m_keyMap[code]] = false;
-	}
+//	}
 }
 
 
@@ -927,6 +965,10 @@ void NewtonDemos::OnDeserializeWorld(wxCommandEvent& event)
 	END_MENU_OPTION();
 }
 
+void NewtonDemos::OnJoystickEvent(wxJoystickEvent& event)
+{
+
+}
 
 #if 0
 long NewtonDemos::onLoad(FXObject* sender, FXSelector id, void* eventPtr)

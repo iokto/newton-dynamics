@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="debug|Win32">
@@ -82,7 +82,7 @@
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/ai;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAILibrary;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAnimation;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOPCH;__WXMSW__;WXUSINGDLL;GLEW_STATIC;AL_LIBTYPE_STATIC;_DSCENE_DLL;_DCONTAINERS_DLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -128,7 +128,7 @@ xcopy   "..\..\..\..\packages\thirdParty\wxWidgets\wxWidgets-2.9.4\build\msw_201
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/ai;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAILibrary;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAnimation;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOPCH;__WXMSW__;WXUSINGDLL;GLEW_STATIC;AL_LIBTYPE_STATIC;_DSCENE_DLL;_DCONTAINERS_DLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -170,7 +170,7 @@ xcopy   "..\..\..\..\packages\thirdParty\wxWidgets\wxWidgets-2.9.4\build\msw_201
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/ai;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAILibrary;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAnimation;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOPCH;__WXMSW__;WXUSINGDLL;GLEW_STATIC;AL_LIBTYPE_STATIC;_DSCENE_DLL;_DCONTAINERS_DLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -215,7 +215,7 @@ xcopy   "..\..\..\..\packages\thirdParty\wxWidgets\wxWidgets-2.9.4\build\msw_201
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/ai;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAILibrary;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../nme;../../nme/foldbar;../../nme/toolBox;../../standardPlugins/dPluginCommons;../../../../coreLibrary_300/source/newton;../../../../packages;../../../../packages/dMath;../../../../packages/dScene;../../../../packages/dAnimation;../../../../packages/dContainers;../../../../packages/dCustomJoints;../../../../packages/thirdParty/tinyxml;../../../../packages/dVisualDebuggerServer;../../../../packages/thirdParty/glew/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/include;../../../../packages/thirdParty/wxWidgets/wxWidgets-2.9.4/lib/$(Platform);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOPCH;__WXMSW__;WXUSINGDLL;GLEW_STATIC;AL_LIBTYPE_STATIC;_DSCENE_DLL;_DCONTAINERS_DLL;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -294,9 +294,6 @@ xcopy   "..\..\..\..\packages\thirdParty\wxWidgets\wxWidgets-2.9.4\build\msw_201
     <ClInclude Include="..\..\nme\NewtonModelEditorApp.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\coreLibrary_300\projects\windows\project_vs2010_dll\ai.vcxproj">
-      <Project>{7d48cee3-5263-46ca-bd69-924881f0ea2f}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\..\coreLibrary_300\projects\windows\project_vs2010_dll\core.vcxproj">
       <Project>{57ac4f2d-b115-4931-8f6e-af8ad616b6aa}</Project>
     </ProjectReference>
@@ -308,9 +305,6 @@ xcopy   "..\..\..\..\packages\thirdParty\wxWidgets\wxWidgets-2.9.4\build\msw_201
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\coreLibrary_300\source\pthreads.2\VS_2010_static_mt\pthread.vcxproj">
       <Project>{03bca23c-02a5-415b-a37b-26600bc2ce96}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\packages\projects\visualStudio_2010_dll\dAILibrary.vcxproj">
-      <Project>{2f95c24f-6935-4288-a71c-dab402e4eabc}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\packages\projects\visualStudio_2010_dll\dAnimation.vcxproj">
       <Project>{e3c14351-bad1-4add-ab9a-31054d6e7cdb}</Project>
