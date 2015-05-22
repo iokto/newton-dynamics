@@ -19,23 +19,23 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-union XXX
-{
-	float16 a;
-	float8 a0[2];
-	float4 a1[4];
-	float2 a2[8];
-	float a3[16];
-};
+#ifndef _DG_AMP_H_
+#define _DG_AMP_H_
 
-__kernel void __attribute__((vec_type_hint(float16))) dgHelloOpenCl (__global const float16* const A, __global const float16* const B, __global float* const out)
-{
-	int idx = get_global_id (0);
-//	out[idx] = A[idx] + B[idx];
-	union XXX xxx;
-	xxx.a = A[idx] + B[idx];
-	xxx.a0[0] += xxx.a0[1];
-	xxx.a1[0] += xxx.a1[1];
-	xxx.a2[0] += xxx.a2[1];
-	out[idx] = xxx.a3[0] + xxx.a3[1]; 
-}
+#pragma warning (disable: 4505) //'Concurrency::details::_Array_view_projection_helper<_T,_R>::_Project0' : unreferenced local function has been removed
+#pragma warning (disable: 4530) //: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+
+#include <amp.h>
+#include <ppl.h>
+#include <amprt.h>
+#include <amp_math.h>
+#include <amp_short_vectors.h>
+
+#include <dgPhysicsStdafx.h>
+#include <dgBody.h>
+#include <dgWorld.h>
+#include <dgConstraint.h>
+#include <dgDynamicBody.h>
+#include <dgWorldDynamicUpdate.h>
+
+#endif
