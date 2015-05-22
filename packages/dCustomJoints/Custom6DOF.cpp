@@ -18,6 +18,8 @@
 
 //dInitRtti(Custom6DOF);
 
+IMPLEMENT_CUSTON_JOINT(Custom6DOF);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -42,6 +44,33 @@ Custom6DOF::Custom6DOF (const dMatrix& pinsAndPivotChildFrame, const dMatrix& pi
 
 Custom6DOF::~Custom6DOF()
 {
+}
+
+Custom6DOF::Custom6DOF (NewtonBody* const child, NewtonBody* const parent, NewtonDeserializeCallback callback, void* const userData)
+	:CustomJoint(child, parent, callback, userData)
+{
+	callback (userData, &m_minLinearLimits, sizeof (dVector));
+	callback (userData, &m_maxLinearLimits, sizeof (dVector));
+	callback (userData, &m_minAngularLimits, sizeof (dVector));
+	callback (userData, &m_maxAngularLimits, sizeof (dVector));
+	callback (userData, &m_maxMaxLinearErrorRamp, sizeof (dVector));
+	callback (userData, &m_maxMaxAngularErrorRamp, sizeof (dVector));
+	int tmp;
+	callback (userData, &tmp, sizeof (int));
+	m_reverseUniversal = tmp ? true : false;
+}
+
+void Custom6DOF::Serialize (NewtonSerializeCallback callback, void* const userData) const
+{
+	CustomJoint::Serialize (callback, userData);
+	callback (userData, &m_minLinearLimits, sizeof (dVector));
+	callback (userData, &m_maxLinearLimits, sizeof (dVector));
+	callback (userData, &m_minAngularLimits, sizeof (dVector));
+	callback (userData, &m_maxAngularLimits, sizeof (dVector));
+	callback (userData, &m_maxMaxLinearErrorRamp, sizeof (dVector));
+	callback (userData, &m_maxMaxAngularErrorRamp, sizeof (dVector));
+	int tmp = m_reverseUniversal;
+	callback (userData, &tmp, sizeof (int));
 }
 
 

@@ -1005,7 +1005,7 @@ void dgWorld::Update (dgFloat32 timestep)
 		dgFloatExceptions exception;
 		dgSetPrecisionDouble precision;
 
-		// runs the update in same separate thread as the calling application, as if it was a separate thread  
+		// run update in same thread as the calling application as if it was a separate thread  
 		StepDynamics (m_savetimestep);
 		memcpy (m_perfomanceCountersBack, m_perfomanceCounters, sizeof (m_perfomanceCounters));
 	#else 
@@ -1192,6 +1192,7 @@ void dgWorld::DeserializeBodyArray (dgTree<dgBody*, dgInt32>&bodyMap, OnBodyDese
 			}
 		}
 
+		dgAssert (body);
 		m_bodiesUniqueID ++;
 		body->m_freeze = false;
 		body->m_sleeping = false;
@@ -1214,6 +1215,7 @@ void dgWorld::DeserializeBodyArray (dgTree<dgBody*, dgInt32>&bodyMap, OnBodyDese
 
 		// sync to next body
 		dgDeserializeMarker (deserialization, userData);
+
 	}
 
 	dgTree<const dgCollision*, dgInt32>::Iterator iter (shapeMap);
