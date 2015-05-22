@@ -19,6 +19,14 @@
 #ifndef __D_LINEAR_ALGEBRA_H__
 #define __D_LINEAR_ALGEBRA_H__
 
+#ifdef _MSC_VER
+	#pragma warning (disable: 4100) //unreferenced formal parameter
+#endif
+
+
+#define D_MAX_PRAM_INFO_SIZE		16 
+#define D_MAX_PLACEMENT_CONTACTS	128
+
 class dSymmetricBiconjugateGradientSolve
 {
 	public:
@@ -42,6 +50,14 @@ class dComplemtaritySolver
 	public:
 	class dBodyState;
 	class dBilateralJoint;
+
+
+	class dContact
+	{
+		public:
+		dVector m_point;
+		dVector m_normal;
+	};
 
 	class dJacobian
 	{
@@ -72,10 +88,10 @@ class dComplemtaritySolver
 	class dParamInfo
 	{
 		public:
-		dJacobianPair m_jacobians[8];
-		dFloat m_jointAccel[8];
-		dFloat m_jointLowFriction[8];
-		dFloat m_jointHighFriction[8];
+		dJacobianPair m_jacobians[D_MAX_PRAM_INFO_SIZE];
+		dFloat m_jointAccel[D_MAX_PRAM_INFO_SIZE];
+		dFloat m_jointLowFriction[D_MAX_PRAM_INFO_SIZE];
+		dFloat m_jointHighFriction[D_MAX_PRAM_INFO_SIZE];
 		dFloat m_timestep;
 		dFloat m_timestepInv;
 		int m_count;
@@ -109,11 +125,18 @@ class dComplemtaritySolver
 	class dBilateralJoint
 	{
 		public:
-		dBilateralJoint(){}
+		dBilateralJoint()
+			:m_state0(NULL)
+			,m_state1(NULL)
+			,m_start(0)
+			,m_count(0)
+		{
+		}
 		virtual ~dBilateralJoint(){}
 
-		protected:
 		virtual void Init (dBodyState* const state0, dBodyState* const state1);
+
+		protected:
 		virtual void JacobianDerivative (dParamInfo* const constraintParams) = 0; 
 		virtual void UpdateSolverForces (const dJacobianPair* const jacobians) const = 0; 
 		virtual void JointAccelerations (dJointAccelerationDecriptor* const accelParam);
@@ -124,9 +147,9 @@ class dComplemtaritySolver
 		void AddAngularRowJacobian (dParamInfo* const constraintParams, const dVector& dir0, const dVector& dir1, dFloat ratio);
 		void CalculatePointDerivative (dParamInfo* const constraintParams, const dVector& dir, const dPointDerivativeParam& param);
 
-		dFloat m_motorAcceleration[8];
-		dFloat m_jointFeebackForce[8];
-		int m_rowIsMotor[8];
+		dFloat m_motorAcceleration[D_MAX_PRAM_INFO_SIZE];
+		dFloat m_jointFeebackForce[D_MAX_PRAM_INFO_SIZE];
+		int m_rowIsMotor[D_MAX_PRAM_INFO_SIZE];
 		dBodyState* m_state0;
 		dBodyState* m_state1;
 		int m_start;
@@ -134,6 +157,31 @@ class dComplemtaritySolver
 
 		friend class dBodyState;
 		friend class dComplemtaritySolver;
+	};
+
+	class dFrictionLessContactJoint: public dBilateralJoint
+	{
+		public: 
+		dFrictionLessContactJoint()
+			:dBilateralJoint()
+			,m_restitution(0.0f)
+			,m_count (0)
+		{}
+		virtual ~dFrictionLessContactJoint(){}
+
+		void SetContacts (int count, dContact* const contacts, dFloat restitution);
+
+		protected:
+		void UpdateSolverForces (const dJacobianPair* const jacobians) const {}
+
+		static inline int CompareContact (const dContact* const contactA, const dContact* const contactB, void* dommy);
+		int ReduceContacts (int count, dContact* const contacts, dFloat tol);
+		void JacobianDerivative (dParamInfo* const constraintParams);
+		void JointAccelerations (dJointAccelerationDecriptor* const params);
+
+		dContact m_contacts[D_MAX_PRAM_INFO_SIZE];
+		dFloat m_restitution;
+		int m_count;
 	};
 
 
@@ -144,13 +192,34 @@ class dComplemtaritySolver
 		virtual ~dBodyState() {}
 
 		dFloat GetMass () const;
+		void SetMass (dFloat mass);
+
+		dFloat GetInvMass () const;
+
+		void SetInertia (dFloat Ixx, dFloat Iyy, dFloat Izz);
+		void GetInertia (dFloat& Ixx, dFloat& Iyy, dFloat& Izz) const;
+
+		void SetVeloc (const dVector& veloc);
+		void SetOmega (const dVector& omega);
 		const dVector& GetOmega() const; 
 		const dVector& GetVelocity() const; 
 
 		void UpdateInertia();
+
+		void SetMatrix (const dMatrix& matrix);
 		const dMatrix& GetMatrix () const;
+
+		void SetLocalMatrix (const dMatrix& matrix);
 		const dMatrix& GetLocalMatrix () const;
+
+		void SetForce (const dVector& force);
+		void SetTorque (const dVector& torque);
+		const dVector& GetForce () const;
+		const dVector& GetTorque () const;
+
 		const dVector& GetCenterOfMass () const;
+
+		void IntegrateVelocity (dFloat timestep);
 
 		protected:
 		virtual void IntegrateForce (dFloat timestep, const dVector& force, const dVector& torque);
@@ -184,7 +253,11 @@ class dComplemtaritySolver
 	dComplemtaritySolver() {};
 	virtual ~dComplemtaritySolver() {};
 
-	virtual int GetActiveJoints (dBilateralJoint** const jointArray, int bufferSize);
+	virtual int GetActiveJoints (dBilateralJoint** const jointArray, int bufferSize)
+	{
+		return 0;
+	}
+
 	virtual int BuildJacobianMatrix (int jointCount, dBilateralJoint** const jointArray, dFloat timestep, dJacobianPair* const jacobianArray, dJacobianColum* const jacobianColumnArray, int maxRowCount);
 	virtual void CalculateReactionsForces (int bodyCount, dBodyState** const bodyArray, int jointCount, dBilateralJoint** const jointArray, dFloat timestep, dJacobianPair* const jacobianArray, dJacobianColum* const jacobianColumnArray);
 };

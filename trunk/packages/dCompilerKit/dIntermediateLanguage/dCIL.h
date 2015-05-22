@@ -13,14 +13,11 @@
 #define __dCIL_H_
 
 #include "dCILstdafx.h"
-#include "dTreeAdressStmt.h"
+#include "dCILInstr.h"
 
-#define D_USE_COMPLEX_ADRESSING_MODE
+
 
 #define D_TEMPRARY_SYMBOL			"t"
-#define D_LOOP_HEADER_SYMBOL		"loopHeader"
-#define D_LOOP_TAIL_SYMBOL			"loopTail"
-
 
 inline dString GetTemporaryVariableName(int index)
 {
@@ -34,43 +31,22 @@ inline dString GetReturnVariableName()
 	return GetTemporaryVariableName(0);
 }
 
+class dCILInstr;
 class dDataFlowGraph; 
 
-class dCIL: public dList<dTreeAdressStmt>
+class dCIL: public dList<dCILInstr*>
 {
 	public:
-/*
-	enum dReturnType
-	{
-		m_voidNone,
-		m_intRegister,
-		m_floatRegister,
-	};
-
-	enum dIntrisicType
-	{
-		m_void,
-		m_bool,
-		m_byte,
-		m_short,
-		m_int,
-		m_long,
-		m_float,
-		m_double,
-		m_classPointer,
-	};
-*/
-
 	class dReturnValue
 	{
 		public:
 		dReturnValue ()
-			:m_type(dTreeAdressStmt::m_int)
+			:m_type(dCILInstr::m_int)
 		{
 			m_f = 0.0;
 		}
 
-		dTreeAdressStmt::dArgType m_type;
+		dCILInstr::dIntrisicType m_type;
 		union {;
 			dMachineIntRegister m_i;
 			dMachineFloatRegister m_f;
@@ -78,9 +54,12 @@ class dCIL: public dList<dTreeAdressStmt>
 	};
 
 	
-	dCIL(llvm::Module* const module);
+	dCIL();
 	virtual ~dCIL(void);
 
+	dVirtualMachine* BuilExecutable();
+
+	void Clear();
 	void Trace();
 
 	dString NewTemp (); 
@@ -88,24 +67,28 @@ class dCIL: public dList<dTreeAdressStmt>
 	void ResetTemporaries();
 	dListNode* NewStatement();
 
+	//void OptimizeSSA (dListNode* const functionNode);
+	void RegisterAllocation (dListNode* const functionNode);
 
-    void Optimize (llvm::Function* const function);
-//	void ConvertToLLVM (llvm::Module* const module, llvm::LLVMContext &Context);
-//	void Optimize (dListNode* const functionNode, int argumentInRegisters, dReturnType returnType);
-//	void Optimize (dListNode* const functionNode, int argumentInRegisters);
 	private:
-//	bool RemoveNop(dListNode* const functionNode);
-//	bool RemoveRedundantJumps(dListNode* const functionNode);
-
 	int m_mark;
 	int m_tempIndex;
 	int m_labelIndex;
-	bool m_commutativeOperator[dTreeAdressStmt::m_operatorsCount];
-	dTreeAdressStmt::dOperator m_conditionals[dTreeAdressStmt::m_operatorsCount];
-	dTreeAdressStmt::dOperator m_operatorComplement[dTreeAdressStmt::m_operatorsCount];
+	bool m_commutativeOperator[dCILThreeArgInstr::m_operatorsCount];
+	dCILThreeArgInstr::dOperator m_conditionals[dCILThreeArgInstr::m_operatorsCount];
+	dCILThreeArgInstr::dOperator m_operatorComplement[dCILThreeArgInstr::m_operatorsCount];
 
-    llvm::legacy::FunctionPassManager m_optimizer;
-	friend dDataFlowGraph;
+	public:
+	static dString m_phiSource;
+	static dString m_pointerSize;
+	static dString m_pointerDecoration;
+	static dString m_variableUndercore;
+	static dString m_functionArgument;
+
+	static dString m_ssaPosifix;
+	
+	friend class dDataFlowGraph;
+	friend class dCILInstrIntergerLogical;
 };
 
 

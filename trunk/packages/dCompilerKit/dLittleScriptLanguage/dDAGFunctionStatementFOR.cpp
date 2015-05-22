@@ -43,6 +43,14 @@ dAssert (0);
 	}
 }
 
+
+dDAGFunctionStatement* const dDAGFunctionStatementFOR::GetPostFixStatement() const
+{
+	dAssert(0);
+	return NULL;
+}
+
+
 void dDAGFunctionStatementFOR::CompileCIL(dCIL& cil)  
 {
 	dAssert (0);
@@ -56,18 +64,18 @@ void dDAGFunctionStatementFOR::CompileCIL(dCIL& cil)
 	if (m_testExpression) {
 		m_testExpression->CompileCIL(cil);
 
-		dTreeAdressStmt& tmpTest = cil.NewStatement()->GetInfo();
-		tmpTest.m_instruction = dTreeAdressStmt::m_assigment;
-		tmpTest.m_operator = dTreeAdressStmt::m_nothing;
+		dCILInstr& tmpTest = cil.NewStatement()->GetInfo();
+		tmpTest.m_instruction = dCILInstr::m_assigment;
+		tmpTest.m_operator = dCILInstr::m_nothing;
 		tmpTest.m_arg0.m_label = cil.NewTemp();
-		tmpTest.m_arg1.m_type = dTreeAdressStmt::m_intConst;
+		tmpTest.m_arg1.m_type = dCILInstr::m_intConst;
 		tmpTest.m_arg1.m_label = "0"; 
 		DTRACE_INTRUCTION (&tmpTest);
 
 		startExpressionTestNode = cil.NewStatement();
-		dTreeAdressStmt& stmt = startExpressionTestNode->GetInfo();
-		stmt.m_instruction = dTreeAdressStmt::m_if;
-		stmt.m_operator = dTreeAdressStmt::m_identical;
+		dCILInstr& stmt = startExpressionTestNode->GetInfo();
+		stmt.m_instruction = dCILInstr::m_if;
+		stmt.m_operator = dCILInstr::m_identical;
 		stmt.m_arg0 = m_testExpression->m_result;
 		stmt.m_arg1 = tmpTest.m_arg0;
 		stmt.m_arg2.m_label = "loopExit"; 
@@ -77,7 +85,7 @@ void dDAGFunctionStatementFOR::CompileCIL(dCIL& cil)
 	dCIL::dListNode* const exitLabelStmtNode = CompileCILLoopBody(cil, m_endStmt);
 
 	if (startExpressionTestNode) {
-		dTreeAdressStmt& stmt = startExpressionTestNode->GetInfo();
+		dCILInstr& stmt = startExpressionTestNode->GetInfo();
 		stmt.m_jmpTarget = exitLabelStmtNode;
 		stmt.m_arg2.m_label = exitLabelStmtNode->GetInfo().m_arg0.m_label; 
 	}

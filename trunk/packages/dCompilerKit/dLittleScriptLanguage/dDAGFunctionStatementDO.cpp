@@ -30,12 +30,44 @@ dDAGFunctionStatementDO::~dDAGFunctionStatementDO()
 
 void dDAGFunctionStatementDO::ConnectParent(dDAG* const parent)
 {
-dAssert (0);
 	dDAGFunctionStatementFlow::ConnectParent(parent);
+	if (m_expression) {
+		m_expression->ConnectParent(this);
+	}
 }
 
 
+dDAGFunctionStatement* const dDAGFunctionStatementDO::GetPostFixStatement() const
+{
+	return NULL;
+}
+
 void dDAGFunctionStatementDO::CompileCIL(dCIL& cil)  
 {
-	CompileCILLoopBody(cil, NULL);
+/*
+	dCIL::dListNode* const blockTerminatorNode = cil.NewStatement();
+	dCILInstr& blockTerminator = blockTerminatorNode->GetInfo();
+	blockTerminator.m_instruction = dCILInstr::m_goto;
+	blockTerminator.m_arg0.m_label = cil.NewLabel();
+	DTRACE_INTRUCTION (&blockTerminator);
+
+	dCIL::dListNode* const entryLabelNode = cil.NewStatement();
+	blockTerminator.m_trueTargetJump = entryLabelNode;
+	dCILInstr& entryLabel = entryLabelNode->GetInfo();
+	entryLabel.m_instruction = dCILInstr::m_label;
+	entryLabel.m_arg0 = blockTerminator.m_arg0;
+	DTRACE_INTRUCTION (&entryLabel);
+	CompileCILLoopBody(cil, entryLabelNode, NULL);
+*/
+
+	dCILInstrGoto* const endBlock = new dCILInstrGoto(cil, "xxx");
+	endBlock->Trace();
+
+	dDAGFunctionStatementFlow::CompileCIL(cil);
+
+	dCILInstrLabel* const entryLabel = endBlock->GetNode()->GetNext()->GetInfo()->GetAsLabel();
+	dAssert(entryLabel);
+	endBlock->SetLabel (entryLabel->GetArg0().m_label);
+	endBlock->SetTarget (entryLabel);
+
 }

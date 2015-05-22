@@ -40,64 +40,74 @@ void dDAGExpressionNodeBinaryOperator::ConnectParent(dDAG* const parent)
 	m_expressionB->ConnectParent(this);
 }
 
-void dDAGExpressionNodeBinaryOperator::PromoteTypes (dCIL::dReturnValue& typeA, dCIL::dReturnValue& typeB) const
+//void dDAGExpressionNodeBinaryOperator::PromoteTypes (dCIL::dReturnValue& typeA, dCIL::dReturnValue& typeB) const
+dCILInstr::dArgType dDAGExpressionNodeBinaryOperator::PromoteTypes (const dCILInstr::dArgType typeA, const dCILInstr::dArgType typeB) const
 {
-dAssert (0);
-/*
-	if (typeA.m_type != typeB.m_type) {
-		switch (typeA.m_type) 
+	dCILInstr::dArgType type (typeA);
+	dAssert (!typeA.m_isPointer);
+	dAssert (!typeB.m_isPointer);
+	if (typeA.m_intrinsicType != typeB.m_intrinsicType) {
+		switch (typeA.m_intrinsicType) 
 		{
-			case dCIL::m_int:
+			case dCILInstr::m_constInt:
 			{
-				switch (typeB.m_type) 
+				switch (typeB.m_intrinsicType) 
 				{
-					case dCIL::m_double:
-					{
-						typeA.m_type = dCIL::m_double;
-						typeA.m_f = typeA.m_i;
+					case dCILInstr::m_int:
+						type.m_intrinsicType = dCILInstr::m_int;
 						break;
-					}
-
-					case dCIL::m_void:
-					case dCIL::m_bool:
-					case dCIL::m_byte:
-					case dCIL::m_short:
-					case dCIL::m_int:
-					case dCIL::m_long:
-					case dCIL::m_float:
-					case dCIL::m_classPointer:
+					default:;
 						dAssert (0);
-						break;
 				}
-
 				break;
 			}
 
-			case dCIL::m_void:
-			case dCIL::m_bool:
-			case dCIL::m_byte:
-			case dCIL::m_short:
-			
-			case dCIL::m_long:
-			case dCIL::m_float:
-			case dCIL::m_double:
-			case dCIL::m_classPointer:
-				dAssert (0);
+			case dCILInstr::m_int:
+			{
+				switch (typeB.m_intrinsicType) 
+				{
+					case dCILInstr::m_constInt:
+						type.m_intrinsicType = dCILInstr::m_int;
+						break;
+
+					default:;
+						dAssert (0);
+				}
 				break;
+			}
+
+			default:;
+				dAssert (0);
 		}
 	}
-*/
+
+	switch (type.m_intrinsicType) 
+	{
+		case dCILInstr::m_constInt:
+			type.m_intrinsicType = dCILInstr::m_int;
+			break;
+
+		case dCILInstr::m_int:
+			break;
+
+		default:;
+			dAssert (0);
+	}
+
+	return type;
+
 }
 
-dCIL::dReturnValue dDAGExpressionNodeBinaryOperator::Evalue(dCIL& cil)
+dCIL::dReturnValue dDAGExpressionNodeBinaryOperator::Evalue(const dDAGFunctionNode* const function)
 {
-	dCIL::dReturnValue val;
 dAssert (0);
+return dCIL::dReturnValue();
 /*
-	dCIL::dReturnValue operandA (m_expressionA->Evalue(cil));
-	dCIL::dReturnValue operandB (m_expressionB->Evalue(cil));
+	dCIL::dReturnValue operandA (m_expressionA->Evalue(function));
+	dCIL::dReturnValue operandB (m_expressionB->Evalue(function));
 	PromoteTypes (operandA, operandB);
 
+	dCIL::dReturnValue val (operandA);	
 	val.m_type = operandA.m_type;
 	switch (m_operator) 
 	{
@@ -191,95 +201,85 @@ dAssert (0);
 		default:
 			dAssert (0);
 	}
-*/
 	return val;
+*/
 }
 
 void dDAGExpressionNodeBinaryOperator::CompileCIL(dCIL& cil)  
 {
 	m_expressionA->CompileCIL(cil);
-	dTreeAdressStmt::dArg arg1 (LoadLocalVariable(cil, m_expressionA->m_result));
 
+	dCILInstr::dArg arg1 (LoadLocalVariable(cil, m_expressionA->m_result));
 	m_expressionB->CompileCIL(cil);
-	dTreeAdressStmt::dArg arg2 (LoadLocalVariable(cil, m_expressionB->m_result));
+	dCILInstr::dArg arg2 (LoadLocalVariable(cil, m_expressionB->m_result));
 
-	dTreeAdressStmt& stmt = cil.NewStatement()->GetInfo();
-	m_result.m_label = cil.NewTemp ();		
-	stmt.m_instruction = dTreeAdressStmt::m_assigment;
-	stmt.m_arg0 = m_result;
-	stmt.m_arg0.m_type = m_expressionA->m_result.m_type;
-
-	stmt.m_arg1 = arg1;
-	stmt.m_arg2 = arg2;
-	dAssert (stmt.m_arg1.m_type == stmt.m_arg2.m_type);
-
+	dCILThreeArgInstr::dOperator operation = dCILThreeArgInstr::m_add;
 	switch (m_operator) 
 	{
 		case m_add:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_add;
+			operation = dCILThreeArgInstr::m_add;
 			break;
 		}
 
-
 		case m_sub:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_sub;
+			operation = dCILThreeArgInstr::m_sub;
 			break;
 		}
 
 		case m_mul:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_mul;
+			operation = dCILThreeArgInstr::m_mul;
 			break;
 		}
 
 		case m_div:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_div;
+			operation = dCILThreeArgInstr::m_div;
 			break;
 		}
 
 		case m_mod:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_mod;
+			operation = dCILThreeArgInstr::m_mod;
 			break;
 		}
 
 		case m_identical:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_identical;
+			operation = dCILThreeArgInstr::m_identical;
 			break;
 		}
 
 		case m_different:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_different;
+			operation = dCILThreeArgInstr::m_different;
 			break;
 		}
 
 
 		case m_less:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_less;
+			operation = dCILThreeArgInstr::m_less;
 			break;
 		}
 
 		case m_lessEqual:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_lessEqual;
+			operation = dCILThreeArgInstr::m_lessEqual;
 			break;
 		}
 		
 		case m_greather:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_greather;
+			operation = dCILThreeArgInstr::m_greather;
 			break;
 		}
 	
 		case m_greatherEqual:
 		{
-			stmt.m_operator = dTreeAdressStmt::m_greatherEqual;
+			operation = dCILThreeArgInstr::m_greatherEqual;
 			break;
 		}
 		
@@ -287,5 +287,7 @@ void dDAGExpressionNodeBinaryOperator::CompileCIL(dCIL& cil)
 			dAssert (0);
 	}
 
-	DTRACE_INTRUCTION (&stmt);
+	m_result.m_label = cil.NewTemp ();		
+	dCILInstrIntergerLogical* const instr = new dCILInstrIntergerLogical(cil, operation, m_result.m_label, PromoteTypes (m_expressionA->m_result, m_expressionB->m_result), arg1.m_label, arg1.GetType(), arg2.m_label, arg2.GetType()); 
+	instr->Trace();
 }

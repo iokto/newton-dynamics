@@ -17,7 +17,9 @@
 #include "dDAGScopeBlockNode.h"
 
 
-dString dDAG::dScopePrefix ("scope");
+dString dDAG::m_scopePrefix ("scope");
+dString dDAG::m_prototypeSeparator ("::");
+
 
 dRttiRootClassSupportImplement(dDAG);
 
@@ -45,10 +47,10 @@ dDAGScopeBlockNode* dDAG::GetScope() const
 	return NULL;
 }
 
-dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* dDAG::FindLocalVariable(const dString& name) const
+dTree<dCILInstr::dArg, dString>::dTreeNode* dDAG::FindLocalVariable(const dString& name) const
 {
 	for (const dDAGScopeBlockNode* scope = GetScope(); scope; scope = scope->m_parent->GetScope()) {
-		dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* const variableNode = scope->m_localVariables.Find(name);	
+		dTree<dCILInstr::dArg, dString>::dTreeNode* const variableNode = scope->m_localVariables.Find(name);	
 		if (variableNode) {
 			return variableNode;
 		}
@@ -57,17 +59,13 @@ dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* dDAG::FindLocalVariable(const 
 }
 
 
-dTreeAdressStmt::dArg dDAG::LoadLocalVariable (dCIL& cil, const dTreeAdressStmt::dArg& arg) const
+dCILInstr::dArg dDAG::LoadLocalVariable (dCIL& cil, const dCILInstr::dArg& arg) const
 {
-	if (arg.m_label.Find(dScopePrefix) == 0) {
-		dTreeAdressStmt& loadVar = cil.NewStatement()->GetInfo();
-		loadVar.m_instruction = dTreeAdressStmt::m_loadBase;
-		loadVar.m_arg1 = arg;
-		loadVar.m_arg0.m_label = cil.NewTemp();
-		loadVar.m_arg0.m_type = loadVar.m_arg1.m_type;
-		DTRACE_INTRUCTION (&loadVar);
-		return loadVar.m_arg0;
-	}
+//	if (arg.m_label.Find(m_scopePrefix) == 0) {
+//		dCILInstrLoad* const load = new dCILInstrLoad (cil, cil.NewTemp(), arg, arg.m_label, arg);
+//		load->Trace();
+//		return load->GetArg0();
+//	}
 	return arg;
 }
 
@@ -101,7 +99,7 @@ bool dDAG::RenameLocalVariable(dCIL& cil, dString& variable) const
 		char text[256];
 		sprintf (text, "%s%d%s", D_SCOPE_PREFIX, scope->m_scopeLayer, variable.GetStr());
 
-		dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* const varNode = scope->m_localVariables.Find(text);
+		dTree<dCILInstr::dArg, dString>::dTreeNode* const varNode = scope->m_localVariables.Find(text);
 		if (varNode) {
 			variable = text;
 			return true;
@@ -113,8 +111,8 @@ bool dDAG::RenameLocalVariable(dCIL& cil, dString& variable) const
 	if (functionVariable) {
 		if (functionVariable->m_result.m_label == "") {
 			dAssert(0);
-			dTreeAdressStmt& fntArg = cil.NewStatement()->GetInfo();
-			fntArg.m_instruction = dTreeAdressStmt::m_loadBase;
+			dCILInstr& fntArg = cil.NewStatement()->GetInfo();
+			fntArg.m_instruction = dCILInstr::m_loadBase;
 			fntArg.m_arg0.m_label = cil.NewTemp();
 			fntArg.m_arg2.m_label = functionVariable->m_name;
 			DTRACE_INTRUCTION (&fntArg);

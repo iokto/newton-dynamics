@@ -33,46 +33,31 @@ dDAGExpressionNodePrefixPostfix::~dDAGExpressionNodePrefixPostfix(void)
 
 void dDAGExpressionNodePrefixPostfix::ConnectParent(dDAG* const parent) 
 {
-dAssert (0);
 	m_parent = parent;
 	m_expression->ConnectParent(this) ;
 }
 
 void dDAGExpressionNodePrefixPostfix::CompileCIL(dCIL& cil)
 {
-	dAssert (0);
-	/*
-
 	m_expression->CompileCIL(cil);
+	dCILInstr::dArg arg1 (LoadLocalVariable(cil, m_expression->m_result));
 
+	dCILInstrMove* move = NULL;
 	if (m_isPrefix) {
-		dTreeAdressStmt& stmt = cil.NewStatement()->GetInfo();
-		stmt.m_instruction = dTreeAdressStmt::m_assigment;
-		stmt.m_operator = m_isIncrement ? dTreeAdressStmt::m_add : dTreeAdressStmt::m_sub;
-		stmt.m_arg0 = m_expression->m_result;
-		stmt.m_arg1 = m_expression->m_result;
-		stmt.m_arg2.m_type = dTreeAdressStmt::m_intConst;
-		stmt.m_arg2.m_label = "1";
-		DTRACE_INTRUCTION (&stmt);
-		m_result = stmt.m_arg0;
+		dCILInstrIntergerLogical* const stmt = new dCILInstrIntergerLogical (cil, m_isIncrement ? dCILThreeArgInstr::m_add : dCILThreeArgInstr::m_sub, cil.NewTemp(), arg1.GetType(), arg1.m_label, arg1.GetType(), "1", dCILInstr::dArgType (dCILInstr::m_constInt));
+		stmt->Trace();
+
+		move = new dCILInstrMove (cil, arg1.m_label, arg1.GetType(), stmt->GetArg0().m_label, stmt->GetArg0().GetType());
+		move->Trace();
+
 	} else {
-		dTreeAdressStmt& stmt1 = cil.NewStatement()->GetInfo();
-		stmt1.m_instruction = dTreeAdressStmt::m_assigment;
-		stmt1.m_arg0.m_label = cil.NewTemp();
-		stmt1.m_arg1 = m_expression->m_result;
-		DTRACE_INTRUCTION (&stmt1);
+		move = new dCILInstrMove(cil, cil.NewTemp(), arg1.GetType(), arg1.m_label, arg1.GetType());
+		move->Trace();
 
-		dTreeAdressStmt& stmt = cil.NewStatement()->GetInfo();
-		stmt.m_instruction = dTreeAdressStmt::m_assigment;
-		stmt.m_operator = m_isIncrement ? dTreeAdressStmt::m_add : dTreeAdressStmt::m_sub;
-		stmt.m_arg0 = m_expression->m_result;
-		stmt.m_arg1 = m_expression->m_result;
-		stmt.m_arg2.m_type = dTreeAdressStmt::m_intConst;
-		stmt.m_arg2.m_label = "1";
-		DTRACE_INTRUCTION (&stmt);
-
-		m_result = stmt1.m_arg0;
+		dCILInstrIntergerLogical* const stmt = new dCILInstrIntergerLogical(cil, m_isIncrement ? dCILThreeArgInstr::m_add : dCILThreeArgInstr::m_sub, arg1.m_label, arg1.GetType(), arg1.m_label, arg1.GetType(), "1", dCILInstr::dArgType(dCILInstr::m_constInt));
+		stmt->Trace();
 	}
-*/
+
+	m_result = move->GetArg0();
 }
 

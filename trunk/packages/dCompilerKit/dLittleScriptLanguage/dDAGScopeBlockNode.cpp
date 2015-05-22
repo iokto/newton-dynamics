@@ -38,16 +38,16 @@ void dDAGScopeBlockNode::AddStatement (dDAGFunctionStatement* const statement)
 	m_statementList.Append(statement);
 }
 
-void dDAGScopeBlockNode::AddVariable (const dString& name, dTreeAdressStmt::dArgType type)
+void dDAGScopeBlockNode::AddVariable (const dString& name, dCILInstr::dArgType type)
 {
-	dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* const node = m_localVariables.Insert(name);
+	dTree<dCILInstr::dArg, dString>::dTreeNode* const node = m_localVariables.Insert(name);
 	dAssert (node);
-	dTreeAdressStmt::dArg& arg = node->GetInfo();
-	arg.m_type = type;
-	arg.m_label = dScopePrefix + dString (m_scopeLayer) + name, name;
+	dCILInstr::dArg& arg = node->GetInfo();
+	arg.SetType (type);
+	arg.m_label = m_scopePrefix + dString (m_scopeLayer) + name;
 }
 
-dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* dDAGScopeBlockNode::FindVariable(const dString& name) const
+dTree<dCILInstr::dArg, dString>::dTreeNode* dDAGScopeBlockNode::FindVariable(const dString& name) const
 {
 	return m_localVariables.Find(name);
 }
@@ -81,10 +81,10 @@ void dDAGScopeBlockNode::CompileCIL(dCIL& cil)
 
 	for (dList<dString>::dListNode* node = m_allocations.GetLast(); node; node = node->GetPrev()) {
 		dAssert (0);
-		dTreeAdressStmt& allocationStmt = cil.NewStatement()->GetInfo();
-		allocationStmt.m_instruction = dTreeAdressStmt::m_release;
-		allocationStmt.m_arg0.m_label = node->GetInfo();
-		DTRACE_INTRUCTION (&allocationStmt);
+		//dCILInstr& allocationStmt = cil.NewStatement()->GetInfo();
+		//allocationStmt.m_instruction = dCILInstr::m_release;
+		//allocationStmt.m_arg0.m_label = node->GetInfo();
+		//DTRACE_INTRUCTION (&allocationStmt);
 	}
 }
 

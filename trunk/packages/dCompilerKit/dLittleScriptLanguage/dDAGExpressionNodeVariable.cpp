@@ -90,59 +90,58 @@ void dDAGExpressionNodeVariable::ConnectParent(dDAG* const parent)
 	}
 }
 
-dCIL::dReturnValue dDAGExpressionNodeVariable::Evalue(dCIL& cil)
+dCIL::dReturnValue dDAGExpressionNodeVariable::Evalue(const dDAGFunctionNode* const function)
 {
-	dCIL::dReturnValue val;
-	dDAGClassNode* const myClass = GetClass();
-	for (dList<dDAGExpressionClassVariable*>::dListNode* node = myClass->m_variables.GetFirst(); node; node = node->GetNext()) {
-		dDAGExpressionClassVariable* const variable = node->GetInfo();
-		if (variable->m_variable->m_name == m_name) {
-			if (variable->m_iniatilized) {
-				return variable->m_initialValue;
-			} else {
-				dAssert (0);
+	if (function) {
+		dTree<dCILInstr::dArg, dString>::dTreeNode* const node = FindLocalVariable (m_name);
+		dAssert (node);
+
+	} else {
+		dAssert(0);
+		dCIL::dReturnValue val;
+		dDAGClassNode* const myClass = GetClass();
+		for (dList<dDAGExpressionClassVariable*>::dListNode* node = myClass->m_variables.GetFirst(); node; node = node->GetNext()) {
+			dDAGExpressionClassVariable* const variable = node->GetInfo();
+			if (variable->m_variable->m_name == m_name) {
+				if (variable->m_iniatilized) {
+					return variable->m_initialValue;
+				} else {
+					dAssert (0);
+				}
 			}
 		}
 	}
 	dAssert(0);
-	return val;
+	return dCIL::dReturnValue();
 }
 
 void dDAGExpressionNodeVariable::CompileCIL(dCIL& cil)
 {
 //	dDAGFunctionNode* const function = GetFunction();
 	if (m_dimExpressions.GetCount()) {
-		dAssert(0);
-/*
 		dDAGDimensionNode* const dim = m_dimExpressions.GetFirst()->GetInfo();
 		dim->CompileCIL(cil);
-		dCIL::dListNode* const dimInstruction = cil.NewStatement();
-		dTreeAdressStmt& addressIndex = dimInstruction->GetInfo();
-		addressIndex.m_instruction = dTreeAdressStmt::m_assigment;
-		addressIndex.m_arg0.m_label = cil.NewTemp();
-		addressIndex.m_arg1 = dim->m_result; 
 
-		dString result = addressIndex.m_arg0.m_label;
-		DTRACE_INTRUCTION (&addressIndex);
+		dString result = dim->m_result.m_label;
 
 		for (dList<dDAGDimensionNode*>::dListNode* node = m_dimExpressions.GetFirst()->GetNext(); node; node = node->GetNext()) {
 			dAssert (0);
-
+/*
 			dDAGDimensionNode* const dim = node->GetInfo();
 			dim->CompileCIL(cil);
 			
-			dTreeAdressStmt& stmtMul = cil.NewStatement()->GetInfo();
-			stmtMul.m_instruction = dTreeAdressStmt::m_assigment;
-			stmtMul.m_operator = dTreeAdressStmt::m_mul;
+			dThreeAdressStmt& stmtMul = cil.NewStatement()->GetInfo();
+			stmtMul.m_instruction = dThreeAdressStmt::m_assigment;
+			stmtMul.m_operator = dThreeAdressStmt::m_mul;
 			stmtMul.m_arg0.m_label = cil.NewTemp();
 			stmtMul.m_arg1.m_label = result;
 			stmtMul.m_arg2.m_label = dim->m_arraySize;
 
 			DTRACE_INTRUCTION (&stmtMul);
 
-			dTreeAdressStmt& stmtAdd = cil.NewStatement()->GetInfo();
-			stmtAdd.m_instruction = dTreeAdressStmt::m_assigment;
-			stmtAdd.m_operator = dTreeAdressStmt::m_add;
+			dThreeAdressStmt& stmtAdd = cil.NewStatement()->GetInfo();
+			stmtAdd.m_instruction = dThreeAdressStmt::m_assigment;
+			stmtAdd.m_operator = dThreeAdressStmt::m_add;
 			stmtAdd.m_arg0.m_label = cil.NewTemp();
 			stmtAdd.m_arg1.m_label = stmtMul.m_arg0.m_label;
 			stmtAdd.m_arg2 = dim->m_result;
@@ -150,57 +149,32 @@ void dDAGExpressionNodeVariable::CompileCIL(dCIL& cil)
 			result = stmtAdd.m_arg0.m_label;
 
 			DTRACE_INTRUCTION (&stmtAdd);
+*/
 		}
 
+		dTree<dCILInstr::dArg, dString>::dTreeNode* const variable1 = dDAG::FindLocalVariable(m_name);
+		dAssert (variable1);
+
+		dCILInstr::dArg arg1 (LoadLocalVariable(cil, variable1->GetInfo()));
 		dAssert (m_parent);
-		#ifdef D_USE_COMPLEX_ADRESSING_MODE
 
-			// emit an indirect addressing mode
-			dTreeAdressStmt& tmp = cil.NewStatement()->GetInfo();
-			tmp.m_instruction = dTreeAdressStmt::m_load;
-			tmp.m_arg0.m_label = cil.NewTemp();
-			tmp.m_arg1.m_label = variable;
-			tmp.m_arg2.m_label = result;
-			// the size of the integer register in power of two
-			tmp.m_extraInformation = 2;
-			DTRACE_INTRUCTION (&tmp);
-			m_result.m_label = tmp.m_arg0.m_label; 
+		int size = arg1.GetSizeInByte();
+		dCILInstrIntergerLogical* const mulOffset = new dCILInstrIntergerLogical (cil, dCILThreeArgInstr::m_mul, cil.NewTemp(), dCILInstr::dArgType (dCILInstr::m_int), result, dCILInstr::dArgType (dCILInstr::m_int), dString(size), dCILInstr::m_constInt);
+		mulOffset->Trace();
 
-		#else
-			dTreeAdressStmt& dimSize = cil.NewStatement()->GetInfo();
-			dimSize.m_instruction = dTreeAdressStmt::m_assigment;
-			dimSize.m_operator = dTreeAdressStmt::m_mul;
-			dimSize.m_arg0.m_label = cil.NewTemp();
-			dimSize.m_arg1.m_label = result; 
-			dimSize.m_arg2.m_type = dTreeAdressStmt::m_intConst;
-			dimSize.m_arg2.m_label = "4"; 
-			DTRACE_INTRUCTION (&dimSize);
+		dCILInstrIntergerLogical* const address = new dCILInstrIntergerLogical (cil, dCILThreeArgInstr::m_add, cil.NewTemp(), arg1.GetType(), arg1.m_label, arg1.GetType(), mulOffset->GetArg0().m_label, mulOffset->GetArg0().GetType());
+		address->Trace();
 
-			dAssert (m_parent);
-			// emit an indirect addressing mode
-			dTreeAdressStmt& tmp = cil.NewStatement()->GetInfo();
-			tmp.m_instruction = dTreeAdressStmt::m_load;
-			tmp.m_arg0.m_label = cil.NewTemp();
-			tmp.m_arg1.m_label = variable;
-			tmp.m_arg2.m_label = dimSize.m_arg0.m_label;
-			DTRACE_INTRUCTION (&tmp);
-			m_result.m_label = tmp.m_arg0.m_label; 
-	   #endif
-*/
-
+		m_result = dCILInstr::dArg (cil.NewTemp(), arg1.GetType());
+		m_result.m_isPointer = false;
+		dCILInstrLoad* const load = new dCILInstrLoad (cil, m_result.m_label, m_result.GetType(), address->GetArg0().m_label, address->GetArg0().GetType()); 
+		load->Trace();
+		m_result = load->GetArg0();
+		
 	} else {
-		dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* const variable = dDAG::FindLocalVariable(m_name);
+		dTree<dCILInstr::dArg, dString>::dTreeNode* const variable = dDAG::FindLocalVariable(m_name);
 		dAssert (variable);
 		m_result = variable->GetInfo();
-/*
-		dTreeAdressStmt& loadVar = cil.NewStatement()->GetInfo();
-		loadVar.m_instruction = dTreeAdressStmt::m_loadBase;
-		loadVar.m_arg1 = variable->GetInfo();
-		loadVar.m_arg0.m_label = cil.NewTemp();
-		loadVar.m_arg0.m_type = loadVar.m_arg1.m_type;
-		m_result = loadVar.m_arg0;
-		DTRACE_INTRUCTION (&loadVar);
-*/
 	}
 }
 

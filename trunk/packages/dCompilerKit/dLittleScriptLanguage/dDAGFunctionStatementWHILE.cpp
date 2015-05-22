@@ -31,44 +31,40 @@ dDAGFunctionStatementWHILE::~dDAGFunctionStatementWHILE()
 
 void dDAGFunctionStatementWHILE::ConnectParent(dDAG* const parent)
 {
-dAssert (0);
 	dDAGFunctionStatementFlow::ConnectParent(parent);
+	if (m_expression) {
+		m_expression->ConnectParent(this);
+	}
 }
 
 
+dDAGFunctionStatement* const dDAGFunctionStatementWHILE::GetPostFixStatement() const
+{
+	return NULL;
+}
+
 void dDAGFunctionStatementWHILE::CompileCIL(dCIL& cil)  
 {
-dAssert (0);
-/*
-	dCIL::dListNode* startExpressionTestNode = NULL;
+	dCILInstrConditional* conditional = NULL;
 	if (m_testExpression) {
 		m_testExpression->CompileCIL(cil);
-
-		dTreeAdressStmt& tmpTest = cil.NewStatement()->GetInfo();
-		tmpTest.m_instruction = dTreeAdressStmt::m_assigment;
-		tmpTest.m_operator = dTreeAdressStmt::m_nothing;
-		tmpTest.m_arg0.m_label = cil.NewTemp();
-		tmpTest.m_arg1.m_type = dTreeAdressStmt::m_intConst;
-		tmpTest.m_arg1.m_label = "0"; 
-		DTRACE_INTRUCTION (&tmpTest);
-
-		startExpressionTestNode = cil.NewStatement();
-		dTreeAdressStmt& stmt = startExpressionTestNode->GetInfo();
-		stmt.m_instruction = dTreeAdressStmt::m_if;
-		stmt.m_operator = dTreeAdressStmt::m_identical;
-		stmt.m_arg0 = m_testExpression->m_result;
-		stmt.m_arg1 = tmpTest.m_arg0;
-		
-		stmt.m_arg2.m_label = "loopExit"; 
-		DTRACE_INTRUCTION (&stmt);
+		conditional = new dCILInstrConditional (cil, dCILInstrConditional::m_ifnot, m_expression->m_result.m_label, m_expression->m_result.GetType(), "xxx", "xxx");
+		conditional->Trace();
+	} else {
+		dAssert (0);
 	}
 
-	dCIL::dListNode* const exitLabelStmtNode = CompileCILLoopBody(cil, NULL);
+	dDAGFunctionStatementFlow::CompileCIL(cil);
 
-	if (startExpressionTestNode) {
-		dTreeAdressStmt& stmt = startExpressionTestNode->GetInfo();
-		stmt.m_jmpTarget = exitLabelStmtNode;
-		stmt.m_arg2.m_label = exitLabelStmtNode->GetInfo().m_arg0.m_label; 
+	if (conditional) {
+		dCILInstrLabel* const exitLabel = cil.GetLast()->GetInfo()->GetAsLabel();
+		dCILInstrLabel* const entryLabel = conditional->GetNode()->GetNext()->GetInfo()->GetAsLabel();
+		dAssert (exitLabel);
+		dAssert (entryLabel);
+		conditional->SetLabels (exitLabel->GetArg0().m_label, entryLabel->GetArg0().m_label);
+		conditional->SetTargets (exitLabel, entryLabel);
+		//conditional->Trace();
 	}
-*/
+
+//cil.Trace();
 }

@@ -14,9 +14,8 @@
 
 
 #include "dCILstdafx.h"
-#include "dTreeAdressStmt.h"
+#include "dCILInstr.h"
 
-/*
 class dDataFlowGraph;
 class dRegisterInterferenceNode;
 
@@ -45,6 +44,7 @@ class dRegisterInterferenceNode
 		,m_registerIndex (-1)
 		,m_inSet (false)
 		,m_isMove(false)
+		,m_saveRegisterOnEntry(false)
 	{
 	}
 
@@ -54,6 +54,7 @@ class dRegisterInterferenceNode
 	int m_registerIndex;
 	bool m_inSet;
 	bool m_isMove;
+	bool m_saveRegisterOnEntry;
 };
 
 
@@ -88,30 +89,34 @@ class dRegisterInterferenceGraph: public dTree<dRegisterInterferenceNode, dStrin
 	};
 
 	dRegisterInterferenceGraph (dDataFlowGraph* const flowGraph, int registerCount);
-	private:
 
+/*
+	dString GetRegisterName(const dString& varName) const;
+
+	private:
 	void Build();
 	int ColorGraph ();
 	void CoalesceNodes();
 	dTreeNode* GetBestNode();
 	void AllocateRegisters ();
+	void InsertEpilogAndProlog();
 	void SelectSpillVariableAndReWriteFunction();
     bool IsTempVariable (const dString& name) const;
 	int GetRegisterIndex (const dString& varName) const;
-	dString GetRegisterName (const dString& varName) const;
+	
 	bool CoalesceNodesRule1 (dTreeNode* const nodeA, dTreeNode* const nodeB);
 	bool CoalesceNodesRule2 (dTreeNode* const nodeA, dTreeNode* const nodeB);
 	void ReWriteFunctionSpillingVarible(const dString& spillVariable);
-	void SaveSpillRegister(dCIL::dListNode* const node, dTreeAdressStmt::dArg& argument, const dString& spillVariable, const dString& spillMemory);
-	void LoadSpillRegister(dCIL::dListNode* const node, dTreeAdressStmt::dArg& argument, const dString& spillVariable, const dString& spillMemory);
-
+	void SaveSpillRegister(dCIL::dListNode* const node, dCILInstr::dArg& argument, const dString& spillVariable, const dString& spillMemory);
+	void LoadSpillRegister(dCIL::dListNode* const node, dCILInstr::dArg& argument, const dString& spillVariable, const dString& spillMemory);
+	
 	dTree<int, dString> m_spillPenalty;
 	dList<dCoalescedNodePair> m_coalescedNodes;
 	dDataFlowGraph* m_flowGraph;
 	int m_spillCount;
 	int m_registerCount;
 	int m_spillPenatryFactor;
-};
 */
+};
 
 #endif

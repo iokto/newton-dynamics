@@ -57,30 +57,12 @@ dScriptCompiler::dScriptCompiler(const char* const pakacgesRootNameDirectory)
 	:dLittleScriptParser ()
 	,m_packageRootDirectory (pakacgesRootNameDirectory)
 	,m_currentPackage(NULL)
-	,m_currentFunction(NULL)
+	//,m_currentFunction(NULL)
 	,m_classList()
 	,m_scopeStack()
 	,m_allNodes()
-	,m_context()
-	,m_module()
 {
 	_mkdir(m_packageRootDirectory.GetStr());
-
-	m_module = llvm::OwningPtr<llvm::Module> (new llvm::Module("test", m_context));
-
-/*
-//formatted_raw_ostream out;
-//std::string errorInfo;
-//raw_fd_ostream out ("xxxxxxx.bc", errorInfo);
-//WriteBitcodeToFile (M.get(), out);
-//out.close();
-//formatted_raw_ostream input;
-//ReadBitcodeToFile (M.get(), input);
-//dCIL* const cil = dCIL::CreateTargetMachine();
-//scripClass->CompileCIL (cil);
-//M->dump();
-	dAssert (0);
-*/
 }
 
 dScriptCompiler::~dScriptCompiler()
@@ -98,53 +80,6 @@ dScriptCompiler::~dScriptCompiler()
 */
 }
 
-
-#if 0
-
-
-void dScriptCompiler::DisplayError (const char* format, ...) const
-{
-	va_list v_args;
-	char* const text = (char*) malloc (strlen (format) + 2048);
-
-	text[0] = 0;
-	va_start (v_args, format);     
-	vsprintf(text, format, v_args);
-	va_end (v_args);            
-
-	fprintf (stderr, text);
-#ifdef _MSC_VER  
-	OutputDebugStringA (text);
-#endif	
-
-	free (text);
-}
-
-void dScriptCompiler::SyntaxError (const dLittleScriptLexical& scanner, const dUserVariable& errorToken, const dUserVariable& errorTokenMarker)
-{
-	const char* const data = scanner.GetData();
-	int start = errorToken.m_scannerIndex;
-	int lineNumber = errorToken.m_scannerLine + 1;
-	while (data[start] && isspace (data[start])) {
-		if (data[start] == '\n') {
-			lineNumber ++;
-		}
-		start ++;
-	}
-
-	int end = errorTokenMarker.m_scannerIndex;
-	while (data[end] && isspace (data[end])) {
-		end --;
-	}
-	dAssert (end >= start);
-
-	int length = end - start + 1;
-	dString errorLine (&data[start], length);
-	DisplayError ("%s (%d) : syntax error on line: %s\n", m_fileName, lineNumber, errorLine.GetStr());
-}
-
-
-#endif
 
 // parcel callbacks section
 bool dScriptCompiler::Parse(dLittleScriptLexical& scanner)
@@ -165,28 +100,31 @@ int dScriptCompiler::CompileSource (const char* const source)
 			scripClass->ConnectParent (NULL);
 		}
 
-		dCIL cil (m_module.get());
+		dCIL cil;
 		for (dList<dDAGClassNode*>::dListNode* node = m_classList.GetFirst(); node; node = node->GetNext()) {
 			dDAGClassNode* const scripClass = node->GetInfo();
 			scripClass->CompileCIL (cil);
-//			dTrace(("\n"));
-//			dTrace(("optimized version\n"));
-//			cil.Trace();
-
-			scripClass->TranslateToLLVM (cil, m_module.get(), m_context);
-
-			//_ASSERTE (m_currentPackage);
-//			//m_currentPackage->AddClass(scripClass, cil);
 		}
 
-		if (llvm::verifyModule(*m_module)) {
-			llvm::errs() << ": Error constructing function!\n";
-			dAssert (0);
+		for (dList<dDAGClassNode*>::dListNode* node = m_classList.GetFirst(); node; node = node->GetNext()) {
+			dDAGClassNode* const scripClass = node->GetInfo();
+			scripClass->Optimize(cil);
 		}
-		llvm::errs() << *m_module;
+
+/*
+		for (dList<dDAGClassNode*>::dListNode* node = m_classList.GetFirst(); node; node = node->GetNext()) {
+			dDAGClassNode* const scripClass = node->GetInfo();
+			scripClass->ConvertToTarget (cil);
+		}
+
+		dVirtualMachine* const program = cil.BuilExecutable();
+		delete program;
+*/
 	}
 	return 0;
 }
+
+
 
 void dScriptCompiler::ImportClass (const dString& className)
 {
@@ -207,19 +145,20 @@ dDAGScopeBlockNode* dScriptCompiler::GetCurrentScope() const
 dScriptCompiler::dUserVariable dScriptCompiler::NewExpressionNodeConstant (const dUserVariable& value)
 {
 	dUserVariable returnNode;
-	dTreeAdressStmt::dArgType type = dTreeAdressStmt::m_int;
+	dCILInstr::dArgType type (dCILInstr::m_constInt);
+
 	switch (int (value.m_token))
 	{
 		case _THIS:
-			type = dTreeAdressStmt::m_classPointer;
+			type = dCILInstr::m_classPointer;
 			break;
 
 		case _FLOAT_CONST:
-			type = dTreeAdressStmt::m_double;
+			type = dCILInstr::m_constFloat;
 			break;
 
 		case _INTEGER_CONST:
-			type = dTreeAdressStmt::m_int;
+			type = dCILInstr::m_constInt;
 			break;
 
 //		case STRING_VALUE:
@@ -232,7 +171,6 @@ dScriptCompiler::dUserVariable dScriptCompiler::NewExpressionNodeConstant (const
 
 	dDAGExpressionNodeConstant* const node = new dDAGExpressionNodeConstant (m_allNodes, type, value.m_data.GetStr());
 	returnNode.m_node = node;
-
 	return returnNode;
 }
 
@@ -397,6 +335,7 @@ dScriptCompiler::dUserVariable dScriptCompiler::AddClassFunction (const dUserVar
 	GetCurrentClass()->AddFunction(functionNode);
 
 	returnNode.m_node = functionNode;
+	//m_currentFunction = functionNode;
 	return returnNode;
 }
 
@@ -643,8 +582,6 @@ dScriptCompiler::dUserVariable dScriptCompiler::AddClassVariableInitilization(co
 dScriptCompiler::dUserVariable dScriptCompiler::ConcatenateExpressions(const dUserVariable& expressionA, const dUserVariable& expressionB)
 {
 	dUserVariable returnNode;
-dAssert (0);
-/*
 	dDAGExpressionNode* const nodeA = (dDAGExpressionNode*)expressionA.m_node;
 	dDAGExpressionNode* const nodeB = (dDAGExpressionNode*)expressionB.m_node;
 	dAssert (nodeA->IsType(dDAGExpressionNode::GetRttiType()));
@@ -658,7 +595,7 @@ dAssert (0);
 	if (leftVarListA && leftVarListA->m_type) {
 		dDAGExpressionNodeVariable* const leftVarListB = nodeB->FindLeftVariable();
 		if (leftVarListB && !leftVarListB->m_type) {
-dAssert (0);
+
 			dUserVariable localVariable(NewVariableStatement (leftVarListB->m_name, ""));
 
 			dDAGParameterNode* const variableNode = (dDAGParameterNode*)localVariable.m_node;
@@ -670,13 +607,14 @@ dAssert (0);
 				dDAGScopeBlockNode* const block = GetCurrentScope();
 				block->AddStatement(variableNode);
 			} else {
-				dDAGClassNode* const curClass = GetCurrentClass();
-				curClass->AddVariable(variableNode);
+				dAssert (0);
+				//dDAGClassNode* const curClass = GetCurrentClass();
+				//curClass->AddVariable(variableNode);
 			}
 		}
 	}
 	returnNode.m_node = nodeA;
-*/
+
 	return returnNode;
 }
 
@@ -800,6 +738,7 @@ dScriptCompiler::dUserVariable dScriptCompiler::NewExpressionFunctionCall (const
 {
 	dUserVariable returnNode;
 
+	//dAssert (m_currentFunction);
 	dDAGExpressionNode* const argumentListNode = (dDAGExpressionNode*) argumnetList.m_node;
 	dAssert (!argumentListNode || argumentListNode->IsType(dDAGExpressionNode::GetRttiType()));
 	dDAGExpressionNodeFunctionCall* const fntCall = new dDAGExpressionNodeFunctionCall(m_allNodes, name.GetStr(), argumentListNode);
@@ -1010,5 +949,3 @@ void dScriptCompiler::OpenPackage (const dString& packageName)
 */
 }
 
-
-void CompileToLLVM ();

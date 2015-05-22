@@ -56,24 +56,45 @@ void dDAGExpressionNodeFunctionCall::ConnectParent(dDAG* const parent)
 void dDAGExpressionNodeFunctionCall::CompileCIL(dCIL& cil)  
 {
 	dDAGClassNode* const myClass = GetClass();
+	dAssert (myClass);
+	//dDAGFunctionNode* const myFunction = myClass->GetCurrentFunction ();
 
+	dString name (m_name);
+	dList<dCILInstr::dArg> paramList;
 	for (dList<dDAGExpressionNode*>::dListNode* node = m_argumentList.GetLast(); node; node = node->GetPrev()) {
 		dDAGExpressionNode* const expNode = node->GetInfo();
 		expNode->CompileCIL(cil);
-		
-		dTreeAdressStmt& stmt = cil.NewStatement()->GetInfo();
-		stmt.m_instruction = dTreeAdressStmt::m_param;
-		stmt.m_arg0 = expNode->m_result;
-		DTRACE_INTRUCTION (&stmt);
+		paramList.Append (LoadLocalVariable(cil, expNode->m_result));
 	}
 
-	dDAGTypeNode* const returnType = myClass->GetFunctionReturnType(m_name.GetStr(), m_argumentList);
 
-	m_result.m_label = cil.NewTemp ();
-	m_result.m_type = returnType->m_intrinsicType;
-	dTreeAdressStmt& call = cil.NewStatement()->GetInfo();
-	call.m_instruction = dTreeAdressStmt::m_call;
-	call.m_arg0 = m_result;
-	call.m_arg1.m_label = myClass->GetFunctionName (m_name.GetStr(), m_argumentList);
-	DTRACE_INTRUCTION (&call);
+	for (dList<dCILInstr::dArg>::dListNode* node = paramList.GetFirst(); node; node = node->GetNext()) {
+		dCILInstr::dArg& arg = node->GetInfo();
+		dCILInstrMove* const move = new dCILInstrMove (cil, cil.NewTemp(), arg.GetType(), arg.m_label, arg.GetType());
+		move->Trace();
+		arg.m_label = move->GetArg0().m_label;
+	}
+
+	for (dList<dCILInstr::dArg>::dListNode* node = paramList.GetLast(); node; node = node->GetPrev()) {
+		const dCILInstr::dArg& arg = node->GetInfo();
+		name += m_prototypeSeparator + arg.GetTypeName();
+	}
+
+	dDAGFunctionNode* const function = myClass->GetFunction (name);
+	dAssert (function);
+	if (function->m_isStatic) {
+		name = myClass->m_name + m_prototypeSeparator + name;
+	}
+
+	dDAGTypeNode* const returnType = function->m_returnType;
+	dString tmp (cil.NewTemp());
+	m_result.SetType (returnType->GetArgType());
+	dCILInstrCall* const instr = new dCILInstrCall(cil, tmp, m_result.GetType(), name, paramList);
+	instr->Trace();
+
+	if (returnType->GetArgType().m_isPointer || (returnType->GetArgType().m_intrinsicType != dCILInstr::m_void)) {
+		m_result.m_label = cil.NewTemp();
+		dCILInstrMove* const move = new dCILInstrMove(cil, m_result.m_label, m_result.GetType(), tmp, m_result.GetType());
+		move->Trace();
+	}
 }

@@ -34,17 +34,21 @@ dDAGExpressionClassVariable::~dDAGExpressionClassVariable ()
 }
 
 
-dCIL::dReturnValue dDAGExpressionClassVariable::Evalue(dCIL& cil) 
+dCIL::dReturnValue dDAGExpressionClassVariable::Evalue(const dDAGFunctionNode* const function) 
 {
+dAssert (0);
+return dCIL::dReturnValue();
+/*
 	dCIL::dReturnValue val;
 	val.m_type = m_variable->m_type->m_intrinsicType;
 	val.m_f = 0.0;
 	if ((dDAG*)m_expression != (dDAG*)m_variable) {
-		val = m_expression->Evalue(cil);
+		val = m_expression->Evalue(function);
 	}
 	m_iniatilized = true;
 	m_initialValue = val;
 	return val;
+*/
 }
 
 void dDAGExpressionClassVariable::ConnectParent(dDAG* const parent)

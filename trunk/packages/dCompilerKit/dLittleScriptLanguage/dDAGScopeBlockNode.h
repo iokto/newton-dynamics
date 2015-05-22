@@ -38,13 +38,13 @@ class dDAGScopeBlockNode: public dDAGFunctionStatement
 	virtual void ConnectParent(dDAG* const parent);
 	void AddSize(int size) ;
 
-	void AddVariable (const dString& name, dTreeAdressStmt::dArgType type);
-	virtual dTree<dTreeAdressStmt::dArg, dString>::dTreeNode* FindVariable(const dString& name) const;
+	void AddVariable (const dString& name, dCILInstr::dArgType type);
+	virtual dTree<dCILInstr::dArg, dString>::dTreeNode* FindVariable(const dString& name) const;
 
 	dDAGRtti(dDAGFunctionStatement);
 	
 	dList<dString> m_allocations;
-	dTree<dTreeAdressStmt::dArg, dString> m_localVariables;	
+	dTree<dCILInstr::dArg, dString> m_localVariables;	
 	dList<dDAGFunctionStatement*> m_statementList;
 	int m_scopeLayer;
 };

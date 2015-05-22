@@ -87,9 +87,9 @@ class dScene: public dSceneGraph, public dRefCounter
 	DSCENE_API virtual dTreeNode* CreateCollisionCompoundNode(dTreeNode* const parent);
 	DSCENE_API virtual dTreeNode* CreateCollisionConvexHullNode(dTreeNode* const parent);
 	DSCENE_API virtual dTreeNode* CreateCollisionChamferCylinderNode(dTreeNode* const parent);
-	//DSCENE_API virtual dScene::dTreeNode* CreateCollisioTreeNode(dTreeNode* const parent);
 	DSCENE_API virtual dTreeNode* CreateCollisioTreeNode(dTreeNode* const parent);
 	DSCENE_API virtual dTreeNode* CreateMeshNode(dTreeNode* const parent);
+	DSCENE_API virtual dTreeNode* CreateLineNode(dTreeNode* const parent);
 	DSCENE_API virtual dTreeNode* CreateSkinModifierNode(dTreeNode* const parent);
 
 	DSCENE_API virtual dTreeNode* CreateMaterialNode (int id);
@@ -149,6 +149,7 @@ class dScene: public dSceneGraph, public dRefCounter
 
 	DSCENE_API virtual void FreezeScale ();
 	DSCENE_API virtual void FreezeGeometryPivot ();
+	DSCENE_API virtual void FreezeRootRotation ();
 	DSCENE_API virtual void BakeTransform (const dMatrix& matrix);
 	
 	DSCENE_API virtual int GetRevision() const;
@@ -161,7 +162,6 @@ class dScene: public dSceneGraph, public dRefCounter
 
 	DSCENE_API virtual void NewtonWorldToScene (const NewtonWorld* const world, dSceneExportCallback* const visualContext);
 	DSCENE_API virtual void SceneToNewtonWorld (NewtonWorld* world, dList<NewtonBody*>& loadedBodies);
-
 
 	DSCENE_API virtual void DeleteDuplicateTextures();
 	DSCENE_API virtual void DeleteDuplicateMaterials();
