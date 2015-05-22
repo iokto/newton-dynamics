@@ -70,7 +70,7 @@ class dgBody
 
 
 	dgBody();
-	dgBody (dgWorld* const world, const dgTree<const dgCollision*, dgInt32>* const collisionNode, dgDeserialize serializeCallback, void* const userData);
+	dgBody (dgWorld* const world, const dgTree<const dgCollision*, dgInt32>* const collisionNode, dgDeserialize serializeCallback, void* const userData, dgInt32 revisionNumber);
 	virtual ~dgBody();
 
 	dgType GetType () const;
