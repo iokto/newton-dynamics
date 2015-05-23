@@ -1503,6 +1503,7 @@ void dgCollisionConvex::SetUserData (void* const userData)
 }
 
 
+
 void dgCollisionConvex::SetVolumeAndCG ()
 {
 	dgVector faceVertex[DG_MAX_EDGE_COUNT];
@@ -1594,6 +1595,7 @@ bool dgCollisionConvex::SanityCheck (dgPolyhedra& hull) const
 
 	return true;
 }
+
 
 
 void dgCollisionConvex::DebugCollision (const dgMatrix& matrix, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const
@@ -1802,6 +1804,7 @@ dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgMatrix& globalMatri
 	cg.m_w = volume;
 	return cg;
 }
+
 
 
 dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgPlane& plane) const 
@@ -2038,6 +2041,7 @@ dgInt32 dgCollisionConvex::SimplifyClipPolygon (dgInt32 count, const dgVector& n
 
 			dgInt32 i0 = (i1 - 1) >= 0 ? i1 - 1 : count - 1;
 			dgInt32 i2 = (i1 + 1) < count ? i1 + 1 : 0;
+			dgAssert (i0 >= 0);
 
 			if (!(mark[i0] || mark[i2])) {
 				mark[i1] = 1;
@@ -2890,6 +2894,7 @@ dgInt32 dgCollisionConvex::CalculateContactsGeneric (const dgVector& point, cons
 	return count;
 }
 
+
 bool dgCollisionConvex::CalculateClosestPoints (dgCollisionParamProxy& proxy) const
 {
 	dgAssert (this == proxy.m_referenceCollision->m_childShape);
@@ -2947,6 +2952,7 @@ dgFloat32 dgCollisionConvex::ConvexRayCast (const dgCollisionInstance* const cas
 }
 
 
+
 dgFloat32 dgCollisionConvex::ConvexConicConvexRayCast (const dgCollisionInstance* const convexConicShape, const dgMatrix& conicShapeMatrix, const dgCollisionInstance* const otherConvexShapeInstance, const dgMatrix& otherShapeGlobalMatrix, const dgVector& castingVeloc, dgFloat32 maxT, dgContactPoint& contactOut) const 
 {
 	dgAssert (convexConicShape->GetChildShape() == this);
@@ -2976,7 +2982,6 @@ dgFloat32 dgCollisionConvex::ConvexConicConvexRayCast (const dgCollisionInstance
 	proxy.m_timestep = dgFloat32 (0.0f);
 	proxy.m_skinThickness = dgFloat32 (0.0f);
 	proxy.m_matrix = shapeInstance.m_globalMatrix * matrix.Inverse();
-
 
 	contactOut.m_normal = dgVector (dgFloat32 (0.0f));
 	contactOut.m_point = dgVector (dgFloat32 (0.0f));
@@ -3057,9 +3062,11 @@ dgFloat32 dgCollisionConvex::ConvexConicConvexRayCast (const dgCollisionInstance
 		contactOut.m_point = matrix.TransformVector(scale.CompProduct4(lastContact.m_point));
 	}
 
-	shapeInstance.SetUserData (NULL);
+	shapeInstance.SetUserData0 (NULL);
+	shapeInstance.SetUserData1 (NULL);
 	return param;
 }
+
 
 
 dgInt32 dgCollisionConvex::CalculateConvexToConvexContact (dgCollisionParamProxy& proxy) const
