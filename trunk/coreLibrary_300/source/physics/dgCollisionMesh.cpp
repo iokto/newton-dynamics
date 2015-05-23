@@ -196,8 +196,8 @@ dgCollisionMesh::dgCollisionMesh(dgWorld* const world, dgCollisionID type)
 	SetCollisionBBox (dgVector (dgFloat32 (0.0f)), dgVector (dgFloat32 (0.0f)));
 }
 
-dgCollisionMesh::dgCollisionMesh (dgWorld* const world, dgDeserialize deserialization, void* const userData)
-	:dgCollision(world, deserialization, userData)
+dgCollisionMesh::dgCollisionMesh (dgWorld* const world, dgDeserialize deserialization, void* const userData, dgInt32 revisionNumber)
+	:dgCollision(world, deserialization, userData, revisionNumber)
 {
 	dgAssert (m_rtti | dgCollisionMesh_RTTI);
 
@@ -353,6 +353,7 @@ dgInt32 dgCollisionMesh::CalculatePlaneIntersection (const dgFloat32* const vert
 
 	return count;
 }
+
 
 
 

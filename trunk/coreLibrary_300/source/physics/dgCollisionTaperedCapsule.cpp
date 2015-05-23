@@ -40,8 +40,8 @@ dgCollisionTaperedCapsule::dgCollisionTaperedCapsule(dgMemoryAllocator* allocato
 	Init (radio0, radio1, height);
 }
 
-dgCollisionTaperedCapsule::dgCollisionTaperedCapsule(dgWorld* const world, dgDeserialize deserialization, void* const userData)
-	:dgCollisionConvex (world, deserialization, userData)
+dgCollisionTaperedCapsule::dgCollisionTaperedCapsule(dgWorld* const world, dgDeserialize deserialization, void* const userData, dgInt32 revisionNumber)
+	:dgCollisionConvex (world, deserialization, userData, revisionNumber)
 {
 	dgVector size;
 	deserialization (userData, &size, sizeof (dgVector));
@@ -232,6 +232,7 @@ void dgCollisionTaperedCapsule::TesselateTriangle (dgInt32 level, const dgVector
 		count += 3;
 	}
 }
+
 
 
 void dgCollisionTaperedCapsule::DebugCollision (const dgMatrix& matrix, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const

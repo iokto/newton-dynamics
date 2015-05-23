@@ -222,6 +222,22 @@ void NewtonSelectBroadphaseAlgorithm (const NewtonWorld* const newtonWorld, int 
 	world->GetBroadPhase()->SelectBroadPhaseType(algorithmType);
 }
 
+
+dFloat NewtonGetContactMergeTolerance (const NewtonWorld* const newtonWorld)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *) newtonWorld;
+	return world->GetContactMergeTolerance();
+}	
+
+void NewtonSetContactMergeTolerance (const NewtonWorld* const newtonWorld, dFloat tolerance)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *) newtonWorld;
+	world->SetContactMergeTolerance(tolerance);
+}
+
+
 // Name: NewtonInvalidateCache 
 // Reset all internal states of the engine.
 //
@@ -1099,7 +1115,7 @@ NewtonWorldDestructorCallback NewtonWorldGetDestructorCallback(const NewtonWorld
 }
 
 
-void NewtonWorldSetCollisionConstructorDestuctorCallback (const NewtonWorld* const newtonWorld, NewtonCollisionCopyConstructionCallback constructor, NewtonCollisionDestructorCallback destructor)
+void NewtonWorldSetCollisionConstructorDestructorCallback (const NewtonWorld* const newtonWorld, NewtonCollisionCopyConstructionCallback constructor, NewtonCollisionDestructorCallback destructor)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
@@ -1107,12 +1123,27 @@ void NewtonWorldSetCollisionConstructorDestuctorCallback (const NewtonWorld* con
 }
 
 
-NEWTON_API void* NewtonWorldGetListenerUserData (const NewtonWorld* const newtonWorld, void* const listener)
+void* NewtonWorldGetListenerUserData (const NewtonWorld* const newtonWorld, void* const listener)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
 	return world->GetListenerUserData (listener);
 }
+
+NewtonWorldListenerBodyDestroyCallback NewtonWorldListenerGetBodyDestroyCallback (const NewtonWorld* const newtonWorld, void* const listener)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *) newtonWorld;
+	return (NewtonWorldListenerBodyDestroyCallback) world->GetListenerBodyDestroyCallback (listener);
+}
+
+void NewtonWorldListenerSetBodyDestroyCallback (const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldListenerBodyDestroyCallback bodyDestroyCallback)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *) newtonWorld;
+	world->SetListenerBodyDestroyCallback (listener, (dgWorld::OnListenerBodyDestroyCallback) bodyDestroyCallback);
+}
+
 
 void* NewtonWorldAddPreListener (const NewtonWorld* const newtonWorld, const char* const nameId, void* const listenerUserData, NewtonWorldUpdateListenerCallback update, NewtonWorldDestroyListenerCallback destroy)
 {
@@ -1948,7 +1979,7 @@ dFloat NewtonMaterialGetContactMaxTangentImpact(const NewtonMaterial* const mate
 // Remarks: This function can only be called from a material callback event handle.
 // 
 // See also: NewtonMaterialSetCollisionCallback
-void NewtonMaterialGetContactPositionAndNormal(const NewtonMaterial* const materialHandle, NewtonBody* const body, dFloat* const positPtr, dFloat* const normalPtr)
+void NewtonMaterialGetContactPositionAndNormal(const NewtonMaterial* const materialHandle, const NewtonBody* const body, dFloat* const positPtr, dFloat* const normalPtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
@@ -1986,7 +2017,7 @@ void NewtonMaterialGetContactPositionAndNormal(const NewtonMaterial* const mater
 // Remarks: This function can only be called from a material callback event handler.
 // 
 // See also: NewtonMaterialSetCollisionCallback
-void NewtonMaterialGetContactForce(const NewtonMaterial* const materialHandle, NewtonBody* const body, dFloat* const forcePtr)
+void NewtonMaterialGetContactForce(const NewtonMaterial* const materialHandle, const NewtonBody* const body, dFloat* const forcePtr)
 {
 
 	TRACE_FUNCTION(__FUNCTION__);
@@ -2022,7 +2053,7 @@ void NewtonMaterialGetContactForce(const NewtonMaterial* const materialHandle, N
 // Remarks: This function can only be called from a material callback event handler.
 // 
 // See also: NewtonMaterialSetCollisionCallback
-void NewtonMaterialGetContactTangentDirections(const NewtonMaterial* const materialHandle, NewtonBody* const body, dFloat* const dir0, dFloat* const dir1)
+void NewtonMaterialGetContactTangentDirections(const NewtonMaterial* const materialHandle, const NewtonBody* const body, dFloat* const dir0, dFloat* const dir1)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
@@ -3025,7 +3056,7 @@ int NewtonCollisionGetMode(const NewtonCollision* const convexCollision)
 // Setting this flag is not really a necessary to place a collision trigger however this option hint the engine that 
 // this particular shape is a trigger volume and no contact calculation is desired.
 //
-void NewtonCollisionSetCollisionMode (const NewtonCollision* const convexCollision, int mode)
+void NewtonCollisionSetMode (const NewtonCollision* const convexCollision, int mode)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const collision = (dgCollisionInstance*) convexCollision;
@@ -3048,7 +3079,7 @@ dFloat NewtonCollisionGetMaxBreakImpactImpulse(const NewtonCollision* const conv
 }
 */
 
-int NewtonConvexHullGetVetexData (const NewtonCollision* const convexHullCollision, dFloat** const vertexData, int* strideInBytes)
+int NewtonConvexHullGetVertexData (const NewtonCollision* const convexHullCollision, dFloat** const vertexData, int* strideInBytes)
 {
 	dgAssert (0);
 	return 0;
@@ -3254,7 +3285,7 @@ NewtonCollision* NewtonCreateUserMeshCollision(
 
 
 
-int NewtonUserMeshCollisionContinueOveralapTest (const NewtonUserMeshCollisionCollideDesc* const collideDescData, const void* const rayHandle, const dFloat* const minAabb, const dFloat* const maxAabb)
+int NewtonUserMeshCollisionContinuousOverlapTest (const NewtonUserMeshCollisionCollideDesc* const collideDescData, const void* const rayHandle, const dFloat* const minAabb, const dFloat* const maxAabb)
 {
 	const dgFastRayTest* const ray = (dgFastRayTest*) rayHandle;
 
@@ -3465,7 +3496,7 @@ void NewtonTreeCollisionEndBuild(const NewtonCollision* const treeCollision, int
 // The application can use this user data to achieve per polygon material behavior in large static collision meshes.
 //
 // See also: NewtonTreeCollisionSetFaceAtribute, NewtonCreateTreeCollision, NewtonCreateTreeCollisionFromSerialization
-int NewtonTreeCollisionGetFaceAtribute(const NewtonCollision* const treeCollision, const int* const faceIndexArray, int indexCount)
+int NewtonTreeCollisionGetFaceAttribute(const NewtonCollision* const treeCollision, const int* const faceIndexArray, int indexCount)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionBVH* const collision = (dgCollisionBVH*) ((dgCollisionInstance*)treeCollision)->GetChildShape();
@@ -3491,7 +3522,7 @@ int NewtonTreeCollisionGetFaceAtribute(const NewtonCollision* const treeCollisio
 // some collision event occurs.
 //
 // See also: NewtonTreeCollisionGetFaceAtribute, NewtonCreateTreeCollision, NewtonCreateTreeCollisionFromSerialization
-void NewtonTreeCollisionSetFaceAtribute(const NewtonCollision* const treeCollision, const int* const faceIndexArray, int indexCount, int attribute)
+void NewtonTreeCollisionSetFaceAttribute(const NewtonCollision* const treeCollision, const int* const faceIndexArray, int indexCount, int attribute)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionBVH* const collision = (dgCollisionBVH*) ((dgCollisionInstance*)treeCollision)->GetChildShape();
@@ -4534,6 +4565,47 @@ void NewtonBodyDisableSimulation(const NewtonBody* const bodyPtr)
 	dgBody* const body = (dgBody *)bodyPtr;
 	dgWorld* const world = body->GetWorld();
 	world->BodyDisableSimulation (body);
+}
+
+// Name: NewtonBodyGetSimulationState
+// Gets the current simulation state of the specified body.
+//
+// Parameters:
+// *const NewtonBody* *bodyPtr - pointer to the body to be inspected.
+//
+// Return: the current simulation state 0: disabled 1: active.
+//
+// See also: NewtonBodySetSimulationState
+int NewtonBodyGetSimulationState(const NewtonBody* const bodyPtr)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgBody* const body = (dgBody *)bodyPtr;
+	dgWorld* const world = body->GetWorld();
+	return world->GetBodyEnableDisableSimulationState(body) ? 1 : 0;
+}
+
+// Name: NewtonBodySetSimulationState
+// Sets the current simulation state of the specified body.
+//
+// Parameters:
+// *const NewtonBody* *bodyPtr - pointer to the body to be changed.
+// *const int* state - the new simulation state 0: disabled 1: active
+//
+// Return: Nothing.
+//
+// See also: NewtonBodyGetSimulationState
+void NewtonBodySetSimulationState(const NewtonBody* const bodyPtr, const int state)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgBody* const body = (dgBody *)bodyPtr;
+	dgWorld* const world = body->GetWorld();
+
+	if (state) {
+		world->BodyEnableSimulation(body);
+	}
+	else {
+		world->BodyDisableSimulation(body);
+	}
 }
 
 int NewtonBodyGetCollidable (const NewtonBody* const bodyPtr)

@@ -43,7 +43,7 @@ class dgCollisionInstance
 	dgCollisionInstance(const dgCollisionInstance& instance);
 	dgCollisionInstance(const dgCollisionInstance& meshInstance, const dgCollision* const shape);
 	dgCollisionInstance(const dgWorld* const world, const dgCollision* const childCollision, dgInt32 shapeID, const dgMatrix& matrix);
-	dgCollisionInstance(const dgWorld* const world, dgDeserialize deserialization, void* const userData);
+	dgCollisionInstance(const dgWorld* const world, dgDeserialize deserialization, void* const userData, dgInt32 revisionNumber);
 	~dgCollisionInstance();
 
 	dgCollisionInstance* AddRef ();
@@ -108,7 +108,6 @@ class dgCollisionInstance
 	dgFloat32 GetBoxMaxRadius () const; 
 	dgMatrix CalculateInertia () const;
 	void DebugCollision  (const dgMatrix& matrix, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const;
-//	dgVector CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane) const;
 
 	dgVector SupportVertex (const dgVector& dir, dgInt32* const vertexIndex) const;
 	dgInt32 CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const;
@@ -342,12 +341,6 @@ DG_INLINE dgFloat32 dgCollisionInstance::GetBoxMaxRadius () const
 	return GetBoxMinRadius ();
 } 
 
-
-
-//DG_INLINE dgVector dgCollisionInstance::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane) const
-//{
-//	return m_childShape->CalculateVolumeIntegral(globalMatrix,bouyancyPlane,context);
-//}
 
 DG_INLINE dgVector dgCollisionInstance::SupportVertex(const dgVector& dir, dgInt32* const vertexIndex) const
 {

@@ -55,23 +55,12 @@ class dgUniversalConstraint;
 class dgCorkscrewConstraint;
 class dgCollisionDeformableMesh;
 
-class CollisionKeyPair
-{
-	public:
-	CollisionKeyPair(const dgCollision* collision, dgUnsigned32 pinNumber)
-		:m_collision(collision)
-		,m_pinNumber(pinNumber)
-	{
-	}
-	const dgCollision* m_collision;
-	dgUnsigned32 m_pinNumber;
-};
 
-class dgBodyCollisionList: public dgTree<CollisionKeyPair, dgUnsigned32>
+class dgBodyCollisionList: public dgTree<const dgCollision*, dgUnsigned32>
 {
 	public:
 	dgBodyCollisionList (dgMemoryAllocator* const allocator)
-		:dgTree<CollisionKeyPair, dgUnsigned32>(allocator)
+		:dgTree<const dgCollision*, dgUnsigned32>(allocator)
 	{
 	}
 };
@@ -108,6 +97,8 @@ enum dgPerformanceCounters
 
 	m_counterSize
 };
+
+
 
 class dgWorld;
 class dgCollisionInstance;
@@ -151,8 +142,9 @@ class dgWorld
 	public:
 
 	typedef dgUnsigned32 (dgApi *OnIslandUpdate) (const dgWorld* const world, void* island, dgInt32 bodyCount);
-	typedef void (dgApi *OnListenerUpdateCallback) (const dgWorld* const world, void* const listenerUserData, dgFloat32 timestep);
-	typedef void (dgApi *OnListenerDestroyCallback) (const dgWorld* const world, void* const listenerUserData);
+	typedef void (dgApi *OnListenerBodyDestroyCallback) (const dgWorld* const world, void* const listener, dgBody* const body);
+	typedef void (dgApi *OnListenerUpdateCallback) (const dgWorld* const world, void* const listener, dgFloat32 timestep);
+	typedef void (dgApi *OnListenerDestroyCallback) (const dgWorld* const world, void* const listener);
 	typedef void (dgApi *OnBodySerialize) (dgBody& me, dgSerialize funt, void* const serilalizeObject);
 	typedef void (dgApi *OnBodyDeserialize) (dgBody& me, dgDeserialize funt, void* const serilalizeObject);
 	typedef void (dgApi *OnCollisionInstanceDestroy) (const dgWorld* const world, const dgCollisionInstance* const collision);
@@ -164,6 +156,14 @@ class dgWorld
 	class dgListener
 	{
 		public: 
+		dgListener()
+			:m_world(NULL)
+			,m_userData(NULL)
+			,m_onListenerUpdate(NULL)
+			,m_onListenerDestroy(NULL)
+			,m_onBodyDestroy(NULL)
+		{
+		}
 		
 		~dgListener()
 		{
@@ -177,6 +177,7 @@ class dgWorld
 		void* m_userData;
 		OnListenerUpdateCallback m_onListenerUpdate;
 		OnListenerDestroyCallback m_onListenerDestroy;
+		OnListenerBodyDestroyCallback m_onBodyDestroy;
 	};
 
 	class dgListenerList: public dgList <dgListener>
@@ -247,11 +248,13 @@ class dgWorld
 	dgBody* GetIslandBody (const void* const island, dgInt32 index) const;
 
 
-	void* GetListenerUserData (void* const lintener) const;
+	void* GetListenerUserData (void* const listener) const;
 	void* FindPreListener (const char* const nameid) const;
 	void* FindPostListener (const char* const nameid) const;
 	void* AddPreListener (const char* const nameid, void* const userData, OnListenerUpdateCallback updateCallback, OnListenerDestroyCallback destroyCallback);
 	void* AddPostListener (const char* const nameid, void* const userData, OnListenerUpdateCallback updateCallback, OnListenerDestroyCallback destroyCallback);
+	void SetListenerBodyDestroyCallback (void* const listener, OnListenerBodyDestroyCallback callback);
+	OnListenerBodyDestroyCallback GetListenerBodyDestroyCallback (void* const listener) const;
 
 	void SetIslandUpdateCallback (OnIslandUpdate callback); 
 
@@ -354,16 +357,20 @@ class dgWorld
 
 	void BodyEnableSimulation (dgBody* const body);
 	void BodyDisableSimulation (dgBody* const body);
+	bool GetBodyEnableDisableSimulationState (dgBody* const body) const;
 
 	dgBody* GetSentinelBody() const;
 	dgMemoryAllocator* GetAllocator() const;
+
+
+	dgFloat32 GetContactMergeTolerance() const;
+	void SetContactMergeTolerance(dgFloat32 tolerenace);
 
 	void Sync ();
 	
 	private:
 	
 	void CalculateContacts (dgCollidingPairCollector::dgPair* const pair, dgFloat32 timestep, dgInt32 threadIndex, bool ccdMode, bool intersectionTestOnly);
-
 	dgInt32 PruneContacts (dgInt32 count, dgContactPoint* const contact, dgInt32 maxCount = (DG_CONSTRAINT_MAX_ROWS / 3)) const;
 	dgInt32 ReduceContacts (dgInt32 count, dgContactPoint* const contact, dgInt32 maxCount, dgFloat32 tol, dgInt32 arrayIsSorted = 0) const;
 	
