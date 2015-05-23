@@ -317,6 +317,7 @@ void dgPolygonSoupDatabaseBuilder::Finalize()
 }
 
 
+
 void dgPolygonSoupDatabaseBuilder::FinalizeAndOptimize()
 {
 	Finalize();

@@ -22,6 +22,7 @@
 #ifndef __DGTYPES_H__
 #define __DGTYPES_H__
 
+#define DG_SSE4_INSTRUCTIONS_SET
 
 #ifdef DG_SSE4_INSTRUCTIONS_SET
 	#undef DG_SCALAR_VECTOR_CLASS
@@ -61,6 +62,7 @@
 	#pragma warning (disable: 4100) //unreferenced formal parameter
 	#pragma warning (disable: 4201) //nonstandard extension used : nameless struct/union
 	#pragma warning (disable: 4324) //structure was padded due to __declspec(align())
+	#pragma warning (disable: 4530) //: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 
 	#include <io.h> 
 	#include <direct.h> 
@@ -77,7 +79,9 @@
 	#pragma warning (push, 3) 
 		#include <windows.h>
 		#include <crtdbg.h>
-		#include <tlhelp32.h>
+		#ifndef _DURANGO
+		       #include <tlhelp32.h>
+		#endif
 	#pragma warning (pop) 
 #endif
 
@@ -128,6 +132,9 @@
 		#include <pmmintrin.h> 
 		#include <emmintrin.h> 
 		#include <mmintrin.h> 
+		#ifdef DG_SSE4_INSTRUCTIONS_SET
+			#include <smmintrin.h>
+		#endif
 	} 
 #endif
 
@@ -139,6 +146,9 @@
 		#include <pmmintrin.h> 
 		#include <emmintrin.h>  //sse3
         #include <mmintrin.h>    
+		#ifdef DG_SSE4_INSTRUCTIONS_SET
+			#include <smmintrin.h>
+		#endif
     #endif
 #endif
 
@@ -179,6 +189,10 @@
 
 #define DG_VECTOR_SIMD_SIZE		16
 
+#if ((defined (_WIN_32_VER) || defined (_WIN_64_VER)) && (_MSC_VER  >= 1700)) && !defined(_DURANGO)
+	// starting Visual studio 2012 an up we can use high performance computing using AMP
+	#define _NEWTON_AMP
+#endif
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
 	#define	DG_GCC_VECTOR_ALIGMENT	
@@ -187,7 +201,6 @@
 	#define	DG_MSC_VECTOR_ALIGMENT			
 	#define	DG_GCC_VECTOR_ALIGMENT			__attribute__ ((aligned (DG_VECTOR_SIMD_SIZE)))
 #endif
-
 
 #if ((defined (_WIN_32_VER) || defined (_WIN_64_VER)) && (_MSC_VER  >= 1600))
 #include <stdint.h>
@@ -202,7 +215,6 @@
 
 	typedef int64_t dgInt64;
 	typedef uint64_t dgUnsigned64;
-
 #else
 	typedef char dgInt8;
 	typedef unsigned char dgUnsigned8;
@@ -219,13 +231,14 @@
 	typedef double dgFloat64;
 #endif
 
+
 typedef double dgFloat64;
+
 #ifdef _NEWTON_USE_DOUBLE
 	typedef double dgFloat32;
 #else
 	typedef float dgFloat32;
 #endif
-
 
 
 class dgTriplex
@@ -333,44 +346,39 @@ DG_INLINE T dgSign(T A)
 }
 
 template <class T> 
-dgInt32 dgBinarySearch (T const* array, dgInt32 elements, dgInt32 entry)
+dgInt32 dgBinarySearch (T const* array, dgInt32 elements, const T& entry, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
 	dgInt32 index0 = 0;
 	dgInt32 index2 = elements - 1;
-	dgInt32 entry0 = array[index0].m_Key;
-	dgInt32 entry2 = array[index2].m_Key;
 
-	while ((index2 - index0) > 1) {
+	while ((index2 - index0) > 4) {
 		dgInt32 index1 = (index0 + index2) >> 1;
-		dgInt32 entry1 = array[index1].m_Key;
-		if (entry1 == entry) {
-			dgAssert (array[index1].m_Key <= entry);
-			dgAssert (array[index1 + 1].m_Key >= entry);
-			return index1;
-		} else if (entry < entry1) {
-			index2 = index1;
-			entry2 = entry1;
-		} else {
+		dgInt32 test = compare (&array[index1], &entry, context);
+		if (test < 0) {
 			index0 = index1;
-			entry0 = entry1;
+		} else {
+			index2 = index1;
 		}
 	}
 
-	if (array[index0].m_Key > index0) {
-		index0 --;
+	index0 = (index0 > 0) ? index0 - 1 : 0;
+	index2 = ((index2 + 1) < elements) ? index2 + 1 : elements;
+	dgInt32 index = index0 - 1;
+	for (dgInt32 i = index0; i < index2; i ++) {
+		dgInt32 test = compare (&array[i], &entry, context);
+		if (!test) {
+			return i;
+		} else if (test > 0) {
+			break;
+		}
+		index = i;
 	}
-
-	dgAssert (array[index0].m_Key <= entry);
-	dgAssert (array[index0 + 1].m_Key >= entry);
-	return index0;
+	return index;
 }
 
 
-
-
 template <class T> 
-void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 radixPass, 
-				  dgInt32 (*getRadixKey) (const T* const  A, void* const context), void* const context = NULL)
+void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 radixPass,  dgInt32 (*getRadixKey) (const T* const  A, void* const context), void* const context = NULL)
 {
 	dgInt32 scanCount[256]; 
 	dgInt32 histogram[256][4];
@@ -594,6 +602,7 @@ union dgDoubleInt
 		dgInt32 m_intL;
 		dgInt32 m_intH;
 	};
+	void* m_ptr;
 	dgInt64 m_int;
 	dgFloat64 m_float;
 };
@@ -814,7 +823,25 @@ DG_INLINE dgInt32 dgInterlockedExchange(dgInt32* const ptr, dgInt32 value)
 
 DG_INLINE void dgThreadYield()
 {
+#if defined (DG_USE_THREAD_EMULATION)
+	return;
+#else
 	sched_yield();
+#endif
+}
+
+DG_INLINE void dgSpinLock (dgInt32* const ptr, bool yield)
+{
+	while (dgInterlockedExchange(ptr, 1)) {
+		if (yield) {
+			dgThreadYield();
+		}
+	}
+}
+
+DG_INLINE void dgSpinUnlock (dgInt32* const ptr)
+{
+	dgInterlockedExchange(ptr, 0);
 }
 
 DG_INLINE void dgPrefetchMem(const void* const mem)

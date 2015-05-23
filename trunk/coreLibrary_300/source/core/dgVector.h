@@ -309,6 +309,14 @@ class dgVector
 		return m_x;
 	}
 
+	DG_INLINE void Store (dgFloat32* const dst) const
+	{
+		dst[0] = m_x;
+		dst[1] = m_y;
+		dst[2] = m_z;
+		dst[3] = m_w;
+	}
+
 	DG_INLINE dgVector BroadcastX () const
 	{
 		return dgVector (m_x);
@@ -613,12 +621,17 @@ class dgVector
 		};
 	};
 
-
+	static dgVector m_zero;
 	static dgVector m_one;
 	static dgVector m_wOne;
 	static dgVector m_half;
+	static dgVector m_two;
 	static dgVector m_three;
 	static dgVector m_negOne;
+	static dgVector m_xMask;
+	static dgVector m_yMask;
+	static dgVector m_zMask;
+	static dgVector m_wMask;
 	static dgVector m_signMask;
 	static dgVector m_triplexMask;
 }DG_GCC_VECTOR_ALIGMENT;
@@ -681,9 +694,14 @@ class dgVector
 
 	DG_INLINE dgFloat32 GetScalar () const
 	{
-		dgFloat32 scalar;
-		_mm_store_ss(&scalar, m_type);
-		return scalar;
+		//dgFloat32 scalar;
+		//_mm_store_ss(&scalar, m_type);
+		return m_x;
+	}
+
+	DG_INLINE void Store (dgFloat32* const dst) const
+	{
+		_mm_storeu_ps(dst, m_type);
 	}
 
 	DG_INLINE dgVector BroadcastX () const
@@ -758,11 +776,11 @@ class dgVector
 	DG_INLINE dgFloat32 operator% (const dgVector& A) const
 	{
 		#ifdef DG_SSE4_INSTRUCTIONS_SET 
-			return dgVector (_mm_dp_ps (m_type, A.m_type, 0x77)).m_x; 
+			return dgVector (_mm_dp_ps (m_type, A.m_type, 0x77)).GetScalar(); 
 		#else
 			dgVector tmp (A & m_triplexMask);
 			dgAssert ((m_w * tmp.m_w) == dgFloat32 (0.0f));
-			return CompProduct4(tmp).AddHorizontal().m_x;
+			return CompProduct4(tmp).AddHorizontal().GetScalar();
 		#endif
 	}
 
@@ -1021,11 +1039,17 @@ class dgVector
 		};
 	};
 
+	static dgVector m_zero;
 	static dgVector m_one;
 	static dgVector m_wOne;
+	static dgVector m_two;
 	static dgVector m_half;
 	static dgVector m_three;
 	static dgVector m_negOne;
+	static dgVector m_xMask;
+	static dgVector m_yMask;
+	static dgVector m_zMask;
+	static dgVector m_wMask;
 	static dgVector m_signMask;
 	static dgVector m_triplexMask;
 } DG_GCC_VECTOR_ALIGMENT;

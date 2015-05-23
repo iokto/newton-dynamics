@@ -22,7 +22,6 @@
 #include "dgStdafx.h"
 #include "dgDebug.h"
 
-#ifdef DG_TRACE
 	void dgApi dgExpandTraceMessage (const char *fmt, ...)
 	{
 		va_list v_args;
@@ -39,5 +38,5 @@
 			printf ("%s\n", text);
 		#endif
 	}
-#endif
+
 
