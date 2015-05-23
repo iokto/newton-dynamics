@@ -166,7 +166,7 @@ COMPILER = gcc
 #CPU_FLAGS = -m32 -O0 -fPIC -g -msse -msse2 -mfpmath=sse 
 #CPU_FLAGS = -m32 -O0 -fPIC -g -msse -msse4.1 -mfpmath=sse 
 #CPU_FLAGS = -m32 -O2 -fpic -g -msse -msse4.1 -mfpmath=sse -ffloat-store -ffast-math -freciprocal-math -funsafe-math-optimizations -fsingle-precision-constant
-CPU_FLAGS = -m32 -O2 -fpic -g -msse -msse3 -mfpmath=sse -ffloat-store -ffast-math -freciprocal-math -funsafe-math-optimizations -fsingle-precision-constant
+CPU_FLAGS = -m32 -O2 -fpic -g -msse -msse3 -msse4 -mfpmath=sse -ffloat-store -ffast-math -freciprocal-math -funsafe-math-optimizations -fsingle-precision-constant
 
 
 FLAGS  = -c -Wall -Wno-strict-aliasing -D_POSIX_VER $(CPU_FLAGS) -I$(DG_INCLUDED_PATH) -I$(DG_INCLUDED_PHYSICS_PATH) -I$(DG_INCLUDED_MESH_PATH) -I$(DG_INCLUDED_OPENCL_PATH)
@@ -191,7 +191,6 @@ libNewton.a : $(DG_OBJ_FILES)
 #	strip -g -S -d -v libNewton.a -o libNewton.a
 	cp libNewton.a ../../../packages/posix32/libNewton.a
 	cp ../../source/newton/Newton.h ../../../packages/posix32/Newton.h
-	cp ../../source/ai/NewtonAI.h ../../../packages/posix32/NewtonAI.h
 	$(COMPILER) -shared -Wl,-soname,libNewton.so $? -o libNewton.so 
 	cp libNewton.so ../../../packages/posix32/libNewton.so
 	#sudo cp libNewton.so /usr/lib

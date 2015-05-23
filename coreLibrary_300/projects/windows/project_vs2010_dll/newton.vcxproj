@@ -27,19 +27,23 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -125,8 +129,9 @@
       <SuppressStartupBanner>false</SuppressStartupBanner>
     </Link>
     <PostBuildEvent>
-      <Command>rem xcopy  "$(OutDir)$(TargetName).lib" "C:\Users\Julio\Downloads\NewtonTestApp\lib/*.*"  /F /Y /R
-rem xcopy  "$(OutDir)$(TargetName).dll" "C:\Users\Julio\Downloads\NewtonTestApp\bin/*.*"  /F /Y /R
+      <Command>rem xcopy  "$(OutDir)$(TargetName).lib" "C:\Users\julio\Downloads\crash/*.*"  /F /Y /R
+rem xcopy  "$(OutDir)$(TargetName).dll" "C:\Users\julio\Downloads\physic_demo/*.*"  /F /Y /R
+rem xcopy  "$(OutDir)$(TargetName).pdb" "C:\Users\julio\Downloads\camera_collision/*.*"  /F /Y /R
 
 </Command>
     </PostBuildEvent>
