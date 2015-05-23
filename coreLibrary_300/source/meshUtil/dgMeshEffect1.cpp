@@ -1794,6 +1794,7 @@ void dgMeshEffect::AddPolygon (dgInt32 count, const dgFloat64* const vertexList,
 }
 
 #ifndef _NEWTON_USE_DOUBLE
+
 void dgMeshEffect::AddPolygon (dgInt32 count, const dgFloat32* const vertexList, dgInt32 strideIndBytes, dgInt32 material)
 {
 	dgVertexAtribute points[256];
@@ -3079,6 +3080,7 @@ dgMeshEffect* dgMeshEffect::GetNextLayer (dgInt32 mark)
 }
 
 
+
 void dgMeshEffect::MergeFaces (const dgMeshEffect* const source)
 {
 	dgInt32 mark = source->IncLRU();
@@ -3217,6 +3219,8 @@ void dgMeshEffect::RepairTJoints ()
 		dgFloat64 tol2 = tol * tol;
 
 		dirty = false;
+		dgAssert (Sanity ());
+
 		dgPolyhedra::Iterator iter (*this);
 		for (iter.Begin(); iter; ) {
 			dgEdge* const edge = &(*iter);
@@ -3284,7 +3288,7 @@ void dgMeshEffect::RepairTJoints ()
 
 								DeleteEdge(edge);
 								DeleteEdge(nextEdge);
-								dgAssert (Sanity ());
+								//dgAssert (Sanity ());
 
 							} else if (edge->m_next->m_next->m_next == edge) {
 								dirty = true;
@@ -3318,7 +3322,7 @@ void dgMeshEffect::RepairTJoints ()
 								deletedEdge->m_next = deletedEdge->m_twin;
 								deletedEdge->m_prev = deletedEdge->m_twin;
 								DeleteEdge(deletedEdge);
-								dgAssert (Sanity ());
+								//dgAssert (Sanity ());
 							}
 						}
 					} else if (FindEdge(edge->m_incidentVertex, edge->m_next->m_next->m_incidentVertex)) {
@@ -3356,7 +3360,7 @@ void dgMeshEffect::RepairTJoints ()
 							deletedEdge->m_next = deletedEdge->m_twin;
 							deletedEdge->m_prev = deletedEdge->m_twin;
 							DeleteEdge(deletedEdge);
-							dgAssert (Sanity ());
+							//dgAssert (Sanity ());
 						}
 
 					} else {
@@ -3389,7 +3393,7 @@ void dgMeshEffect::RepairTJoints ()
 											dirty |= newFace ? true : false;
 										}
 									}
-									dgAssert (Sanity ());
+									//dgAssert (Sanity ());
 								} else if (openEdge->m_prev->m_twin->m_incidentFace > 0) {
 									dirty = true;
 
@@ -3430,7 +3434,7 @@ void dgMeshEffect::RepairTJoints ()
 									deletedEdge->m_next = deletedEdge->m_twin;
 									deletedEdge->m_prev = deletedEdge->m_twin;
 									DeleteEdge(deletedEdge);
-									dgAssert (Sanity ());
+									//dgAssert (Sanity ());
 								}
 							}
 						}

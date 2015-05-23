@@ -41,7 +41,7 @@ dgCollisionBVH::dgCollisionBVH (dgWorld* const world, dgDeserialize deserializat
 	m_builder = NULL;;
 	m_userRayCastCallback = NULL;
 
-	dgAABBPolygonSoup::Deserialize (deserialization, userData);
+	dgAABBPolygonSoup::Deserialize (deserialization, userData, revisionNumber);
 
 	dgVector p0; 
 	dgVector p1; 

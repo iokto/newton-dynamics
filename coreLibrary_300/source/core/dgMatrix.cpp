@@ -24,10 +24,16 @@
 #include "dgQuaternion.h"
 
 
-
+dgVector dgVector::m_xMask (0xffffffff, 0, 0, 0);
+dgVector dgVector::m_yMask (0,          0xffffffff, 0, 0);
+dgVector dgVector::m_zMask (0,          0,          0xffffffff, 0);
+dgVector dgVector::m_wMask (0,          0,          0,          0xffffffff);
 dgVector dgVector::m_triplexMask (0xffffffff, 0xffffffff, 0xffffffff, 0);
 dgVector dgVector::m_signMask (0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff);
+
+dgVector dgVector::m_zero (dgFloat32 (0.0f));
 dgVector dgVector::m_one  (dgFloat32 (1.0f));
+dgVector dgVector::m_two  (dgFloat32 (2.0f));
 dgVector dgVector::m_wOne (dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (1.0f));
 dgVector dgVector::m_half (dgFloat32 (0.5f));
 dgVector dgVector::m_three (dgFloat32 (3.0f));
@@ -95,12 +101,27 @@ dgMatrix::dgMatrix (const dgMatrix& transformMatrix, const dgVector& scale, cons
 	*this = stretchAxis.Transpose() * scaledAxis * transformMatrix;
 }
 
+dgMatrix dgMatrix::Multiply3X3 (const dgMatrix &B) const
+{
+	return dgMatrix (B.m_front.CompProduct4(m_front.BroadcastX()) + B.m_up.CompProduct4(m_front.BroadcastY()) + B.m_right.CompProduct4(m_front.BroadcastZ()), 
+					 B.m_front.CompProduct4(m_up.BroadcastX())    + B.m_up.CompProduct4(m_up.BroadcastY())    + B.m_right.CompProduct4(m_up.BroadcastZ()), 
+					 B.m_front.CompProduct4(m_right.BroadcastX()) + B.m_up.CompProduct4(m_right.BroadcastY()) + B.m_right.CompProduct4(m_right.BroadcastZ()), 
+					 dgVector::m_wOne); 
+}
+
 dgMatrix dgMatrix::operator* (const dgMatrix &B) const
 {
-	return dgMatrix (dgVector (B.m_front.Scale4(m_front.m_x) + B.m_up.Scale4(m_front.m_y) + B.m_right.Scale4(m_front.m_z) + B.m_posit.Scale4 (m_front.m_w)), 
-					 dgVector (B.m_front.Scale4(m_up.m_x)    + B.m_up.Scale4(m_up.m_y)    + B.m_right.Scale4(m_up.m_z)    + B.m_posit.Scale4 (m_up.m_w)), 
-					 dgVector (B.m_front.Scale4(m_right.m_x) + B.m_up.Scale4(m_right.m_y) + B.m_right.Scale4(m_right.m_z) + B.m_posit.Scale4 (m_right.m_w)), 
-					 dgVector (B.m_front.Scale4(m_posit.m_x) + B.m_up.Scale4(m_posit.m_y) + B.m_right.Scale4(m_posit.m_z) + B.m_posit.Scale4 (m_posit.m_w))); 
+#if 0
+	return dgMatrix (B.m_front.Scale4(m_front.m_x) + B.m_up.Scale4(m_front.m_y) + B.m_right.Scale4(m_front.m_z) + B.m_posit.Scale4 (m_front.m_w), 
+					 B.m_front.Scale4(m_up.m_x)    + B.m_up.Scale4(m_up.m_y)    + B.m_right.Scale4(m_up.m_z)    + B.m_posit.Scale4 (m_up.m_w), 
+					 B.m_front.Scale4(m_right.m_x) + B.m_up.Scale4(m_right.m_y) + B.m_right.Scale4(m_right.m_z) + B.m_posit.Scale4 (m_right.m_w), 
+					 B.m_front.Scale4(m_posit.m_x) + B.m_up.Scale4(m_posit.m_y) + B.m_right.Scale4(m_posit.m_z) + B.m_posit.Scale4 (m_posit.m_w)); 
+#else
+	return dgMatrix (B.m_front.CompProduct4(m_front.BroadcastX()) + B.m_up.CompProduct4(m_front.BroadcastY()) + B.m_right.CompProduct4(m_front.BroadcastZ()) + B.m_posit.CompProduct4 (m_front.BroadcastW()), 
+					 B.m_front.CompProduct4(m_up.BroadcastX())    + B.m_up.CompProduct4(m_up.BroadcastY())    + B.m_right.CompProduct4(m_up.BroadcastZ())    + B.m_posit.CompProduct4 (m_up.BroadcastW()), 
+					 B.m_front.CompProduct4(m_right.BroadcastX()) + B.m_up.CompProduct4(m_right.BroadcastY()) + B.m_right.CompProduct4(m_right.BroadcastZ()) + B.m_posit.CompProduct4 (m_right.BroadcastW()), 
+					 B.m_front.CompProduct4(m_posit.BroadcastX()) + B.m_up.CompProduct4(m_posit.BroadcastY()) + B.m_right.CompProduct4(m_posit.BroadcastZ()) + B.m_posit.CompProduct4 (m_posit.BroadcastW())); 
+#endif
 }
 
 
@@ -266,40 +287,12 @@ dgMatrix dgMatrix::Symetric3by3Inverse () const
 void dgMatrix::CalcPitchYawRoll (dgVector& euler0, dgVector& euler1) const
 {
 	const dgMatrix& matrix = *this;
-/*
-	const dgFloat32 minSin = dgFloat32(0.99995f);
-	dgFloat32 roll = dgFloat32(0.0f);
-	dgFloat32 pitch  = dgFloat32(0.0f);
-	dgFloat32 yaw = dgAsin (-dgClamp (matrix[0][2], dgFloat32(-0.999999f), dgFloat32(0.999999f)));
-
-	dgAssert (dgCheckFloat (yaw));
-	if (matrix[0][2] < minSin) {
-		if (matrix[0][2] > (-minSin)) {
-			roll = dgAtan2 (matrix[0][1], matrix[0][0]);
-			pitch = dgAtan2 (matrix[1][2], matrix[2][2]);
-		} else {
-			pitch = dgAtan2 (matrix[1][0], matrix[1][1]);
-		}
-	} else {
-		pitch = -dgAtan2 (matrix[1][0], matrix[1][1]);
-	}
-
-#ifdef _DEBUG
-	dgMatrix m (dgPitchMatrix (pitch) * dgYawMatrix(yaw) * dgRollMatrix(roll));
-	for (dgInt32 i = 0; i < 3; i ++) {
-		for (dgInt32 j = 0; j < 3; j ++) {
-			dgFloat32 error = dgAbsf (m[i][j] - matrix[i][j]);
-			dgAssert (error < 5.0e-2f);
-		}
-	}
-#endif
-	return dgVector (pitch, yaw, roll, dgFloat32(0.0f));
-*/
+	dgAssert (dgAbsf (((matrix[0] * matrix[1]) % matrix[2]) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
 
 	// Assuming the angles are in radians.
-	if (matrix[0][2] > 0.99995f) {
-		dgFloat32 picth0 = 0.0f;
-		dgFloat32 yaw0 = -3.141592f * 0.5f;
+	if (matrix[0][2] > dgFloat32 (0.99995f)) {
+		dgFloat32 picth0 = dgFloat32 (0.0f);
+		dgFloat32 yaw0 = dgFloat32 (-3.141592f * 0.5f);
 		dgFloat32 roll0 = - dgAtan2(matrix[2][1], matrix[1][1]);
 		euler0[0] = picth0;
 		euler0[1] = yaw0;
@@ -309,9 +302,9 @@ void dgMatrix::CalcPitchYawRoll (dgVector& euler0, dgVector& euler1) const
 		euler1[1] = yaw0;
 		euler1[2] = roll0;
 
-	} else if (matrix[0][2] < -0.99995f) {
-		dgFloat32 picth0 = 0.0f;
-		dgFloat32 yaw0 = 3.141592f * 0.5f;
+	} else if (matrix[0][2] < dgFloat32 (-0.99995f)) {
+		dgFloat32 picth0 = dgFloat32 (0.0f);
+		dgFloat32 yaw0 = dgFloat32 (3.141592f * 0.5f);
 		dgFloat32 roll0 = dgAtan2(matrix[2][1], matrix[1][1]);
 		euler0[0] = picth0;
 		euler0[1] = yaw0;
@@ -321,8 +314,8 @@ void dgMatrix::CalcPitchYawRoll (dgVector& euler0, dgVector& euler1) const
 		euler1[1] = yaw0;
 		euler1[2] = roll0;
 	} else {
-		dgFloat32 yaw0 = -dgSin ( matrix[0][2]);
-		dgFloat32 yaw1 = 3.141592f - yaw0;
+		dgFloat32 yaw0 = -dgAsin ( matrix[0][2]);
+		dgFloat32 yaw1 = dgFloat32 (3.141592f) - yaw0;
 		dgFloat32 sign0 = dgSign(dgCos (yaw0));
 		dgFloat32 sign1 = dgSign(dgCos (yaw1));
 
@@ -332,8 +325,8 @@ void dgMatrix::CalcPitchYawRoll (dgVector& euler0, dgVector& euler1) const
 		dgFloat32 roll0 = dgAtan2(matrix[0][1] * sign0, matrix[0][0] * sign0);
 		dgFloat32 roll1 = dgAtan2(matrix[0][1] * sign1, matrix[0][0] * sign1);
 
-		if (yaw1 > 3.141592f) {
-			yaw1 -= 2.0f * 3.141592f;
+		if (yaw1 > dgFloat32 (3.141592f)) {
+			yaw1 -= dgFloat32 (2.0f * 3.141592f);
 		}
 
 		euler0[0] = picth0;

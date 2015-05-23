@@ -496,6 +496,7 @@ dgAABBPointTree4d* dgConvexHull4d::BuildTree (dgAABBPointTree4d* const parent, d
 		maxMemSize -= sizeof (dgAABBPointTree4dClump);
 		dgAssert (maxMemSize >= 0);
 
+		dgAssert (clump);
 		clump->m_count = count;
 		for (dgInt32 i = 0; i < count; i ++) {
 			clump->m_indices[i] = i + baseIndex;
@@ -577,7 +578,7 @@ dgAABBPointTree4d* dgConvexHull4d::BuildTree (dgAABBPointTree4d* const parent, d
 		if (i0 == 0){
 			i0 = count / 2;
 		}
-		if (i0 == (count - 1)){
+		if (i0 >= (count - 1)){
 			i0 = count / 2;
 		}
 
@@ -936,6 +937,7 @@ void dgConvexHull4d::InsertNewVertex(dgInt32 vertexIndex, dgListNode* const fron
 		}
 	}
 }
+
 
 
 

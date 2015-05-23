@@ -1519,6 +1519,7 @@ void dgMeshEffect::ApplyAttributeArray (dgVertexAtribute* const attib, dgInt32 m
 }
 
 
+
 void dgMeshEffect::CalculateNormals (dgFloat64 angleInRadians)
 {
     dgEdge* edgeBuffer[256];
