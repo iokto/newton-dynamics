@@ -37,7 +37,7 @@ public:
 		public:
 		dgCriticalSection();
 		~dgCriticalSection();
-		void Lock();
+		void Lock(bool yield);
 		void Unlock();
 
 		private:
@@ -99,28 +99,24 @@ public:
 };
 
 
-
-inline void dgThread::dgCriticalSection::Lock()
+DG_INLINE void dgThread::dgCriticalSection::Lock(bool yield)
 {
 	#ifndef DG_USE_THREAD_EMULATION 
 		#ifdef DG_USE_MUTEX_CRITICAL_SECTION
 			pthread_mutex_lock(&m_mutex);
 		#else 
-			while (dgInterlockedExchange(&m_mutex, 1)) {
-				dgThreadYield();
-			}
-		
+			dgSpinLock (&m_mutex, yield);
 		#endif
 	#endif
 }
 
-inline void dgThread::dgCriticalSection::Unlock()
+DG_INLINE void dgThread::dgCriticalSection::Unlock()
 {
 	#ifndef DG_USE_THREAD_EMULATION 
 		#ifdef DG_USE_MUTEX_CRITICAL_SECTION
 			pthread_mutex_unlock(&m_mutex);
 		#else 
-			dgInterlockedExchange(&m_mutex, 0);
+			dgSpinUnlock (&m_mutex);
 		#endif
 	#endif
 }

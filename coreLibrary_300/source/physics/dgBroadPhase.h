@@ -67,12 +67,6 @@ class dgBroadPhase
 	public:
 	DG_CLASS_ALLOCATOR(allocator);
 
-	enum dgType
-	{
-		m_generic = 0,
-		m_persistent,
-	};
-
 	class dgNode;
 	class dgSpliteInfo;
 
@@ -86,9 +80,6 @@ class dgBroadPhase
 
 	dgInt32 ConvexCast (dgCollisionInstance* const shape, const dgMatrix& p0, const dgVector& p1, dgFloat32& timetoImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const;
 	void ForEachBodyInAABB (const dgVector& q0, const dgVector& q1, OnBodiesInAABB callback, void* const userData) const;
-
-	dgInt32 GetBroadPhaseType () const;
-	void SelectBroadPhaseType (dgInt32 algorthmType);
 
 	void ResetEntropy ();
 
@@ -108,6 +99,8 @@ class dgBroadPhase
 	void UpdateBodyBroadphase(dgBody* const body, dgInt32 threadIndex);
 
 	void ImproveFitness();
+	void RotateLeft (dgNode* const node);
+	void RotateRight (dgNode* const node);
 	void ImproveNodeFitness (dgNode* const node);
 	dgNode* InsertNode (dgNode* const node);
 	dgFloat32 CalculateSurfaceArea (const dgNode* const node0, const dgNode* const node1, dgVector& minBox, dgVector& maxBox) const;
@@ -118,7 +111,7 @@ class dgBroadPhase
 	static void CollidingPairsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void UpdateContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 //	static void UpdateSoftBodyForcesKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
-	static void AddGeneratedBodyesContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
+	static void AddGeneratedBodiesContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static dgInt32 CompareNodes (const dgNode* const nodeA, const dgNode* const nodeB, void* notUsed);
 	
 	void UpdateContactsBroadPhaseEnd ();
@@ -128,17 +121,18 @@ class dgBroadPhase
 //	void UpdateSoftBodyForcesKernel (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
 	
 	dgNode* BuildTopDown (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
+	dgNode* BuildTopDownBig (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 
-	void FindCollidingPairsGeneric (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
-	void FindCollidingPairsPersistent (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
-	void SubmitPairsPersistent (dgNode* const body, dgNode* const node, const dgVector& timeStepBound, dgInt32 threadID);
+	void FindCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
+	void SubmitPairs (dgNode* const body, dgNode* const node, const dgVector& timeStepBound, dgInt32 threadID);
 
 	void FindGeneratedBodiesCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
 
 	void KinematicBodyActivation (dgContact* const contatJoint) const;
 
 	bool TestOverlaping (const dgBody* const body0, const dgBody* const body1) const;
-	dgFloat64 CalculateEmptropy ();
+	dgFloat64 CalculateEntropy ();
+			  
 
 	dgWorld* m_world;
 	dgNode* m_rootNode;
@@ -146,11 +140,11 @@ class dgBroadPhase
 	dgUnsigned32 m_lru;
 	dgFitnessList m_fitness;
 	dgList<dgBody*> m_generatedBodies;
-	dgType m_broadPhaseType;
 	dgThread::dgCriticalSection m_contacJointLock;
 	dgThread::dgCriticalSection m_criticalSectionLock;
 	bool m_recursiveChunks;
 
+	static dgVector m_obbTolerance;
 	static dgVector m_conservativeRotAngle;
 	friend class dgBody;
 	friend class dgWorld;

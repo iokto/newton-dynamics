@@ -814,7 +814,7 @@ void dgWorld::PopulateContacts (dgCollidingPairCollector::dgPair* const pair, dg
 			nodes[index] = nodes[count];
 			cachePosition[index] = cachePosition[count];
 		} else {
-			GlobalLock();
+			GlobalLock(false);
 			contactNode = list.Append ();
 			GlobalUnlock();
 		}
@@ -913,7 +913,7 @@ void dgWorld::PopulateContacts (dgCollidingPairCollector::dgPair* const pair, dg
 	}
 
 	if (count) {
-		GlobalLock();
+		GlobalLock(false);
 		for (dgInt32 i = 0; i < count; i ++) {
 			list.Remove(nodes[i]);
 		}
