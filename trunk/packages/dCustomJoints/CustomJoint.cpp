@@ -206,7 +206,7 @@ void CustomJoint::CalculateLocalMatrix (const dMatrix& pinsAndPivotFrame, dMatri
 }
 
 
-void CustomJoint::CalculateGlobalMatrix (const dMatrix& localMatrix0, const dMatrix& localMatrix1, dMatrix& matrix0, dMatrix& matrix1) const
+void CustomJoint::CalculateGlobalMatrix (dMatrix& matrix0, dMatrix& matrix1) const
 {
 	dMatrix body0Matrix;
 	// Get the global matrices of each rigid body.
@@ -216,8 +216,8 @@ void CustomJoint::CalculateGlobalMatrix (const dMatrix& localMatrix0, const dMat
 	if (m_body1) {
 		NewtonBodyGetMatrix(m_body1, &body1Matrix[0][0]);
 	}
-	matrix0 = localMatrix0 * body0Matrix;
-	matrix1 = localMatrix1 * body1Matrix;
+	matrix0 = m_localMatrix0 * body0Matrix;
+	matrix1 = m_localMatrix1 * body1Matrix;
 }
 
 

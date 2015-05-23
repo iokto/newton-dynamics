@@ -184,13 +184,12 @@ class CustomJoint: public CustomAlloc
 
 	// the application needs to implement this function for each derived joint. See examples for more detail
 	CUSTOM_JOINTS_API virtual void SubmitConstraints (dFloat timestep, int threadIndex);
-	CUSTOM_JOINTS_API void CalculateGlobalMatrix (const dMatrix& localMatrix0, const dMatrix& localMatrix1, dMatrix& matrix0, dMatrix& matrix1) const;
+
+	CUSTOM_JOINTS_API void CalculateGlobalMatrix (dMatrix& matrix0, dMatrix& matrix1) const;
 	CUSTOM_JOINTS_API void CalculateLocalMatrix (const dMatrix& pinsAndPivotFrame, dMatrix& localMatrix0, dMatrix& localMatrix1) const;
 
 	CUSTOM_JOINTS_API virtual dCRCTYPE GetSerializeKey() const;
-
 	CUSTOM_JOINTS_API static SerializeMetaDataDictionary& GetDictionary();
-
 
 	dMatrix m_localMatrix0;
 	dMatrix m_localMatrix1;

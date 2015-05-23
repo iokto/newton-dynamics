@@ -53,7 +53,7 @@ class CustomDistance: public CustomJoint
 		dMatrix matrix1;
 
 		// calculate the position of the pivot point and the Jacobian direction vectors, in global space. 
-		CalculateGlobalMatrix (m_localPivot, m_parentPivot, matrix0, matrix1);
+		CalculateGlobalMatrix (matrix0, matrix1);
 
 		dVector p0 (matrix0.m_posit);
 		dVector p1 (matrix1.m_posit);
@@ -539,7 +539,7 @@ void StandardJoints (DemoEntityManager* const scene)
     dVector location (0.0f, 0.0f, 0.0f, 0.0f);
     dVector size (1.5f, 2.0f, 2.0f, 0.0f);
 
-	AddDistance (scene, dVector (-20.0f, 0.0f, -20.0f));
+	//AddDistance (scene, dVector (-20.0f, 0.0f, -20.0f));
 	AddBallAndSockectWithFriction (scene, dVector (-20.0f, 0.0f, -15.0f));
 	Add6DOF (scene, dVector (-20.0f, 0.0f, -10.0f));
 	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -5.0f));

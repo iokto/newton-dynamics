@@ -113,7 +113,7 @@ void Custom6DOF::GetInfo (NewtonJointRecord* const info) const
 	info->m_attachBody_1 = m_body1;
 
 	// calculate the position of the pivot point and the Jacobian direction vectors, in global space. 
-	CalculateGlobalMatrix (m_localMatrix0, m_localMatrix1, matrix0, matrix1);
+	CalculateGlobalMatrix (matrix0, matrix1);
 
 	dVector p0 (matrix0.m_posit);
 	dVector p1 (matrix1.m_posit);
@@ -159,7 +159,7 @@ void Custom6DOF::SubmitConstraints (dFloat timestep, int threadIndex)
 	dMatrix matrix1;
 
 	// calculate the position of the pivot point and the Jacobian direction vectors, in global space. 
-	CalculateGlobalMatrix (m_localMatrix0, m_localMatrix1, matrix0, matrix1);
+	CalculateGlobalMatrix (matrix0, matrix1);
 
 	// add the linear limits
 	const dVector& p0 = matrix0.m_posit;
