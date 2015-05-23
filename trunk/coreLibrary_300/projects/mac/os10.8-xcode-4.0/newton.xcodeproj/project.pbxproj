@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C5E3826A19C4FD08005B9535 /* Newton.h in Headers */ = {isa = PBXBuildFile; fileRef = C5E3826719C4FD08005B9535 /* Newton.h */; };
+		C5E3826B19C4FD08005B9535 /* NewtonClass.h in Headers */ = {isa = PBXBuildFile; fileRef = C5E3826819C4FD08005B9535 /* NewtonClass.h */; };
+		C5E3826C19C4FD08005B9535 /* NewtonStdAfx.h in Headers */ = {isa = PBXBuildFile; fileRef = C5E3826919C4FD08005B9535 /* NewtonStdAfx.h */; };
 		FF7EDA9C188842FD00CB1FFA /* dgMeshEffect.h in Headers */ = {isa = PBXBuildFile; fileRef = FF7EDA9A188842FD00CB1FFA /* dgMeshEffect.h */; };
 		FF7EDA9D188842FD00CB1FFA /* dgMeshEffect6.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FF7EDA9B188842FD00CB1FFA /* dgMeshEffect6.cpp */; };
 		FF7EDAA11888436A00CB1FFA /* dgCollisionCompoundFractured.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FF7EDA9F1888436A00CB1FFA /* dgCollisionCompoundFractured.cpp */; };
@@ -140,6 +143,9 @@
 
 /* Begin PBXFileReference section */
 		32BAE0B70371A74B00C91783 /* newton_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = newton_Prefix.pch; sourceTree = "<group>"; };
+		C5E3826719C4FD08005B9535 /* Newton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Newton.h; path = ../../../source/newton/Newton.h; sourceTree = "<group>"; };
+		C5E3826819C4FD08005B9535 /* NewtonClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NewtonClass.h; path = ../../../source/newton/NewtonClass.h; sourceTree = "<group>"; };
+		C5E3826919C4FD08005B9535 /* NewtonStdAfx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NewtonStdAfx.h; path = ../../../source/newton/NewtonStdAfx.h; sourceTree = "<group>"; };
 		D2AAC06F0554671400DB518D /* libnewton.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libnewton.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF7EDA9A188842FD00CB1FFA /* dgMeshEffect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dgMeshEffect.h; path = ../../../source/meshUtil/dgMeshEffect.h; sourceTree = "<group>"; };
 		FF7EDA9B188842FD00CB1FFA /* dgMeshEffect6.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dgMeshEffect6.cpp; path = ../../../source/meshUtil/dgMeshEffect6.cpp; sourceTree = "<group>"; };
@@ -409,6 +415,9 @@
 		FFF899F9132D161E00A262F2 /* newton */ = {
 			isa = PBXGroup;
 			children = (
+				C5E3826719C4FD08005B9535 /* Newton.h */,
+				C5E3826819C4FD08005B9535 /* NewtonClass.h */,
+				C5E3826919C4FD08005B9535 /* NewtonStdAfx.h */,
 				FFF89B1E132D17D800A262F2 /* Newton.cpp */,
 				FFF89B20132D17D800A262F2 /* NewtonClass.cpp */,
 			);
@@ -418,45 +427,45 @@
 		FFF899FA132D163E00A262F2 /* physics */ = {
 			isa = PBXGroup;
 			children = (
-				FF7EDA9F1888436A00CB1FFA /* dgCollisionCompoundFractured.cpp */,
-				FF7EDAA01888436A00CB1FFA /* dgDeformableBodiesUpdate.cpp */,
-				FF805354174BA2E0009F1C62 /* dgNarrowPhaseCollision.cpp */,
-				FF85FFB217405B4500BEE80B /* dgCollisionDeformableClothPatch.cpp */,
-				FF85FFB417405B4500BEE80B /* dgCollisionDeformableSolidMesh.cpp */,
-				FFE8C0F616304AF8008A1215 /* dgBroadPhase.cpp */,
-				FFE8C0F816304AF8008A1215 /* dgDynamicBody.cpp */,
-				FFE8C0FA16304AF8008A1215 /* dgKinematicBody.cpp */,
-				FFF60E1E1556B95300E7B112 /* dgCollisionConvexPolygon.cpp */,
-				FFF60E201556B95300E7B112 /* dgCollisionDeformableMesh.cpp */,
-				FFF60E221556B95300E7B112 /* dgCollisionInstance.cpp */,
-				FFF60E241556B95300E7B112 /* dgCollisionTaperedCapsule.cpp */,
-				FFF60E261556B95300E7B112 /* dgCollisionTaperedCylinder.cpp */,
-				FFF60E281556B95300E7B112 /* dgDeformableBody.cpp */,
-				FFF60E2A1556B95300E7B112 /* dgDeformableContact.cpp */,
 				FFF89B28132D17F600A262F2 /* dgBallConstraint.cpp */,
 				FFF89B2A132D17F600A262F2 /* dgBilateralConstraint.cpp */,
 				FFF89B2C132D17F600A262F2 /* dgBody.cpp */,
 				FFF89B2E132D17F600A262F2 /* dgBodyMasterList.cpp */,
+				FFE8C0F616304AF8008A1215 /* dgBroadPhase.cpp */,
 				FFF89B32132D17F600A262F2 /* dgCollision.cpp */,
 				FFF89B34132D17F600A262F2 /* dgCollisionBox.cpp */,
 				FFF89B36132D17F600A262F2 /* dgCollisionBVH.cpp */,
 				FFF89B38132D17F600A262F2 /* dgCollisionCapsule.cpp */,
 				FFF89B3A132D17F600A262F2 /* dgCollisionChamferCylinder.cpp */,
 				FFF89B3C132D17F600A262F2 /* dgCollisionCompound.cpp */,
+				FF7EDA9F1888436A00CB1FFA /* dgCollisionCompoundFractured.cpp */,
 				FFF89B40132D17F600A262F2 /* dgCollisionCone.cpp */,
 				FFF89B42132D17F600A262F2 /* dgCollisionConvex.cpp */,
 				FFF89B44132D17F600A262F2 /* dgCollisionConvexHull.cpp */,
+				FFF60E1E1556B95300E7B112 /* dgCollisionConvexPolygon.cpp */,
 				FFF89B48132D17F600A262F2 /* dgCollisionCylinder.cpp */,
+				FF85FFB217405B4500BEE80B /* dgCollisionDeformableClothPatch.cpp */,
+				FFF60E201556B95300E7B112 /* dgCollisionDeformableMesh.cpp */,
+				FF85FFB417405B4500BEE80B /* dgCollisionDeformableSolidMesh.cpp */,
 				FFF89B4C132D17F600A262F2 /* dgCollisionHeightField.cpp */,
+				FFF60E221556B95300E7B112 /* dgCollisionInstance.cpp */,
 				FFF89B4E132D17F600A262F2 /* dgCollisionMesh.cpp */,
 				FFF89B50132D17F600A262F2 /* dgCollisionNull.cpp */,
 				FFF89B52132D17F600A262F2 /* dgCollisionScene.cpp */,
 				FFF89B54132D17F600A262F2 /* dgCollisionSphere.cpp */,
+				FFF60E241556B95300E7B112 /* dgCollisionTaperedCapsule.cpp */,
+				FFF60E261556B95300E7B112 /* dgCollisionTaperedCylinder.cpp */,
 				FFF89B56132D17F600A262F2 /* dgCollisionUserMesh.cpp */,
 				FFF89B5A132D17F600A262F2 /* dgConstraint.cpp */,
 				FFF89B5C132D17F600A262F2 /* dgContact.cpp */,
 				FFF89B5E132D17F600A262F2 /* dgCorkscrewConstraint.cpp */,
+				FF7EDAA01888436A00CB1FFA /* dgDeformableBodiesUpdate.cpp */,
+				FFF60E281556B95300E7B112 /* dgDeformableBody.cpp */,
+				FFF60E2A1556B95300E7B112 /* dgDeformableContact.cpp */,
+				FFE8C0F816304AF8008A1215 /* dgDynamicBody.cpp */,
 				FFF89B60132D17F600A262F2 /* dgHingeConstraint.cpp */,
+				FFE8C0FA16304AF8008A1215 /* dgKinematicBody.cpp */,
+				FF805354174BA2E0009F1C62 /* dgNarrowPhaseCollision.cpp */,
 				FFF89B6D132D17F600A262F2 /* dgSlidingConstraint.cpp */,
 				FFF89B6F132D17F600A262F2 /* dgUniversalConstraint.cpp */,
 				FFF89B71132D17F600A262F2 /* dgUpVectorConstraint.cpp */,
@@ -494,13 +503,16 @@
 				FF9BBC841835206D0060F147 /* dgCRC.h in Headers */,
 				FF9BBC851835206D0060F147 /* dgDebug.h in Headers */,
 				FF9BBC861835206D0060F147 /* dgDelaunayTetrahedralization.h in Headers */,
+				C5E3826B19C4FD08005B9535 /* NewtonClass.h in Headers */,
 				FF9BBC871835206D0060F147 /* dgFastQueue.h in Headers */,
+				C5E3826C19C4FD08005B9535 /* NewtonStdAfx.h in Headers */,
 				FF9BBC881835206D0060F147 /* dgGeneralMatrix.h in Headers */,
 				FF9BBC891835206D0060F147 /* dgGeneralVector.h in Headers */,
 				FF9BBC8A1835206D0060F147 /* dgGoogol.h in Headers */,
 				FF9BBC8B1835206D0060F147 /* dgGraph.h in Headers */,
 				FF9BBC8C1835206D0060F147 /* dgHeap.h in Headers */,
 				FF9BBC8D1835206D0060F147 /* dgIntersections.h in Headers */,
+				C5E3826A19C4FD08005B9535 /* Newton.h in Headers */,
 				FF9BBC8E1835206D0060F147 /* dgList.h in Headers */,
 				FF9BBC8F1835206D0060F147 /* dgMatrix.h in Headers */,
 				FF9BBC901835206D0060F147 /* dgMemory.h in Headers */,
@@ -557,7 +569,7 @@
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0600;
+				LastUpgradeCheck = 0610;
 			};
 			buildConfigurationList = 1DEB920508733DBB0010E9CD /* Build configuration list for PBXProject "newton" */;
 			compatibilityVersion = "Xcode 3.2";
