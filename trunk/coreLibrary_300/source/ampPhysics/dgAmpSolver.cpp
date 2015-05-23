@@ -1216,7 +1216,7 @@ void dgAmpInstance::BuildJacobianMatrixParallel (dgParallelSolverSyncData* const
 		}
 		world->SynchronizationBarrier();
 
-	//	dgAssert (syncData->m_jacobianMatrixRowAtomicIndex == syncData->m_rowCount);
+		dgAssert (syncData->m_jacobianMatrixRowAtomicIndex == syncData->m_rowCount);
 	//	dgInt32 rowCount = syncData->m_rowCount;
 	//	copy (m_matrixDataCpu.begin(), m_matrixDataCpu.begin() + rowCount, m_matrixData);
 			

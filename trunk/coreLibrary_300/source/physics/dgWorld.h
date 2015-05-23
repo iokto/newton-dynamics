@@ -39,13 +39,14 @@
 #define DG_SLEEP_ENTRIES					8
 #define DG_MAX_DESTROYED_BODIES_BY_FORCE	8
 
+
 class dgBody;
+class dgAmpInstance;
 class dgDynamicBody;
 class dgKinematicBody;
 class dgCollisionPoint;
 class dgUserConstraint;
 class dgBallConstraint;
-class dgOpenclInstance;
 class dgHingeConstraint;
 class dgUserMeshCreation;
 class dgSlidingConstraint;
@@ -451,12 +452,11 @@ class dgWorld
 
 	dgSolverSleepTherfesholds m_sleepTable[DG_SLEEP_ENTRIES];
 	
-	
-	dgOpenclInstance* m_openCL;
 	dgBroadPhase* m_broadPhase; 
 	dgDynamicBody* m_sentinelBody;
 	dgCollisionInstance* m_pointCollision;
 	
+	dgAmpInstance* m_amp;
 	void* m_userData;
 	dgMemoryAllocator* m_allocator;
 	dgInt32 m_hardwaredIndex;
@@ -477,14 +477,15 @@ class dgWorld
 	dgArray<dgUnsigned8> m_bodiesMemory; 
 	dgArray<dgUnsigned8> m_jointsMemory; 
 	dgArray<dgUnsigned8> m_pairMemoryBuffer;
-	dgArray<dgUnsigned8> m_internalForcesMemory;  
 	dgArray<dgUnsigned8> m_solverMatrixMemory;  
+	dgArray<dgUnsigned8> m_solverRightSideMemory;
 	
 	static dgVector m_linearContactError2;
 	static dgVector m_angularContactError2;
 	
 	friend class dgBody;
 	friend class dgBroadPhase;
+	friend class dgAmpInstance;
 	friend class dgDeformableBody;
 	friend class dgActiveContacts;
 	friend class dgUserConstraint;
