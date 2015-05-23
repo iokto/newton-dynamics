@@ -414,7 +414,20 @@ void dgWorld::SetCurrentHardwareMode(dgInt32 deviceIndex)
 			m_openCL->SelectPlaform (m_hardwaredIndex - 1);
 		#endif
 	}
+}
 
+
+dgFloat32 dgWorld::GetContactMergeTolerance() const
+{
+	dgAssert (0);
+	return 0;
+	//return m_contactTolerance;
+}
+
+void dgWorld::SetContactMergeTolerance(dgFloat32 tolerenace)
+{
+	dgAssert (0);
+//	m_contactTolerance = dgMax (tolerenace, dgFloat32 (1.e-3));
 }
 
 
@@ -505,6 +518,7 @@ void dgWorld::BodyEnableSimulation (dgBody* const body)
 		dgBodyMasterList::AddBody(body);
 		body->SetMassMatrix(body->m_mass.m_w, body->m_mass.m_x, body->m_mass.m_y, body->m_mass.m_z);
 		m_broadPhase->Add (body);
+		dgAssert (body->m_masterNode);
 	}
 }
 
@@ -514,7 +528,13 @@ void dgWorld::BodyDisableSimulation(dgBody* const body)
 		m_broadPhase->Remove(body);
 		dgBodyMasterList::RemoveBody(body);
 		m_disableBodies.Insert(0, body);
+		dgAssert (!body->m_masterNode);
 	}
+}
+
+bool dgWorld::GetBodyEnableDisableSimulationState (dgBody* const body) const
+{
+	return body->m_masterNode ? true : false;
 }
 
 dgDynamicBody* dgWorld::CreateDynamicBody(dgCollisionInstance* const collision, const dgMatrix& matrix)
@@ -657,6 +677,19 @@ void* dgWorld::GetListenerUserData (void* const listenerNode) const
 	dgListener& listener = ((dgListenerList::dgListNode*) listenerNode)->GetInfo();
 	return listener.m_userData;
 }
+
+void dgWorld::SetListenerBodyDestroyCallback (void* const listenerNode, OnListenerBodyDestroyCallback callback)
+{
+	dgListener& listener = ((dgListenerList::dgListNode*) listenerNode)->GetInfo();
+	listener.m_onBodyDestroy = callback;
+}
+
+dgWorld::OnListenerBodyDestroyCallback dgWorld::GetListenerBodyDestroyCallback (void* const listenerNode) const
+{
+	dgListener& listener = ((dgListenerList::dgListNode*) listenerNode)->GetInfo();
+	return listener.m_onBodyDestroy;
+}
+
 
 void* dgWorld::FindPreListener (const char* const nameid) const
 {
@@ -1135,7 +1168,7 @@ void dgWorld::SerializeBodyArray (dgBody** const array, dgInt32 count, OnBodySer
 		serializeCallback(userData, &bodyType, sizeof (bodyType));	
 
 		// serialize the body
-		body->Serialize(&shapeMap, serializeCallback, userData);
+		body->Serialize(shapeMap, serializeCallback, userData);
 
 		// serialize body custom data
 		bodyCallback (*body, serializeCallback, userData);
@@ -1147,7 +1180,7 @@ void dgWorld::SerializeBodyArray (dgBody** const array, dgInt32 count, OnBodySer
 
 void dgWorld::DeserializeBodyArray (dgTree<dgBody*, dgInt32>&bodyMap, OnBodyDeserialize bodyCallback, dgDeserialize deserialization, void* const userData)
 {
-	dgDeserializeMarker (deserialization, userData);
+	dgInt32 revision = dgDeserializeMarker (deserialization, userData);
 
 	dgTree<const dgCollision*, dgInt32> shapeMap(GetAllocator());
 
@@ -1157,7 +1190,7 @@ void dgWorld::DeserializeBodyArray (dgTree<dgBody*, dgInt32>&bodyMap, OnBodyDese
 		dgInt32 id;
 
 		deserialization(userData, &id, sizeof (id));	
-		dgCollisionInstance instance (this, deserialization, userData);
+		dgCollisionInstance instance (this, deserialization, userData, revision);
 		dgDeserializeMarker (deserialization, userData);
 
 		const dgCollision* const shape = instance.GetChildShape();
@@ -1176,12 +1209,12 @@ void dgWorld::DeserializeBodyArray (dgTree<dgBody*, dgInt32>&bodyMap, OnBodyDese
 		{
 			case dgBody::m_dynamicBody:
 			{
-				body = new (m_allocator) dgDynamicBody(this, &shapeMap, deserialization, userData);
+				body = new (m_allocator) dgDynamicBody(this, &shapeMap, deserialization, userData, revision);
 				break;
 			}
 			case dgBody::m_kinematicBody:
 			{
-				body = new (m_allocator) dgKinematicBody(this, &shapeMap, deserialization, userData);
+				body = new (m_allocator) dgKinematicBody(this, &shapeMap, deserialization, userData, revision);
 				break;
 			}
 

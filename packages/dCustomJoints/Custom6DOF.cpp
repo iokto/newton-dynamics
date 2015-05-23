@@ -53,11 +53,9 @@ Custom6DOF::Custom6DOF (NewtonBody* const child, NewtonBody* const parent, Newto
 	callback (userData, &m_maxLinearLimits, sizeof (dVector));
 	callback (userData, &m_minAngularLimits, sizeof (dVector));
 	callback (userData, &m_maxAngularLimits, sizeof (dVector));
-	callback (userData, &m_maxMaxLinearErrorRamp, sizeof (dVector));
-	callback (userData, &m_maxMaxAngularErrorRamp, sizeof (dVector));
-	int tmp;
-	callback (userData, &tmp, sizeof (int));
-	m_reverseUniversal = tmp ? true : false;
+	callback (userData, &m_pitch, sizeof (AngularIntegration));
+	callback (userData, &m_yaw, sizeof (AngularIntegration));
+	callback (userData, &m_roll, sizeof (AngularIntegration));
 }
 
 void Custom6DOF::Serialize (NewtonSerializeCallback callback, void* const userData) const
@@ -67,10 +65,9 @@ void Custom6DOF::Serialize (NewtonSerializeCallback callback, void* const userDa
 	callback (userData, &m_maxLinearLimits, sizeof (dVector));
 	callback (userData, &m_minAngularLimits, sizeof (dVector));
 	callback (userData, &m_maxAngularLimits, sizeof (dVector));
-	callback (userData, &m_maxMaxLinearErrorRamp, sizeof (dVector));
-	callback (userData, &m_maxMaxAngularErrorRamp, sizeof (dVector));
-	int tmp = m_reverseUniversal;
-	callback (userData, &tmp, sizeof (int));
+	callback(userData, &m_pitch, sizeof (AngularIntegration));
+	callback(userData, &m_yaw, sizeof (AngularIntegration));
+	callback(userData, &m_roll, sizeof (AngularIntegration));
 }
 
 
