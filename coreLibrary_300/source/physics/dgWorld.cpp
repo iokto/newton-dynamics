@@ -48,8 +48,8 @@
 #include "dgCorkscrewConstraint.h"
 
 
-#ifdef _NEWTON_OPENCL
-#include "dgOpenclInstance.h"
+#ifdef _NEWTON_AMP
+#include "dgAmpInstance.h"
 #endif
 
 
@@ -219,8 +219,10 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgMutexThread("dgMutexThread", DG_MUTEX_THREAD_ID)
 	,dgAsyncThread("dgAsyncThread", DG_ASYNC_THREAD_ID)
 	,dgWorldThreadPool(allocator)
-	,m_openCL(NULL)
 	,m_broadPhase(NULL)
+	,m_sentinelBody(NULL)
+	,m_pointCollision(NULL)
+	,m_amp(NULL)
 	,m_preListener(allocator)
 	,m_postListener(allocator)
 	,m_perInstanceData(allocator)
@@ -228,8 +230,8 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,m_bodiesMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 	,m_jointsMemory (DG_INITIAL_JOINTS_SIZE, allocator, 64)
 	,m_pairMemoryBuffer (DG_INITIAL_CONTACT_SIZE, allocator, 64)
-	,m_internalForcesMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 	,m_solverMatrixMemory (DG_INITIAL_JACOBIAN_SIZE, allocator, 64)
+	,m_solverRightSideMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 {
 	dgMutexThread* const mutexThread = this;
 	SetMatertThread (mutexThread);
@@ -308,9 +310,8 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	AddSentinelBody();
 	SetPerfomanceCounter(NULL);
 
-	#ifdef _NEWTON_OPENCL
-	//m_openCL = dgOpencl::GetOpenCL(GetAllocator());
-	m_openCL = new (GetAllocator()) dgOpenclInstance(this);
+	#ifdef _NEWTON_AMP
+	m_amp = new (GetAllocator()) dgAmpInstance(this);
 	#endif
 }
 
@@ -320,9 +321,9 @@ dgWorld::~dgWorld()
 	dgAsyncThread::Terminate();
 	dgMutexThread::Terminate();
 
-	#ifdef _NEWTON_OPENCL
-	if (m_openCL) {
-		delete m_openCL;
+	#ifdef _NEWTON_AMP
+	if (m_amp) {
+		delete m_amp;
 	}
 	#endif
 
@@ -379,11 +380,13 @@ void dgWorld::SetFrictionMode (dgInt32 mode)
 dgInt32 dgWorld::EnumerateHardwareModes() const
 {
 	dgInt32 count = 1;
-	#ifdef _NEWTON_OPENCL
-		if (m_openCL) {
-			count += m_openCL->GetPlatformsCount();
+
+	#ifdef _NEWTON_AMP
+		if (m_amp) {
+			count += m_amp->GetPlatformsCount();
 		}
 	#endif
+
 	return count;
 }
 
@@ -391,27 +394,27 @@ void dgWorld::GetHardwareVendorString (dgInt32 deviceIndex, char* const descript
 {
 	deviceIndex = dgClamp(deviceIndex, 0, EnumerateHardwareModes() - 1);
 	if (deviceIndex == 0) {
-		sprintf (description, "cpu");
+		sprintf (description, "newton cpu");
 
-	} else if (m_openCL) {
-		#ifdef _NEWTON_OPENCL
-			m_openCL->GetVendorString (deviceIndex - 1, description, maxlength);
+	} else if (m_amp) {
+		#ifdef _NEWTON_AMP
+			m_amp->GetVendorString (deviceIndex - 1, description, maxlength);
 		#endif
 	}
 }
 
 void dgWorld::SetCurrentHardwareMode(dgInt32 deviceIndex)
 {
-	#ifdef _NEWTON_OPENCL
-		if (m_openCL) {
-			m_openCL->CleanUp();
+	#ifdef _NEWTON_AMP
+	if (m_amp) {
+		m_amp->CleanUp();
 		}
 	#endif
 
 	m_hardwaredIndex = dgClamp(deviceIndex, 0, EnumerateHardwareModes() - 1);
-	if ((m_hardwaredIndex > 0) && m_openCL){
-		#ifdef _NEWTON_OPENCL
-			m_openCL->SelectPlaform (m_hardwaredIndex - 1);
+	if ((m_hardwaredIndex > 0) && m_amp){
+		#ifdef _NEWTON_AMP
+			m_amp->SelectPlaform (m_hardwaredIndex - 1);
 		#endif
 	}
 }
