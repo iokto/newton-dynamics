@@ -466,46 +466,44 @@ dgInt32 dgWorld::ClosestPoint(const dgCollisionInstance* const collisionSrcA, co
 
 	dgCollisionParamProxy proxy(&contactJoint, contacts, threadIndex, false, false);
 
+	proxy.m_referenceBody = &collideBodyA;
+	proxy.m_referenceCollision = collideBodyA.m_collision;
+	proxy.m_floatingBody = &collideBodyB;
+	proxy.m_floatingCollision = collideBodyB.m_collision;
+	proxy.m_timestep = dgFloat32 (0.0f);
+	proxy.m_skinThickness = dgFloat32 (0.0f);
+	proxy.m_maxContacts = 16;
+	
+	dgInt32 flag = 0;
 	if (collisionA.IsType (dgCollision::dgCollisionCompound_RTTI)) {
-		dgAssert (0);
-/*
-		return ClosestCompoundPoint (&collideBodyA, &collideBodyB, contactA, contactB, normalAB, threadIndex);
+		//return ClosestCompoundPoint (&collideBodyA, &collideBodyB, contactA, contactB, normalAB, threadIndex);
+		flag = ClosestCompoundPoint (proxy);
 	} else if (collisionB.IsType (dgCollision::dgCollisionCompound_RTTI)) {
-		dgInt32 flag = ClosestCompoundPoint (&collideBodyB, &collideBodyA, contactB, contactA, normalAB, threadIndex);
+		dgAssert (0);
+		//dgInt32 flag = ClosestCompoundPoint (&collideBodyB, &collideBodyA, contactB, contactA, normalAB, threadIndex);
+		dgSwap (proxy.m_referenceBody, proxy.m_floatingBody);
+		dgSwap (proxy.m_referenceCollision, proxy.m_floatingCollision);
+		flag = ClosestCompoundPoint (proxy);
 		normalAB.m_x *= dgFloat32 (-1.0f);
 		normalAB.m_y *= dgFloat32 (-1.0f);
 		normalAB.m_z *= dgFloat32 (-1.0f);
-		return flag;
-*/
 	} else if (collisionA.IsType (dgCollision::dgCollisionConvexShape_RTTI) && collisionB.IsType (dgCollision::dgCollisionConvexShape_RTTI)) {
-		proxy.m_referenceBody = &collideBodyA;
-		proxy.m_referenceCollision = collideBodyA.m_collision;
+		flag = ClosestPoint (proxy);
+	}
 
-		proxy.m_floatingBody = &collideBodyB;
-		proxy.m_floatingCollision = collideBodyB.m_collision;
-
-		proxy.m_timestep = dgFloat32 (0.0f);
-		proxy.m_skinThickness = dgFloat32 (0.0f);
-
-		proxy.m_maxContacts = 16;
-		dgInt32 flag = ClosestPoint (proxy);
 		if (flag) {
 			contactA.m_x = contacts[0].m_point.m_x;
 			contactA.m_y = contacts[0].m_point.m_y;
 			contactA.m_z = contacts[0].m_point.m_z;
-
 			contactB.m_x = contacts[1].m_point.m_x;
 			contactB.m_y = contacts[1].m_point.m_y;
 			contactB.m_z = contacts[1].m_point.m_z;
-
 			normalAB.m_x = contacts[0].m_normal.m_x;
 			normalAB.m_y = contacts[0].m_normal.m_y;
 			normalAB.m_z = contacts[0].m_normal.m_z;
 		}
 		return flag;
 	}
-	return 0;
-}
 
 
 bool dgWorld::IntersectionTest (const dgCollisionInstance* const collisionSrcA, const dgMatrix& matrixA, 
@@ -652,6 +650,11 @@ dgInt32 dgWorld::PruneContacts (dgInt32 count, dgContactPoint* const contact, dg
 						dgVector dp (contact[j].m_point - contact[i].m_point);
 						dgFloat32 dist2 = dp % dp;
 						if (dist2 < window2) {
+							if (contact[i].m_penetration < contact[j].m_penetration ) {
+								contact[i].m_point = contact[j].m_point;
+								contact[i].m_normal = contact[j].m_normal;
+								contact[i].m_penetration =contact[j].m_penetration;
+							}
 							mask[j] = 1;
 							packContacts = 1;
 						}
