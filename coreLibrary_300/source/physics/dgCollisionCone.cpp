@@ -249,9 +249,7 @@ dgInt32 dgCollisionCone::CalculatePlaneIntersection (const dgVector& normal, con
 	} else {
 		count = dgCollisionConvex::CalculatePlaneIntersection (normal, origin, contactsOut);
 	}
-
 	return count;
-
 }
 
 

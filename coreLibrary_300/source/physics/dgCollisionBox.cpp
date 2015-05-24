@@ -29,39 +29,22 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-dgConvexSimplexEdge dgCollisionBox::m_edgeArray[24] = 
+dgInt32 dgCollisionBox::m_initSimplex = 0;
+dgConvexSimplexEdge dgCollisionBox::m_edgeArray[24];
+dgConvexSimplexEdge* dgCollisionBox::m_edgeEdgeMap[12];
+dgConvexSimplexEdge* dgCollisionBox::m_vertexToEdgeMap[8];
+dgInt32 dgCollisionBox::m_faces[][4] =
 {
-	{&m_edgeArray[3], &m_edgeArray[12], &m_edgeArray[5], 1}, 
-	{&m_edgeArray[6], &m_edgeArray[3], &m_edgeArray[7], 2}, 
-	{&m_edgeArray[12], &m_edgeArray[6], &m_edgeArray[14], 7}, 
-	{&m_edgeArray[0], &m_edgeArray[9], &m_edgeArray[1], 0}, 
-	{&m_edgeArray[9], &m_edgeArray[15], &m_edgeArray[11], 3}, 
-	{&m_edgeArray[15], &m_edgeArray[0], &m_edgeArray[16], 6}, 
-	{&m_edgeArray[1], &m_edgeArray[18], &m_edgeArray[2], 0}, 
-	{&m_edgeArray[10], &m_edgeArray[1], &m_edgeArray[9], 3}, 
-	{&m_edgeArray[18], &m_edgeArray[10], &m_edgeArray[20], 5}, 
-	{&m_edgeArray[4], &m_edgeArray[7], &m_edgeArray[3], 1}, 
-	{&m_edgeArray[7], &m_edgeArray[21], &m_edgeArray[8], 2}, 
-	{&m_edgeArray[21], &m_edgeArray[4], &m_edgeArray[22], 4}, 
-	{&m_edgeArray[2], &m_edgeArray[16], &m_edgeArray[0], 0}, 
-	{&m_edgeArray[16], &m_edgeArray[19], &m_edgeArray[17], 6}, 
-	{&m_edgeArray[19], &m_edgeArray[2], &m_edgeArray[18], 5}, 
-	{&m_edgeArray[5], &m_edgeArray[22], &m_edgeArray[4], 1}, 
-	{&m_edgeArray[13], &m_edgeArray[5], &m_edgeArray[12], 7}, 
-	{&m_edgeArray[22], &m_edgeArray[13], &m_edgeArray[23], 4}, 
-	{&m_edgeArray[8], &m_edgeArray[14], &m_edgeArray[6], 2}, 
-	{&m_edgeArray[14], &m_edgeArray[23], &m_edgeArray[13], 7}, 
-	{&m_edgeArray[23], &m_edgeArray[8], &m_edgeArray[21], 4}, 
-	{&m_edgeArray[11], &m_edgeArray[20], &m_edgeArray[10], 3}, 
-	{&m_edgeArray[17], &m_edgeArray[11], &m_edgeArray[15], 6}, 
-	{&m_edgeArray[20], &m_edgeArray[17], &m_edgeArray[19], 5}, 
+	{0, 1, 3, 2},
+	{0, 4, 5, 1},
+	{1, 5, 7, 3},
+	{0, 2, 6, 4},
+	{2, 3, 7, 6},
+	{4, 6, 7, 5},
 };
 
-//dgConvexSimplexEdge* dgCollisionBox::m_vertexToEdgeMap[8] = {&m_edgeArray[3], &m_edgeArray[0], &m_edgeArray[1], &m_edgeArray[4], &m_edgeArray[11], &m_edgeArray[8], &m_edgeArray[5], &m_edgeArray[2]};
-dgConvexSimplexEdge* dgCollisionBox::m_vertexToEdgeMap[] = {&m_edgeArray[1], &m_edgeArray[3], &m_edgeArray[4], &m_edgeArray[7], 
-															&m_edgeArray[11], &m_edgeArray[8], &m_edgeArray[5], &m_edgeArray[2],
-															&m_edgeArray[14], &m_edgeArray[16], &m_edgeArray[17], &m_edgeArray[20]};
+
+dgVector dgCollisionBox::m_indexMark (1.0f, 2.0f, 4.0f, 0.0f);
 
 dgCollisionBox::dgCollisionBox(dgMemoryAllocator* allocator, dgUnsigned32 signature, dgFloat32 size_x, dgFloat32 size_y, dgFloat32 size_z)
 	:dgCollisionConvex(allocator, signature, m_boxCollision)
@@ -97,13 +80,76 @@ void dgCollisionBox::Init (dgFloat32 size_x, dgFloat32 size_y, dgFloat32 size_z)
 	m_vertex[1]	= dgVector (-m_size[0].m_x,  m_size[0].m_y,  m_size[0].m_z, dgFloat32 (0.0f));
 	m_vertex[2]	= dgVector ( m_size[0].m_x, -m_size[0].m_y,  m_size[0].m_z, dgFloat32 (0.0f));
 	m_vertex[3]	= dgVector (-m_size[0].m_x, -m_size[0].m_y,  m_size[0].m_z, dgFloat32 (0.0f));
-	m_vertex[4]	= dgVector (-m_size[0].m_x, -m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
-	m_vertex[5]	= dgVector ( m_size[0].m_x, -m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
-	m_vertex[6]	= dgVector (-m_size[0].m_x,  m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
-	m_vertex[7]	= dgVector ( m_size[0].m_x,  m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
+
+	m_vertex[4]	= dgVector ( m_size[0].m_x,  m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
+	m_vertex[5]	= dgVector (-m_size[0].m_x,  m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
+	m_vertex[6]	= dgVector ( m_size[0].m_x, -m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
+	m_vertex[7]	= dgVector (-m_size[0].m_x, -m_size[0].m_y, -m_size[0].m_z, dgFloat32 (0.0f));
 
 	dgCollisionConvex::m_vertex = m_vertex;
 	dgCollisionConvex::m_simplex = m_edgeArray;
+
+	if (!m_initSimplex) {
+		dgPolyhedra polyhedra (GetAllocator());
+		polyhedra.BeginFace();
+		for (dgInt32 i = 0; i < 6; i ++) {
+			polyhedra.AddFace (4, &m_faces[i][0]);
+		}
+		polyhedra.EndFace();
+
+		int index = 0;
+		dgInt32 mark = polyhedra.IncLRU();;
+		dgPolyhedra::Iterator iter (polyhedra);
+		for (iter.Begin(); iter; iter ++) {
+			dgEdge* const edge = &iter.GetNode()->GetInfo();
+			if (edge->m_mark != mark) {
+				dgEdge* ptr = edge;
+				do {
+					ptr->m_mark = mark;
+					ptr->m_userData = index;
+					index ++;
+					ptr = ptr->m_twin->m_next;
+				} while (ptr != edge) ;
+			}
+		}
+		dgAssert (index == 24);
+
+		polyhedra.IncLRU();
+		mark = polyhedra.IncLRU();
+		for (iter.Begin(); iter; iter ++) {
+			dgEdge* const edge = &iter.GetNode()->GetInfo();
+			dgEdge *ptr = edge;
+			do {
+				ptr->m_mark = mark;
+				dgConvexSimplexEdge* const simplexPtr = &m_simplex[ptr->m_userData];
+				simplexPtr->m_vertex = ptr->m_incidentVertex;
+				simplexPtr->m_next = &m_simplex[ptr->m_next->m_userData];
+				simplexPtr->m_prev = &m_simplex[ptr->m_prev->m_userData];
+				simplexPtr->m_twin = &m_simplex[ptr->m_twin->m_userData];
+				ptr = ptr->m_twin->m_next;
+			} while (ptr != edge) ;
+		} 
+
+		for (iter.Begin(); iter; iter ++) {
+			dgEdge* const edge = &iter.GetNode()->GetInfo();
+			m_vertexToEdgeMap[edge->m_incidentVertex] = &m_simplex[edge->m_userData];
+		}
+
+		dgInt32 count = 0;
+		mark = polyhedra.IncLRU();
+		for (iter.Begin(); iter; iter ++) {
+			dgEdge* const edge = &iter.GetNode()->GetInfo();
+			if (edge->m_mark != mark) {
+				edge->m_mark = mark;
+				edge->m_twin->m_mark = mark;
+				m_edgeEdgeMap[count] = &m_simplex[edge->m_userData];
+				count ++;
+				dgAssert (count <= 12);
+			}
+		}
+
+		m_initSimplex = 1;
+	}
 
 	SetVolumeAndCG ();
 }
@@ -146,6 +192,11 @@ dgVector dgCollisionBox::SupportVertex (const dgVector& dir, dgInt32* const vert
 	dgAssert (dgAbsf(dir % dir - dgFloat32 (1.0f)) < dgFloat32 (1.0e-3f));
 	dgAssert (dir.m_w == dgFloat32 (0.0f));
 	dgVector mask (dir < dgVector (dgFloat32 (0.0f)));
+	if (vertexIndex) {
+		dgVector index (m_indexMark.CompProduct4(mask & dgVector::m_one));
+		index = (index.AddHorizontal()).GetInt();
+		*vertexIndex = index.m_ix;
+	}
 	return (m_size[1] & mask) + m_size[0].AndNot(mask);
 }
 
@@ -227,6 +278,30 @@ void dgCollisionBox::MassProperties ()
 						  dgFloat32 (0.0f));
 	m_centerOfMass.m_w = volume;
 }
+
+
+
+void dgCollisionBox::GetCollisionInfo(dgCollisionInfo* const info) const
+{
+	dgCollisionConvex::GetCollisionInfo(info);
+
+	info->m_box.m_x = m_size[0].m_x * dgFloat32 (2.0f);
+	info->m_box.m_y = m_size[0].m_y * dgFloat32 (2.0f);
+	info->m_box.m_z = m_size[0].m_z * dgFloat32 (2.0f);
+}
+
+void dgCollisionBox::Serialize(dgSerialize callback, void* const userData) const
+{
+	SerializeLow(callback, userData);
+	dgVector size (m_size[0].Scale3 (dgFloat32 (2.0f)));
+	callback (userData, &size, sizeof (dgVector));
+}
+
+const dgConvexSimplexEdge** dgCollisionBox::GetVertexToEdgeMapping() const 
+{
+	return (const dgConvexSimplexEdge**)&m_vertexToEdgeMap[0];
+}
+
 
 
 dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const
@@ -315,25 +390,8 @@ dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, cons
 		}
 	}
 
-	if (count > 1) {
+	if (count > 2) {
 		count = RectifyConvexSlice (count, normal, contactsOut);
 	}
 	return count;
 }
-
-void dgCollisionBox::GetCollisionInfo(dgCollisionInfo* const info) const
-{
-	dgCollisionConvex::GetCollisionInfo(info);
-
-	info->m_box.m_x = m_size[0].m_x * dgFloat32 (2.0f);
-	info->m_box.m_y = m_size[0].m_y * dgFloat32 (2.0f);
-	info->m_box.m_z = m_size[0].m_z * dgFloat32 (2.0f);
-}
-
-void dgCollisionBox::Serialize(dgSerialize callback, void* const userData) const
-{
-	SerializeLow(callback, userData);
-	dgVector size (m_size[0].Scale3 (dgFloat32 (2.0f)));
-	callback (userData, &size, sizeof (dgVector));
-}
-

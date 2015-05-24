@@ -385,12 +385,26 @@ void dgCollisionInstance::SetScale (const dgVector& scale)
 
 void dgCollisionInstance::SetGlobalScale (const dgVector& scale)
 {
+	// calculate current matrix
+	dgMatrix matrix(dgGetIdentityMatrix());
+	matrix[0][0] = m_scale.m_x;
+	matrix[1][1] = m_scale.m_y;
+	matrix[2][2] = m_scale.m_z;
+	matrix = m_aligmentMatrix * matrix * m_localMatrix;
+
+	// extract the original local matrix
+	dgMatrix transpose (matrix.Transpose());
+	dgVector globalScale (dgSqrt (transpose[0] % transpose[0]), dgSqrt (transpose[1] % transpose[1]), dgSqrt (transpose[2] % transpose[2]), dgFloat32 (1.0f));
+	dgVector invGlobalScale (dgFloat32 (1.0f) / globalScale.m_x, dgFloat32 (1.0f) / globalScale.m_y, dgFloat32 (1.0f) / globalScale.m_z, dgFloat32 (1.0f));
+	dgMatrix localMatrix (m_aligmentMatrix.Transpose() * m_localMatrix);
+	localMatrix.m_posit = matrix.m_posit.CompProduct4(invGlobalScale) | dgVector::m_wOne;
+
 	if ((dgAbsf (scale[0] - scale[1]) < dgFloat32 (1.0e-4f)) && (dgAbsf (scale[0] - scale[2]) < dgFloat32 (1.0e-4f))) {
-		m_localMatrix.m_posit =  m_localMatrix.m_posit.Scale3 (scale.m_x * m_invScale.m_x);
+		m_localMatrix = localMatrix;
+		m_localMatrix.m_posit = m_localMatrix.m_posit.CompProduct4(scale) | dgVector::m_wOne;
+		m_aligmentMatrix = dgGetIdentityMatrix();
 		SetScale (scale);
 	} else {
-		// extract the original local matrix
-		dgMatrix localMatrix (m_aligmentMatrix * m_localMatrix);
 		
 		// create a new scale matrix 
 		localMatrix[0] = localMatrix[0].CompProduct4 (scale);
@@ -404,6 +418,15 @@ void dgCollisionInstance::SetGlobalScale (const dgVector& scale)
 
 		m_localMatrix = m_aligmentMatrix * m_localMatrix;
 		m_aligmentMatrix = m_aligmentMatrix.Transpose();
+
+		dgAssert (m_localMatrix.TestOrthogonal());
+		dgAssert (m_aligmentMatrix.TestOrthogonal());
+
+//dgMatrix xxx1 (dgGetIdentityMatrix());
+//xxx1[0][0] = m_scale.m_x;
+//xxx1[1][1] = m_scale.m_y;
+//xxx1[2][2] = m_scale.m_z;
+//dgMatrix xxx (m_aligmentMatrix * xxx1 * m_localMatrix);
 
 		bool isIdentity = true;
 		for (dgInt32 i = 0; i < 3; i ++) {
@@ -653,14 +676,9 @@ dgFloat32 dgCollisionInstance::RayCast (const dgVector& localP0, const dgVector&
 
 dgFloat32 dgCollisionInstance::ConvexRayCast (const dgCollisionInstance* const convexShape, const dgMatrix& convexShapeMatrix, const dgVector& localVeloc, dgFloat32 minT, dgContactPoint& contactOut, OnRayPrecastAction preFilter, const dgBody* const referenceBody, void* const userData, dgInt32 threadId) const
 {
-
+	dgFloat32 t = dgFloat32 (1.2f);
 	if ((GetCollisionPrimityType() != m_nullCollision) && (!preFilter || preFilter(referenceBody, this, userData))) {
-
-		switch(m_scaleType)
-		{
-			case m_unit:
-			{
-				dgFloat32 t = m_childShape->ConvexRayCast (convexShape, convexShapeMatrix, localVeloc, minT, contactOut, referenceBody, this, userData, threadId);
+		t = m_childShape->ConvexRayCast (convexShape, convexShapeMatrix, localVeloc, minT, contactOut, referenceBody, this, userData, threadId);
 				if (t <= minT) {
 					if (!(m_childShape->IsType(dgCollision::dgCollisionMesh_RTTI) || m_childShape->IsType(dgCollision::dgCollisionCompound_RTTI))) {
 						contactOut.m_shapeId0 = GetUserDataID();
@@ -671,52 +689,23 @@ dgFloat32 dgCollisionInstance::ConvexRayCast (const dgCollisionInstance* const c
 					//contactOut.m_collision1 = this;
 					contactOut.m_collision1 = convexShape;
 				}
+	}
 				return t;
 			}
-			default:
-				dgAssert(0);
-
-		}
-	}
-	return dgFloat32 (1.2f);
-
-}
 
 void dgCollisionInstance::CalculateBuoyancyAcceleration (const dgMatrix& matrix, const dgVector& origin, const dgVector& gravity, const dgVector& fluidPlane, dgFloat32 fluidDensity, dgFloat32 fluidViscosity, dgVector& accel, dgVector& alpha)
 {
-	dgMatrix scaledMatrix (m_localMatrix * matrix);
-
-	switch (m_scaleType)
-	{
-		case m_unit:
-		case m_uniform:
-		case m_nonUniform:
-		{
-			scaledMatrix[0] = scaledMatrix[0].Scale4 (m_scale[0]);
-			scaledMatrix[1] = scaledMatrix[1].Scale4 (m_scale[1]);
-			scaledMatrix[2] = scaledMatrix[2].Scale4 (m_scale[2]);
-			break;
-		}
-		default:
-			dgAssert(0);
-	}
+	dgMatrix globalMatrix (m_localMatrix * matrix);
 
 	accel = dgVector (dgFloat32 (0.0f));
 	alpha = dgVector (dgFloat32 (0.0f));
-	dgVector volumeIntegral (m_childShape->CalculateVolumeIntegral (scaledMatrix, fluidPlane));
+	dgVector volumeIntegral (m_childShape->CalculateVolumeIntegral (globalMatrix, fluidPlane, *this));
 	if (volumeIntegral.m_w > dgFloat32 (0.0f)) {
 		dgVector buoyanceCenter (volumeIntegral - origin);
 
 		dgVector force (gravity.Scale3 (-fluidDensity * volumeIntegral.m_w));
 		dgVector torque (buoyanceCenter * force);
 
-//		dgFloat32 damp = GetMax (GetMin ((m_veloc % m_veloc) * dgFloat32 (100.0f) * fluidLinearViscousity, dgFloat32 (1.0f)), dgFloat32(dgFloat32 (10.0f)));
-//		force -= m_veloc.Scale3 (damp);
-
-		//damp = (m_omega % m_omega) * dgFloat32 (10.0f) * fluidAngularViscousity;
-//		damp = GetMax (GetMin ((m_omega % m_omega) * dgFloat32 (1000.0f) * fluidAngularViscousity, dgFloat32(0.25f)), dgFloat32(2.0f));
-//		torque -= m_omega.Scale3 (damp);
-//		dgThreadHiveScopeLock lock (m_world, &m_criticalSectionLock);
 		accel += force;
 		alpha += torque;
 	}

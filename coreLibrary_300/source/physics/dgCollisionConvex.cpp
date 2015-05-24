@@ -1130,7 +1130,7 @@ class dgCollisionConvex::dgMinkHull: public dgDownHeap<dgMinkFace *, dgFloat32>
 				SupportVertex (normal, 3);
 				volume = -((m_hullDiff[3] - m_hullDiff[0]) % normal);
 				if (dgAbsf(volume) < dgFloat32 (1.0e-10f)) {
-					// there is somethomg wrong, try building a simple by a different starting point, for now just assert
+					// there is something wrong, try building a simple by a different starting point, for now just assert
 					//dgAssert (0);
 					volume = dgFloat32 (0.0f);
 					//for (int i = 0; i < 4; i ++) {
@@ -1426,7 +1426,6 @@ class dgCollisionConvex::dgMinkHull: public dgDownHeap<dgMinkFace *, dgFloat32>
 	dgCollisionConvex* m_otherShape;
 	dgCollisionParamProxy* m_proxy;
 	dgFaceFreeList* m_freeFace; 
-//	bool m_scaleIsUnit;
 	dgCollisionInstance::dgScaleType m_scaleType;
 
 	dgMinkFace* m_faceStack[DG_CONVEX_MINK_STACK_SIZE];
@@ -1793,13 +1792,42 @@ dgFloat32 dgCollisionConvex::GetBoxMaxRadius () const
 
 
 
-//dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgMatrix& globalMatrix, GetBuoyancyPlane buoyancyPlane, void* context) const
-dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& globalPlane) const
+dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& globalPlane, const dgCollisionInstance& parentScale) const
 {
 	dgPlane localPlane (globalMatrix.UntransformPlane (globalPlane));
+
+	const dgVector& scale = parentScale.m_scale;
+	switch (parentScale.m_scaleType)
+	{
+		case dgCollisionInstance::m_unit:
+			break;
+
+		case dgCollisionInstance::m_uniform:
+		{
+			localPlane.m_w *= parentScale.m_invScale.m_x;
+			break;
+		}
+		case dgCollisionInstance::m_nonUniform:
+		{
+			localPlane = localPlane.CompProduct4 (scale | dgVector::m_wOne);
+			dgFloat32 mag2 = localPlane % localPlane;
+			localPlane = localPlane.Scale4 (dgRsqrt(mag2));
+			break;
+		}
+		default:
+		{
+			localPlane = localPlane.CompProduct4 (scale | dgVector::m_wOne);
+			dgFloat32 mag2 = localPlane % localPlane;
+			localPlane = localPlane.Scale4 (dgRsqrt(mag2));
+			localPlane = parentScale.m_aligmentMatrix.UntransformPlane (localPlane);
+		}
+	}
+
 	dgVector cg (CalculateVolumeIntegral (localPlane));
 	
-	dgFloat32 volume = cg.m_w;
+	dgFloat32 volume = cg.m_w * scale.m_x * scale.m_y * scale.m_z;
+	cg = parentScale.m_aligmentMatrix.RotateVector (cg);
+	cg = cg.CompProduct4(scale);
 	cg = globalMatrix.TransformVector (cg);
 	cg.m_w = volume;
 	return cg;
@@ -2201,13 +2229,11 @@ dgCollisionConvex::dgPerimenterEdge* dgCollisionConvex::ReduceContacts (dgPerime
 		}
 	}
 
-
 	if (heap.GetCount()) {
 		if (maxCount > 8) {
 			maxCount = 8;
 		}
 		while (heap.GetCount() > maxCount) {
-			//dgFloat32 dist2;
 			dgPerimenterEdge* ptr = heap[0];
 			heap.Pop();
 			for (dgInt32 i = 0; i < heap.GetCount(); i ++) {
@@ -2392,6 +2418,11 @@ dgFloat32 dgCollisionConvex::RayCast (const dgVector& localP0, const dgVector& l
 	dgVector point (localP0);
 	dgVector point0 (localP0);
 	dgVector p0p1 (localP0 - localP1);
+
+	// avoid NaN as a result of a division by zero
+	if ((p0p1.TestZero().GetSignMask() & 7) == 7) {
+		return dgFloat32(1.2f);
+	}
 
 	dgFloat32 param = dgFloat32 (0.0f);
 
@@ -3081,8 +3112,6 @@ dgInt32 dgCollisionConvex::CalculateConvexToConvexContact (dgCollisionParamProxy
 			return -1;
 		}
 		minkHull.m_p = ConvexConicSupporVertex(minkHull.m_p, minkHull.m_normal);
-		//dgFloat32 penetration = minkHull.m_normal % (minkHull.m_p - minkHull.m_q) + proxy.m_skinThickness;
-		//return (penetration < dgFloat32 (0.0f)) ? 0 : -1;
 		dgFloat32 penetration = minkHull.m_normal % (minkHull.m_q - minkHull.m_p) - proxy.m_skinThickness;
 		dgInt32 retVal = (penetration <= dgFloat32 (0.0f)) ? -1 : 0;
 		proxy.m_contactJoint->m_contactActive = retVal;
@@ -3140,6 +3169,7 @@ dgInt32 dgCollisionConvex::CalculateConvexToConvexContact (dgCollisionParamProxy
 	}
 	return count;
 }
+
 
 
 

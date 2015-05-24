@@ -121,14 +121,9 @@ class dgCollisionCompound: public dgCollision
 	class dgNodePairs
 	{
 		public:
-		dgVector m_treeNodeP0;
-		dgVector m_treeNodeP1;
-		dgVector m_treeNodeSize;
-		dgVector m_treeNodeOrigin;
-		dgInt32 m_treeNodeIsLeaf;
-		dgFloat32 m_treeNodeArea;
 		const void* m_treeNode;
 		dgNodeBase* m_myNode;
+		dgInt32 m_treeNodeIsLeaf;
 	};
 
 
@@ -177,7 +172,7 @@ class dgCollisionCompound: public dgCollision
 
 	
 	
-	virtual dgVector CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane) const;
+	virtual dgVector CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane, const dgCollisionInstance& parentScale) const;
 
 	virtual void DebugCollision (const dgMatrix& matrix, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const;
 	virtual dgFloat32 RayCast (const dgVector& localP0, const dgVector& localP1, dgFloat32 maxT, dgContactPoint& contactOut, const dgBody* const body, void* const userData, OnRayPrecastAction preFilter) const;
@@ -202,23 +197,32 @@ class dgCollisionCompound: public dgCollision
 
 	dgFloat32 ConvexRayCastSingleConvex (const dgCollisionInstance* const convexInstance, const dgMatrix& instanceMatrix, const dgVector& instanceVeloc, dgFloat32 maxT, dgContactPoint& contactOut, const dgBody* const referenceBody, const dgCollisionInstance* const referenceInstance, void* const userData, dgInt32 threadId) const; 
 
-	dgInt32 ClosestDistance (dgBody* const bodyA, dgTriplex& contactA, dgBody* const bodyB, dgTriplex& contactB, dgTriplex& normalAB) const;
-	//dgInt32 ClosestDistanceToConvex (dgBody* const bodyA, dgTriplex& contactA, dgBody* const ConvetvBodyB, dgTriplex& contactB, dgTriplex& normalAB) const;
+	//dgInt32 ClosestDistance (dgBody* const bodyA, dgTriplex& contactA, dgBody* const bodyB, dgTriplex& contactB, dgTriplex& normalAB) const;
 	//dgInt32 ClosestDistanceToCompound (dgBody* const compoundBodyA, dgTriplex& contactA, dgBody* const compoundBodyB, dgTriplex& contactB, dgTriplex& normalAB) const;
+	//dgInt32 ClosestDistanceToConvex (dgBody* const bodyA, dgTriplex& contactA, dgBody* const ConvetvBodyB, dgTriplex& contactB, dgTriplex& normalAB) const;
+	dgInt32 ClosestDistance (dgCollisionParamProxy& proxy) const;
+	dgInt32 ClosestDistanceToConvex (dgCollisionParamProxy& proxy) const;
+	dgInt32 ClosestDistanceToCompound (dgCollisionParamProxy& proxy) const;
+	
 
 #ifdef _DEBUG
 	dgVector InternalSupportVertex (const dgVector& dir) const;
 #endif
 	
 	dgNodeBase* BuildTopDown (dgNodeBase** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgList<dgNodeBase*>::dgListNode** const nextNode);
+	dgNodeBase* BuildTopDownBig (dgNodeBase** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgList<dgNodeBase*>::dgListNode** const nextNode);
 
 	dgFloat64 CalculateEntropy (dgList<dgNodeBase*>& list);
 
-	void CalculateCollisionTreeArea(dgNodePairs& pairOut, const dgCollisionBVH* const collisionTree, const void* const treeNode) const;
 	void ImproveNodeFitness (dgNodeBase* const node) const;
 	dgFloat32 CalculateSurfaceArea (dgNodeBase* const node0, dgNodeBase* const node1, dgVector& minBox, dgVector& maxBox) const;
 
 	dgInt32 CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const;
+
+	void PushNode (const dgMatrix& matrix, dgUpHeap<dgHeapNodePair, dgFloat32>& heap, dgNodeBase* const myNode, dgNodeBase* const otehrNode) const;
+
+	static dgInt32 CompareNodes (const dgNodeBase* const nodeA, const dgNodeBase* const nodeB, void* notUsed);
+
 
 	dgFloat32 m_boxMinRadius;
 	dgFloat32 m_boxMaxRadius;
@@ -235,6 +239,8 @@ class dgCollisionCompound: public dgCollision
 	friend class dgWorld;
 	friend class dgCollisionScene;
 };
+
+
 
 #endif 
 

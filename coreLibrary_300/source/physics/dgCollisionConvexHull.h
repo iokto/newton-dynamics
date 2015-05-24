@@ -38,7 +38,6 @@ class dgCollisionConvexHull: public dgCollisionConvex
 	dgInt32 GetFaceIndices (dgInt32 index, dgInt32* const indices) const;
 
 	static dgInt32 CalculateSignature (dgInt32 vertexCount, const dgFloat32* const vertexArray, dgInt32 strideInBytes);
-	static dgInt32 CalculatePinNumber (dgInt32 vertexCount, const dgFloat32* const vertexArray, dgInt32 strideInBytes);
 
 	protected:
 	void BuildHull (dgInt32 count, dgInt32 strideInBytes, dgFloat32 tolerance, const dgFloat32* const vertexArray);
@@ -56,11 +55,14 @@ class dgCollisionConvexHull: public dgCollisionConvex
 	virtual void GetCollisionInfo(dgCollisionInfo* const info) const;
 	virtual void Serialize(dgSerialize callback, void* const userData) const;
 
+	virtual const dgConvexSimplexEdge** GetVertexToEdgeMapping() const {return m_vertexToEdgeMapping;}
+
 //	virtual dgFloat32 RayCast (const dgVector& localQ0, const dgVector& localP1, dgContactPoint& contactOut, const dgBody* const body, void* const userData) const;
 
 	dgInt32 m_faceCount;
 	dgInt32 m_supportTreeCount;
 	dgConvexSimplexEdge** m_faceArray;
+	const dgConvexSimplexEdge** m_vertexToEdgeMapping;
 	dgConvexBox* m_supportTree;
 
 	friend class dgWorld;
