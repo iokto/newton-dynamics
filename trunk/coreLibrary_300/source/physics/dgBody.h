@@ -34,10 +34,8 @@ class dgBroadPhaseNode;
 class dgCollisionInstance;
 
 
+#define DG_MINIMUM_MASS		dgFloat32(1.0e-3f)
 #define DG_INFINITE_MASS	dgFloat32(1.0e15f)
-
-
-
 
 #define OverlapTest(body0,body1) dgOverlapTest ((body0)->m_minAABB, (body0)->m_maxAABB, (body1)->m_minAABB, (body1)->m_maxAABB)
 
@@ -105,8 +103,8 @@ class dgBody
 	virtual void SetGroupID (dgUnsigned32 id);
 	dgInt32 GetUniqueID () const;
 
-	bool GetContinuesCollisionMode () const;
-	void SetContinuesCollisionMode (bool mode);
+	bool GetContinueCollisionMode () const;
+	void SetContinueCollisionMode (bool mode);
 	bool GetCollisionWithLinkedBodies () const;
 	void SetCollisionWithLinkedBodies (bool state);
 
@@ -256,6 +254,7 @@ class dgBody
 	friend class dgContact;
 	friend class dgConstraint;
 	friend class dgBroadPhase;
+	friend class dgAmpInstance;
 	friend class dgCollisionBVH;
 	friend class dgBroadPhaseNode;
 	friend class dgBodyMasterList;
@@ -437,12 +436,12 @@ DG_INLINE dgCollisionInstance* dgBody::GetCollision () const
 	return m_collision;
 }
 
-DG_INLINE void dgBody::SetContinuesCollisionMode (bool mode)
+DG_INLINE void dgBody::SetContinueCollisionMode (bool mode)
 {
 	m_continueCollisionMode = dgUnsigned32 (mode);
 }
 
-DG_INLINE bool dgBody::GetContinuesCollisionMode () const
+DG_INLINE bool dgBody::GetContinueCollisionMode () const
 {
 	return m_continueCollisionMode;
 }

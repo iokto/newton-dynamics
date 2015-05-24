@@ -65,10 +65,12 @@ class dgCollisionCylinder: public dgCollisionConvex
 	virtual dgInt32 CalculateContacts (const dgVector& point, const dgVector& normal, dgCollisionParamProxy& proxy, dgVector* const contactsOut) const;
 
 
+	dgVector m_profile[4];
+	dgVector m_vertex[DG_CYLINDER_SEGMENTS * 2];
 	dgFloat32 m_height;
 	dgFloat32 m_radius;
+	dgFloat32 m_skinthickness;
 
-	dgVector m_vertex[DG_CYLINDER_SEGMENTS * 2];
 	static dgInt32 m_shapeRefCount;
 	static dgConvexSimplexEdge m_edgeArray[];
 

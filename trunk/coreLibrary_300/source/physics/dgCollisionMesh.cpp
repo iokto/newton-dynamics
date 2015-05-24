@@ -270,7 +270,7 @@ dgVector dgCollisionMesh::BoxSupportMapping  (const dgVector& dir) const
 
 
 
-dgVector dgCollisionMesh::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane) const
+dgVector dgCollisionMesh::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane, const dgCollisionInstance& parentScale) const
 {
 	return dgVector (dgFloat32 (0.0f));
 }

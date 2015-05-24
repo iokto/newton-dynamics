@@ -431,14 +431,17 @@ for (dgFractureConectivity::dgListNode* node = m_conectivity.GetFirst(); node; n
 //dgTrace (("faceA:\n"));
 			dgPerimenterEdge subdivision[256];
 			dgAssert ((2 * (indexCountA + indexCountB)) < dgInt32 (sizeof (subdivision) / sizeof (subdivision[0])));
-			for (dgInt32 i = 0; i < indexCountB; i ++) {
+			for (dgInt32 i = 1; i < indexCountB; i ++) {
 				subdivision[i].m_vertex = &pointsB[indexB[i]];
 				subdivision[i].m_prev = &subdivision[i - 1];
 				subdivision[i].m_next = &subdivision[i + 1];
 
 //dgTrace (("%f %f %f\n", pointsB[indexB[i]].m_x, pointsB[indexB[i]].m_y, pointsB[indexB[i]].m_z));
 			}
+			subdivision[0].m_vertex = &pointsB[indexB[0]];
+			subdivision[0].m_next = &subdivision[1];
 			subdivision[0].m_prev = &subdivision[indexCountB - 1];
+
 			subdivision[indexCountB - 1].m_next = &subdivision[0];
 
             dgInt32 edgeIndex = indexCountB;

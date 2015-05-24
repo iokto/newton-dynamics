@@ -220,25 +220,28 @@ dgFloat32 dgBody::RayCast (const dgLineBox& line, OnRayCastAction filter, OnRayP
 {
 	dgAssert (filter);
 	dgVector l0 (line.m_l0);
-//	dgVector l1 (line.m_l1);
+	//	dgVector l1 (line.m_l1);
 	dgVector l1 (line.m_l0 + (line.m_l1 - line.m_l0).Scale4 (dgMin(maxT, dgFloat32 (1.0f))));
 	if (dgRayBoxClip (l0, l1, m_minAABB, m_maxAABB)) {
 		dgContactPoint contactOut;
 		const dgMatrix& globalMatrix = m_collision->GetGlobalMatrix();
 		dgVector localP0 (globalMatrix.UntransformVector (l0));
 		dgVector localP1 (globalMatrix.UntransformVector (l1));
-		dgFloat32 t = m_collision->RayCast (localP0, localP1, dgFloat32 (1.0f), contactOut, preFilter, this, userData);
-		if (t < dgFloat32 (1.0f)) {
-			dgVector p (globalMatrix.TransformVector(localP0 + (localP1 - localP0).Scale3(t)));
-			dgVector l1l0 (line.m_l1 - line.m_l0);
-			t = ((p - line.m_l0) % l1l0) / (l1l0 % l1l0);
-			if (t < maxT) {
-				dgAssert (t >= dgFloat32 (0.0f));
-				dgAssert (t <= dgFloat32 (1.0f));
-				contactOut.m_normal = globalMatrix.RotateVector (contactOut.m_normal);
-				maxT = filter (this, contactOut.m_collision0, p, contactOut.m_normal, contactOut.m_shapeId0, userData, t);
+		dgVector p1p0 (localP1 - localP0);
+		if ((p1p0 % p1p0) > dgFloat32 (1.0e-12f)) {
+			dgFloat32 t = m_collision->RayCast (localP0, localP1, dgFloat32 (1.0f), contactOut, preFilter, this, userData);
+			if (t < dgFloat32 (1.0f)) {
+				dgVector p (globalMatrix.TransformVector(localP0 + (localP1 - localP0).Scale3(t)));
+				dgVector l1l0 (line.m_l1 - line.m_l0);
+				t = ((p - line.m_l0) % l1l0) / (l1l0 % l1l0);
+				if (t < maxT) {
+					dgAssert (t >= dgFloat32 (0.0f));
+					dgAssert (t <= dgFloat32 (1.0f));
+					contactOut.m_normal = globalMatrix.RotateVector (contactOut.m_normal);
+					maxT = filter (this, contactOut.m_collision0, p, contactOut.m_normal, contactOut.m_shapeId0, userData, t);
+				}
 			}
-		}
+		} 
 	} 
 	return maxT;
 }
@@ -334,10 +337,12 @@ dgVector dgBody::CalculateInverseDynamicForce (const dgVector& desiredVeloc, dgF
 
 dgConstraint* dgBody::GetFirstJoint() const
 {
-	for (dgBodyMasterListRow::dgListNode* node = m_masterNode->GetInfo().GetFirst(); node; node = node->GetNext()) {
-		dgConstraint* const joint = node->GetInfo().m_joint;
-		if (joint->GetId() >= dgConstraint::m_unknownConstraint) {
-			return joint;
+	if (m_masterNode) {
+		for (dgBodyMasterListRow::dgListNode* node = m_masterNode->GetInfo().GetFirst(); node; node = node->GetNext()) {
+			dgConstraint* const joint = node->GetInfo().m_joint;
+			if (joint->GetId() >= dgConstraint::m_unknownConstraint) {
+				return joint;
+			}
 		}
 	}
 	return NULL;
@@ -365,11 +370,13 @@ dgConstraint* dgBody::GetNextJoint(dgConstraint* const joint) const
 
 dgConstraint* dgBody::GetFirstContact() const
 {
-	for (dgBodyMasterListRow::dgListNode* node = m_masterNode->GetInfo().GetFirst(); node; node = node->GetNext()) {
-		dgConstraint* const joint = node->GetInfo().m_joint;
-		//if ((joint->GetId() == dgConstraint::m_contactConstraint) && (joint->GetMaxDOF() != 0)) {
-		if (joint->GetId() == dgConstraint::m_contactConstraint) {
-			return joint;
+	if (m_masterNode) {
+		for (dgBodyMasterListRow::dgListNode* node = m_masterNode->GetInfo().GetFirst(); node; node = node->GetNext()) {
+			dgConstraint* const joint = node->GetInfo().m_joint;
+			//if ((joint->GetId() == dgConstraint::m_contactConstraint) && (joint->GetMaxDOF() != 0)) {
+			if (joint->GetId() == dgConstraint::m_contactConstraint) {
+				return joint;
+			}
 		}
 	}
 	return NULL;
@@ -461,11 +468,11 @@ void dgBody::SetMassMatrix(dgFloat32 mass, dgFloat32 Ixx, dgFloat32 Iyy, dgFloat
 		mass = DG_INFINITE_MASS * 2.0f;
 	}
 
-	if (mass < dgFloat32 (1.0e-3f)) {
+	if (mass < DG_MINIMUM_MASS) {
 		mass = DG_INFINITE_MASS * 2.0f;
 	}
 
-	dgAssert (m_masterNode);
+	//dgAssert (m_masterNode);
 	if (mass >= DG_INFINITE_MASS) {
 		m_mass.m_x = DG_INFINITE_MASS;
 		m_mass.m_y = DG_INFINITE_MASS;
@@ -476,9 +483,11 @@ void dgBody::SetMassMatrix(dgFloat32 mass, dgFloat32 Ixx, dgFloat32 Iyy, dgFloat
 		m_invMass.m_z = dgFloat32 (0.0f);
 		m_invMass.m_w = dgFloat32 (0.0f);
 
-		dgBodyMasterList& masterList (*m_world);
-		if (masterList.GetFirst() != m_masterNode) {
-			masterList.InsertAfter (masterList.GetFirst(), m_masterNode);
+		if (m_masterNode) {
+			dgBodyMasterList& masterList (*m_world);
+			if (masterList.GetFirst() != m_masterNode) {
+				masterList.InsertAfter (masterList.GetFirst(), m_masterNode);
+			}
 		}
 		SetAparentMassMatrix (m_mass);
 
@@ -505,9 +514,10 @@ void dgBody::SetMassMatrix(dgFloat32 mass, dgFloat32 Ixx, dgFloat32 Iyy, dgFloat
 		m_invMass.m_z = dgFloat32 (1.0f) / Izz1;
 		m_invMass.m_w = dgFloat32 (1.0f) / mass;
 
-		dgBodyMasterList& masterList (*m_world);
-		masterList.RotateToEnd (m_masterNode);
-
+		if (m_masterNode) {
+			dgBodyMasterList& masterList (*m_world);
+			masterList.RotateToEnd (m_masterNode);
+		}
 		SetAparentMassMatrix (dgVector (Ixx, Iyy, Izz, mass));
 	}
 
@@ -553,20 +563,28 @@ void dgBody::SetMassProperties (dgFloat32 mass, const dgCollisionInstance* const
 
 dgMatrix dgBody::CalculateInertiaMatrix () const
 {
-	dgMatrix tmp (m_matrix.Transpose());
+	dgMatrix tmp (m_matrix.Transpose4X4());
 	tmp[0] = tmp[0].CompProduct4 (m_mass);
 	tmp[1] = tmp[1].CompProduct4 (m_mass);
 	tmp[2] = tmp[2].CompProduct4 (m_mass);
+#if 0
 	return tmp * m_matrix;
+#else
+	return dgMatrix (m_matrix.RotateVector(tmp[0]), m_matrix.RotateVector(tmp[1]), m_matrix.RotateVector(tmp[2]), dgVector::m_wOne);
+#endif
 }
 
 dgMatrix dgBody::CalculateInvInertiaMatrix () const
 {
-	dgMatrix tmp (m_matrix.Transpose());
+	dgMatrix tmp (m_matrix.Transpose4X4());
 	tmp[0] = tmp[0].CompProduct4(m_invMass);
 	tmp[1] = tmp[1].CompProduct4(m_invMass);
 	tmp[2] = tmp[2].CompProduct4(m_invMass);
+#if 0
 	return tmp * m_matrix;
+#else
+	return dgMatrix (m_matrix.RotateVector(tmp[0]), m_matrix.RotateVector(tmp[1]), m_matrix.RotateVector(tmp[2]), dgVector::m_wOne);
+#endif
 }
 
 void dgBody::InvalidateCache ()

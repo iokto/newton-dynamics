@@ -88,7 +88,7 @@ class dgCollisionConvex: public dgCollision
 
 	virtual void SerializeLow(dgSerialize callback, void* const userData) const;
 
-	virtual dgVector CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane) const;
+	virtual dgVector CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane, const dgCollisionInstance& parentScale) const;
 	static void CalculateInertia (void *userData, int vertexCount, const dgFloat32* const FaceArray, int faceId);
 
 	virtual dgFloat32 GetVolume () const;
@@ -130,8 +130,7 @@ class dgCollisionConvex: public dgCollision
 	dgInt32 ConvexPolygonToLineIntersection (const dgVector& normal, dgInt32 count1, dgVector* const shape1, dgInt32 count2, dgVector* const shape2, dgVector* const contactOut, dgVector* const mem) const;
 	dgFloat32 ConvexConicConvexRayCast (const dgCollisionInstance* const convexConicShape, const dgMatrix& conicShapeMatrix, const dgCollisionInstance* const convexCastingShape, const dgMatrix& castingMatrix, const dgVector& castingVeloc, dgFloat32 maxT, dgContactPoint& contactOut) const;
 									
-
-	
+	virtual const dgConvexSimplexEdge** GetVertexToEdgeMapping() const {return NULL;}
 
 //	dgVector ReduceLine (dgInt32& indexOut, dgVector* const lineDiff, dgVector* const lineSum) const;
 //	dgVector ReduceTriangle (dgInt32& indexOut, dgVector* const triangleDiff, dgVector* const triangleSum) const;
@@ -152,6 +151,7 @@ class dgCollisionConvex: public dgCollision
 	dgVector* m_vertex;
 	dgConvexSimplexEdge* m_simplex;
 	
+	
 	dgFloat32 m_boxMinRadius;
 	dgFloat32 m_boxMaxRadius;
 	dgFloat32 m_simplexVolume;
@@ -159,7 +159,6 @@ class dgCollisionConvex: public dgCollision
 	dgUnsigned16 m_edgeCount;
 	dgUnsigned16 m_vertexCount;
 
-	
 	public:	
 	static dgVector m_hullDirs[14]; 
 	static dgVector m_dummySum[4];

@@ -1259,7 +1259,7 @@ void NewtonWorldRayCast(const NewtonWorld* const newtonWorld, const dFloat* cons
 	}
 }
 
-NEWTON_API void NewtonWorldConvexRayCast (const NewtonWorld* const newtonWorld, const NewtonCollision* const shape, const dFloat* const matrix, const dFloat* const p1, NewtonWorldRayFilterCallback filter, void* const userData, NewtonWorldRayPrefilterCallback prefilter, int threadIndex)
+void NewtonWorldConvexRayCast (const NewtonWorld* const newtonWorld, const NewtonCollision* const shape, const dFloat* const matrix, const dFloat* const p1, NewtonWorldRayFilterCallback filter, void* const userData, NewtonWorldRayPrefilterCallback prefilter, int threadIndex)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	if (filter) {
@@ -2797,7 +2797,7 @@ NewtonCollision* NewtonCreateCompoundCollisionFromMesh (const NewtonWorld* const
 	for (NewtonMesh* segment = NewtonMeshCreateFirstSingleSegment (convexAproximation); segment; segment = nextSegment) {
 		nextSegment = NewtonMeshCreateNextSingleSegment (convexAproximation, segment);
 
-		NewtonCollision* const convexHull = NewtonCreateConvexHullFromMesh (newtonWorld, segment, 0.01f, subShapeID);
+		NewtonCollision* const convexHull = NewtonCreateConvexHullFromMesh (newtonWorld, segment, hullTolerance, subShapeID);
 		if (convexHull) {
 			NewtonCompoundCollisionAddSubCollision (compound, convexHull);
 			NewtonDestroyCollision(convexHull);
@@ -3615,9 +3615,8 @@ int NewtonTreeCollisionGetVertexListTriangleListInAABB(const NewtonCollision* co
 //NewtonCollision* NewtonCreateHeightFieldCollision(const NewtonWorld* const newtonWorld, int width, int height, int cellsDiagonals,
 //												  const dFloat* const elevationMap, const char* const atributeMap,
 //												  dFloat horizontalScale, int shapeID)
- NEWTON_API NewtonCollision* NewtonCreateHeightFieldCollision (const NewtonWorld* const newtonWorld, int width, int height, int gridsDiagonals, dgInt32 elevationdatType,
+  NewtonCollision* NewtonCreateHeightFieldCollision (const NewtonWorld* const newtonWorld, int width, int height, int gridsDiagonals, dgInt32 elevationdatType,
 															   const void* const elevationMap, const char* const attributeMap, dFloat verticalScale, dFloat horizontalScale, int shapeID)
-
 {
 	Newton* const world = (Newton *)newtonWorld;
 
@@ -3725,13 +3724,13 @@ NewtonCollision* NewtonSceneCollisionGetCollisionFromNode (NewtonCollision* cons
 	return NewtonCompoundCollisionGetCollisionFromNode (sceneCollision, node);
 }
 
-NEWTON_API void* NewtonSceneCollisionGetFirstNode (NewtonCollision* const sceneCollision)
+void* NewtonSceneCollisionGetFirstNode (NewtonCollision* const sceneCollision)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	return NewtonCompoundCollisionGetFirstNode (sceneCollision);
 }
 
-NEWTON_API void* NewtonSceneCollisionGetNextNode (NewtonCollision* const sceneCollision, const void* const node)
+void* NewtonSceneCollisionGetNextNode (NewtonCollision* const sceneCollision, const void* const node)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	return NewtonCompoundCollisionGetNextNode (sceneCollision, node);
@@ -5641,14 +5640,20 @@ void NewtonBodySetCollisionScale (const NewtonBody* const bodyPtr, dFloat scaleX
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
 	dgWorld* const world = body->GetWorld();
-	NewtonCollisionSetScale(NewtonBodyGetCollision(bodyPtr), scaleX, scaleY, scaleZ);
-	world->GetBroadPhase()->ResetEntropy ();
+	NewtonCollision* const collision = NewtonBodyGetCollision(bodyPtr);
+
+	dgFloat32 mass = body->GetInvMass().m_w > dgFloat32 (0.0f) ? body->GetMass().m_w : dgFloat32 (0.0f);
+	NewtonCollisionSetScale (collision, scaleX, scaleY, scaleZ);
 
 	NewtonJoint* nextJoint;
-	for (NewtonJoint* contactJoint = NewtonBodyGetFirstContactJoint(bodyPtr); contactJoint; contactJoint = nextJoint) {
-		nextJoint = NewtonBodyGetNextContactJoint(bodyPtr, contactJoint);
-		world->DestroyConstraint ((dgConstraint*)contactJoint);
+	for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(bodyPtr); joint; joint = nextJoint) {
+		dgConstraint* const contactJoint = (dgConstraint*)joint;
+		nextJoint = NewtonBodyGetNextContactJoint(bodyPtr, joint);
+		//world->DestroyConstraint (contactJoint);
+		contactJoint->ResetMaxDOF();
 	}
+    NewtonBodySetMassProperties (bodyPtr, mass, collision);
+	world->GetBroadPhase()->ResetEntropy ();
 }
 
 
@@ -5743,7 +5748,7 @@ void NewtonBodySetContinuousCollisionMode(const NewtonBody* const bodyPtr, unsig
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
-	body->SetContinuesCollisionMode (state ? true : false);
+	body->SetContinueCollisionMode (state ? true : false);
 }
 
 
@@ -5767,7 +5772,7 @@ int NewtonBodyGetContinuousCollisionMode (const NewtonBody* const bodyPtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
-	return body->GetContinuesCollisionMode () ? 1 : false;
+	return body->GetContinueCollisionMode () ? 1 : false;
 }
 
 
@@ -7878,7 +7883,7 @@ NewtonMesh* NewtonMeshCreateVoronoiConvexDecomposition (const NewtonWorld* const
 	return (NewtonMesh*) dgMeshEffect::CreateVoronoiConvexDecomposition (world->dgWorld::GetAllocator(), pointCount, strideInBytes, vertexCloud, materialID, dgMatrix (textureMatrix));
 }
 
-NEWTON_API NewtonMesh* NewtonMeshCreateFromSerialization (const NewtonWorld* const newtonWorld, NewtonDeserializeCallback deserializeFunction, void* const serializeHandle)
+NewtonMesh* NewtonMeshCreateFromSerialization (const NewtonWorld* const newtonWorld, NewtonDeserializeCallback deserializeFunction, void* const serializeHandle)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
@@ -8018,10 +8023,10 @@ NewtonMesh* NewtonMeshSimplify (const NewtonMesh* const mesh, int maxVertexCount
 	return (NewtonMesh*) ((dgMeshEffect*) mesh)->CreateSimplification (maxVertexCount, (dgReportProgress) progressReportCallback, reportPrgressUserData);
 }
 
-NewtonMesh* NewtonMeshApproximateConvexDecomposition (const NewtonMesh* const mesh, dFloat maxConcavity, dFloat backFaceDistanceFactor, int maxCount, int maxVertexPerHull, NewtonReportProgress progressReportCallback, void* const reportPrgressUserData)
+NewtonMesh* NewtonMeshApproximateConvexDecomposition (const NewtonMesh* const mesh, dFloat maxConcavity, dFloat backFaceDistanceFactor, int maxCount, int maxVertexPerHull, NewtonReportProgress progressReportCallback, void* const reportProgressUserData)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	return (NewtonMesh*) ((dgMeshEffect*) mesh)->CreateConvexApproximation (maxConcavity, backFaceDistanceFactor, maxCount, maxVertexPerHull, (dgReportProgress) progressReportCallback, reportPrgressUserData);
+	return (NewtonMesh*) ((dgMeshEffect*) mesh)->CreateConvexApproximation (maxConcavity, backFaceDistanceFactor, maxCount, maxVertexPerHull, (dgReportProgress) progressReportCallback, reportProgressUserData);
 }
 
 
