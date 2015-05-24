@@ -28,6 +28,8 @@
 
 #define REST_RELATIVE_VELOCITY		dgFloat32 (1.0e-3f)
 #define MAX_DYNAMIC_FRICTION_SPEED	dgFloat32 (0.3f)
+#define MAX_PENETRATION_STIFFNESS	dgFloat32 (50.0f)
+
 
 
 //////////////////////////////////////////////////////////////////////
@@ -176,9 +178,9 @@ void dgContact::JacobianContactDerivative (dgContraintDescritor& params, const d
 	dgFloat32 relVelocErr = velocError % contact.m_normal;
 
 	dgFloat32 penetration = dgMin (contact.m_penetration, dgFloat32(0.5f));
-	dgFloat32 penetrationStiffness = dgFloat32 (50.0f) * contact.m_softness;
+	dgFloat32 penetrationStiffness = MAX_PENETRATION_STIFFNESS * contact.m_softness;
 	dgFloat32 penetrationVeloc = penetration * penetrationStiffness;
-	dgAssert (dgAbsf (penetrationVeloc - dgFloat32 (50.0f) * contact.m_softness * dgMin (contact.m_penetration, dgFloat32(0.5f))) < dgFloat32 (1.0e-6f));
+	dgAssert (dgAbsf (penetrationVeloc - MAX_PENETRATION_STIFFNESS * contact.m_softness * dgMin (contact.m_penetration, dgFloat32(0.5f))) < dgFloat32 (1.0e-6f));
 	if (relVelocErr > REST_RELATIVE_VELOCITY) {
 		relVelocErr *= (restitution + dgFloat32 (1.0f));
 	}
@@ -290,10 +292,7 @@ void dgContact::JointAccelerations(dgJointAccelerationDecriptor* const params)
 			dgFloat32 aRel = row->m_deltaAccel;
 
 			if (row->m_normalForceIndex < 0) {
-				dgFloat32 restitution = dgFloat32 (1.0f);
-				if (vRel <= dgFloat32 (0.0f)) {
-					restitution += row->m_restitution;
-				}
+				dgFloat32 restitution = (vRel <= dgFloat32 (0.0f)) ? (dgFloat32 (1.0f) + row->m_restitution) : dgFloat32 (1.0f);
 
 				dgFloat32 penetrationVeloc = dgFloat32 (0.0f);
 				if (row->m_penetration > dgFloat32 (1.0e-2f)) {
