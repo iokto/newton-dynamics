@@ -270,7 +270,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	m_freezeSpeed2 = DG_FREEZE_MAG2 * dgFloat32 (0.1f);
 	m_freezeOmega2 = DG_FREEZE_MAG2 * dgFloat32 (0.1f);
 
-	m_contactTolerance = DG_PRUNE_CONTACT_TOLERANCE___;
+	m_contactTolerance = DG_PRUNE_CONTACT_TOLERANCE;
 
 	dgInt32 steps = 1;
 	dgFloat32 freezeAccel2 = m_freezeAccel2;
