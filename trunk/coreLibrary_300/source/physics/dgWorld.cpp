@@ -270,6 +270,8 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	m_freezeSpeed2 = DG_FREEZE_MAG2 * dgFloat32 (0.1f);
 	m_freezeOmega2 = DG_FREEZE_MAG2 * dgFloat32 (0.1f);
 
+	m_contactTolerance = DG_PRUNE_CONTACT_TOLERANCE___;
+
 	dgInt32 steps = 1;
 	dgFloat32 freezeAccel2 = m_freezeAccel2;
 	dgFloat32 freezeAlpha2 = m_freezeAlpha2;
@@ -422,15 +424,12 @@ void dgWorld::SetCurrentHardwareMode(dgInt32 deviceIndex)
 
 dgFloat32 dgWorld::GetContactMergeTolerance() const
 {
-	dgAssert (0);
-	return 0;
-	//return m_contactTolerance;
+	return m_contactTolerance;
 }
 
 void dgWorld::SetContactMergeTolerance(dgFloat32 tolerenace)
 {
-	dgAssert (0);
-//	m_contactTolerance = dgMax (tolerenace, dgFloat32 (1.e-3));
+	m_contactTolerance = dgMax (tolerenace, dgFloat32 (1.e-3));
 }
 
 
