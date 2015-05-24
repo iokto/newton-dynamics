@@ -24,6 +24,8 @@
 
 #include "dgCollision.h"
 
+#define DG_CLIP_MAX_COUNT				512
+#define DG_CLIP_MAX_POINT_COUNT			64
 
 
 class dgConvexSimplexEdge
@@ -71,7 +73,7 @@ class dgCollisionConvex: public dgCollision
 
 	virtual dgVector SupportVertex (const dgVector& dir, dgInt32* const vertexIndex) const;
 
-	virtual dgInt32 CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const;
+	virtual dgInt32 CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut, dgFloat32 normalSign) const;
 	virtual dgInt32 GetConvexVertexCount() const { return m_vertexCount;}
 
 	bool IntesectionTest (dgCollisionParamProxy& proxy) const;

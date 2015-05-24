@@ -275,7 +275,12 @@ dgFloat32 dgCollisionChamferCylinder::RayCast (const dgVector& q0, const dgVecto
 	}
 
 	dgVector dq ((q1 - q0) & dgVector::m_triplexMask);
-	dgAssert ((dq % dq) > 0.0f);
+	
+	// avoid NaN as a result of a division by zero
+	if ((dq % dq) <= 0.0f) {
+		return dgFloat32(1.2f);
+	}
+
 	//dgVector dir (dq.Scale3 (dgRsqrt(dq % dq)));
 	dgVector dir (dq.CompProduct4 (dq.InvMagSqrt()));
 	if (dgAbsf (dir.m_x) > 0.9999f) {
@@ -372,7 +377,7 @@ dgVector dgCollisionChamferCylinder::ConvexConicSupporVertex (const dgVector& di
 
 dgVector dgCollisionChamferCylinder::ConvexConicSupporVertex (const dgVector& point, const dgVector& dir) const
 {
-	dgFloat32 (dir.m_w == 0.0f);
+	dgAssert (dir.m_w == 0.0f);
 	return point + dir.Scale4(m_height);
 }
 
@@ -400,14 +405,14 @@ dgInt32 dgCollisionChamferCylinder::CalculateContacts (const dgVector& point, co
 
 
 
-dgInt32 dgCollisionChamferCylinder::CalculatePlaneIntersection (const dgVector& normal, const dgVector& origin, dgVector* const contactsOut) const
+dgInt32 dgCollisionChamferCylinder::CalculatePlaneIntersection (const dgVector& normal, const dgVector& origin, dgVector* const contactsOut, dgFloat32 normalSign) const
 {
 	dgInt32 count = 0;
 	if (dgAbsf (normal.m_x) < dgFloat32 (0.999f)) { 
 		count = 1;
 		contactsOut[0] = SupportVertex (normal, NULL);
 	} else {
-		count = dgCollisionConvex::CalculatePlaneIntersection (normal, origin, contactsOut);
+		count = dgCollisionConvex::CalculatePlaneIntersection (normal, origin, contactsOut, normalSign);
 	}
 	return count;
 }

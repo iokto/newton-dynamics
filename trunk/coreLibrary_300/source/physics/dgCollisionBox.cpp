@@ -304,7 +304,7 @@ const dgConvexSimplexEdge** dgCollisionBox::GetVertexToEdgeMapping() const
 
 
 
-dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const
+dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut, dgFloat32 normalSign) const
 {
 	dgFloat32 test[8];
 	dgPlane plane (normal, - (normal % point));
@@ -313,80 +313,128 @@ dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, cons
 		test[i] = plane.DotProduct4 (m_vertex[i] | dgVector::m_wOne).m_x;
 	}
 
-	dgConvexSimplexEdge* edge = NULL;
-	for (dgInt32 i = 0; i < dgInt32 (sizeof (m_vertexToEdgeMap)/sizeof (m_vertexToEdgeMap[0])); i ++) {
-		dgConvexSimplexEdge* const ptr = m_vertexToEdgeMap[i];
-		dgFloat32 side0 = test[ptr->m_vertex];
-		dgFloat32 side1 = test[ptr->m_twin->m_vertex];
-		if ((side0 * side1) < dgFloat32 (0.0f)) {
-			edge = ptr;
-			break;
-		}
-	}
 
-	dgInt32 count = 0;
-	if (edge) {
-		if (test[edge->m_vertex] < dgFloat32 (0.0f)) {
-			edge = edge->m_twin;
-		}
-		dgAssert (test[edge->m_vertex] > dgFloat32 (0.0f));
+	dgVector support[4];
+	dgInt32 featureCount = 3;
+	const dgConvexSimplexEdge* edge = &m_simplex[0];
+	const dgConvexSimplexEdge** const vertToEdgeMapping = GetVertexToEdgeMapping();
+	if (vertToEdgeMapping) {
+		dgInt32 edgeIndex;
+		featureCount = 1;
+		support[0] = SupportVertex (normal.Scale4(normalSign), &edgeIndex);
+		edge = vertToEdgeMapping[edgeIndex];
 
-		dgConvexSimplexEdge* ptr = edge;
-		dgConvexSimplexEdge* firstEdge = NULL;
-		dgFloat32 side0 = test[edge->m_vertex];
+		// 5 degrees
+		const dgFloat32 tiltAngle = dgFloat32 (0.087f);
+		const dgFloat32 tiltAngle2 = tiltAngle * tiltAngle ;
+		dgPlane testPlane (normal, - (normal.DotProduct4(support[0]).GetScalar()));
+		const dgConvexSimplexEdge* ptr = edge;
 		do {
-			dgAssert (m_vertex[ptr->m_twin->m_vertex].m_w == dgFloat32 (0.0f));
-			dgFloat32 side1 = test[ptr->m_twin->m_vertex];
-			if (side1 < side0) {
-				if (side1 < dgFloat32 (0.0f)) {
-					firstEdge = ptr;
-					break;
-				}
-
-				side0 = side1;
-				edge = ptr->m_twin;
-				ptr = edge;
+			const dgVector& p = m_vertex[ptr->m_twin->m_vertex];
+			dgFloat32 test = testPlane.Evalue(p);
+			dgVector dist (p - support[0]);
+			dgFloat32 angle2 = test * test / (dist.DotProduct4(dist).GetScalar());
+			if (angle2 < tiltAngle2) {
+				support[featureCount] = p;
+				featureCount ++;
 			}
 			ptr = ptr->m_twin->m_next;
-		} while (ptr != edge);
+		} while ((ptr != edge) && (featureCount < 3));
+	}
 
-		if (firstEdge) {
-			edge = firstEdge;
-			ptr = edge;
-			do {
-				dgVector dp (m_vertex[ptr->m_twin->m_vertex] - m_vertex[ptr->m_vertex]);
+	//featureCount = 3;
+	dgInt32 count = 0;
+	switch (featureCount)
+	{
+		case 1:
+			contactsOut[0] = support[0] - normal.CompProduct4(normal.DotProduct4(support[0] - point));
+			count = 1;
+			break;
 
-				//dgFloat32 t = plane % dp;
-				dgFloat32 t = plane.DotProduct4(dp).m_x;
-				if (t >= dgFloat32 (-1.e-24f)) {
-					t = dgFloat32 (0.0f);
-				} else {
-					t = test[ptr->m_vertex] / t;
-					if (t > dgFloat32 (0.0f)) {
-						t = dgFloat32 (0.0f);
-					}
-					if (t < dgFloat32 (-1.0f)) {
-						t = dgFloat32 (-1.0f);
-					}
+		case 2:
+			contactsOut[0] = support[0] - normal.CompProduct4(normal.DotProduct4(support[0] - point));
+			contactsOut[1] = support[1] - normal.CompProduct4(normal.DotProduct4(support[1] - point));
+			count = 2;
+			break;
+
+
+		default:
+		{
+			dgConvexSimplexEdge* edge = NULL;
+			for (dgInt32 i = 0; i < dgInt32 (sizeof (m_edgeEdgeMap) / sizeof (m_edgeEdgeMap[0])); i ++) {
+				dgConvexSimplexEdge* const ptr = m_edgeEdgeMap[i];
+				dgFloat32 side0 = test[ptr->m_vertex];
+				dgFloat32 side1 = test[ptr->m_twin->m_vertex];
+				if ((side0 * side1) < dgFloat32 (0.0f)) {
+					edge = ptr;
+					break;
 				}
+			}
 
-				dgAssert (t <= dgFloat32 (0.01f));
-				dgAssert (t >= dgFloat32 (-1.05f));
-				contactsOut[count] = m_vertex[ptr->m_vertex] - dp.Scale4 (t);
-				count ++;
-
-				dgConvexSimplexEdge* ptr1 = ptr->m_next;
-				for (; ptr1 != ptr; ptr1 = ptr1->m_next) {
-					dgInt32 index0 = ptr1->m_twin->m_vertex;
-					if (test[index0] >= dgFloat32 (0.0f)) {
-						dgAssert (test[ptr1->m_vertex] <= dgFloat32 (0.0f));
-						break;
-					}
+			if (edge) {
+				if (test[edge->m_vertex] < dgFloat32 (0.0f)) {
+					edge = edge->m_twin;
 				}
-				dgAssert (ptr != ptr1);
-				ptr = ptr1->m_twin;
+				dgAssert (test[edge->m_vertex] > dgFloat32 (0.0f));
 
-			} while ((ptr != edge) && (count < 8));
+				dgConvexSimplexEdge* ptr = edge;
+				dgConvexSimplexEdge* firstEdge = NULL;
+				dgFloat32 side0 = test[edge->m_vertex];
+				do {
+					dgAssert (m_vertex[ptr->m_twin->m_vertex].m_w == dgFloat32 (0.0f));
+					dgFloat32 side1 = test[ptr->m_twin->m_vertex];
+					if (side1 < side0) {
+						if (side1 < dgFloat32 (0.0f)) {
+							firstEdge = ptr;
+							break;
+						}
+
+						side0 = side1;
+						edge = ptr->m_twin;
+						ptr = edge;
+					}
+					ptr = ptr->m_twin->m_next;
+				} while (ptr != edge);
+
+				if (firstEdge) {
+					edge = firstEdge;
+					ptr = edge;
+					do {
+						dgVector dp (m_vertex[ptr->m_twin->m_vertex] - m_vertex[ptr->m_vertex]);
+
+						//dgFloat32 t = plane % dp;
+						dgFloat32 t = plane.DotProduct4(dp).m_x;
+						if (t >= dgFloat32 (-1.e-24f)) {
+							t = dgFloat32 (0.0f);
+						} else {
+							t = test[ptr->m_vertex] / t;
+							if (t > dgFloat32 (0.0f)) {
+								t = dgFloat32 (0.0f);
+							}
+							if (t < dgFloat32 (-1.0f)) {
+								t = dgFloat32 (-1.0f);
+							}
+						}
+
+						dgAssert (t <= dgFloat32 (0.01f));
+						dgAssert (t >= dgFloat32 (-1.05f));
+						contactsOut[count] = m_vertex[ptr->m_vertex] - dp.Scale4 (t);
+						count ++;
+
+						dgConvexSimplexEdge* ptr1 = ptr->m_next;
+						for (; ptr1 != ptr; ptr1 = ptr1->m_next) {
+							dgInt32 index0 = ptr1->m_twin->m_vertex;
+							if (test[index0] >= dgFloat32 (0.0f)) {
+								dgAssert (test[ptr1->m_vertex] <= dgFloat32 (0.0f));
+								break;
+							}
+						}
+						dgAssert (ptr != ptr1);
+						ptr = ptr1->m_twin;
+
+					} while ((ptr != edge) && (count < 8));
+				}
+			}
 		}
 	}
 
