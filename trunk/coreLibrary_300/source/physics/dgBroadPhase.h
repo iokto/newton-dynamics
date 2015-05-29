@@ -124,13 +124,13 @@ class dgBroadPhase
 
 //	dgInt32 GetJointArray(const dgBody* const body, dgContact** const contactArray);
 	void FindCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
-	void SubmitPairs (dgNode* const body, dgNode* const node, const dgVector& timeStepBound, dgInt32 threadID);
+	void SubmitPairs (dgNode* const body, dgNode* const node, dgFloat32 timestep, dgInt32 threadID);
 
 	void FindGeneratedBodiesCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
 
 	void KinematicBodyActivation (dgContact* const contatJoint) const;
 
-	bool TestOverlaping (const dgBody* const body0, const dgBody* const body1) const;
+	bool TestOverlaping (const dgBody* const body0, const dgBody* const body1, dgFloat32 timestep) const;
 	dgFloat64 CalculateEntropy ();
 			  
 
