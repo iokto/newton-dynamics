@@ -778,8 +778,14 @@ void dgBroadPhase::ImproveFitness()
 }
 
 
-void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgVector& timestep2, dgInt32 threadID)
+void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFloat32 timestep, dgInt32 threadID)
 {
+
+//	if (!dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) {
+	if (!TestOverlaping (body0, body1, timestep)) {
+		return;
+	}
+
 	dgAssert ((body0->GetInvMass().m_w != dgFloat32 (0.0f)) || (body1->GetInvMass().m_w != dgFloat32 (0.0f)) || (body0->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)) || (body1->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)));
 
 	// add all pairs 
@@ -1069,15 +1075,13 @@ bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* cons
 	bool isKinematic0 = body0->IsRTTIType (dgBody::m_kinematicBodyRTTI) != 0;
 	bool isKinematic1 = body1->IsRTTIType (dgBody::m_kinematicBodyRTTI) != 0;
 
-	//bool tier0 = ((-dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) >> 4) != 0;
-	bool tier0 = true;
 	bool tier1 = !(body1->m_collision->IsType (dgCollision::dgCollisionNull_RTTI) | body0->m_collision->IsType (dgCollision::dgCollisionNull_RTTI));
 	bool tier2 = !(body0->m_sleeping & body1->m_sleeping);
 	bool tier3 = isDynamic0 & mass0; 
 	bool tier4 = isDynamic1 & mass1; 
 	bool tier5 = isKinematic0 & mass1; 
 	bool tier6 = isKinematic1 & mass0; 
-	bool ret = tier0 & tier1 & tier2 & (tier3 | tier4 | tier5 | tier6);
+	bool ret = tier1 & tier2 & (tier3 | tier4 | tier5 | tier6);
 
 	if (ret) {
 		const dgCollisionInstance* const instance0 = body0->GetCollision();
@@ -1100,13 +1104,18 @@ bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* cons
 			dgFloat32 distance = ray.BoxIntersect(boxp0, boxp1);
 			ret = (distance < dgFloat32 (1.0f));
 		} else {
-			dgVector size0;
-			dgVector size1;
-			dgVector origin0;
-			dgVector origin1;
-			instance0->CalcObb (origin0, size0);
-			instance1->CalcObb (origin1, size1);
-			ret = dgObbTest (origin0, size0, instance0->GetGlobalMatrix(), origin1, size1, instance1->GetGlobalMatrix());
+			ret = dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB) ? 1 : 0;
+/*
+			if (ret) {
+				dgVector size0;
+				dgVector size1;
+				dgVector origin0;
+				dgVector origin1;
+				instance0->CalcObb (origin0, size0);
+				instance1->CalcObb (origin1, size1);
+				ret = dgObbTest (origin0, size0, instance0->GetGlobalMatrix(), origin1, size1, instance1->GetGlobalMatrix());
+			}
+*/
 		}
 	}
 	return ret;
@@ -1129,11 +1138,7 @@ void dgBroadPhase::SubmitPairs (dgNode* const bodyNode, dgNode* const node, dgFl
 			if (!rootNode->m_left) {
 				dgAssert (!rootNode->m_right);
 				dgBody* const body1 = rootNode->m_body;
-
-				if (dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) {
-					AddPair (body0, body1, timestep, threadID);
-				}
-
+				AddPair (body0, body1, timestep, threadID);
 			} else {
 				pool[stack] = rootNode->m_left;
 				stack ++;
