@@ -384,8 +384,7 @@ class dgWorld
 //	dgInt32 CalculateConvexToConvexContacts (dgFloat32& timestep, dgBody* conv1, dgBody* conv2, dgFloat32 penetrationPadding, dgContactPoint* const contact) const;
 //	dgInt32 CalculateConvexToNonConvexContacts (dgFloat32& timestep, dgBody* conv, dgBody* nConv, dgContactPoint* const contact, dgInt32 maxContacts) const;
 //	dgInt32 CalculatecConvexConvexCastContacts (dgCollisionParamProxy& proxy, bool& algorithmSuccessful) const;
-	
-	bool ValidateContactCache (dgContact* const contact, dgFloat32 timestep) const;
+//	bool ValidateContactCache (dgContact* const contact, dgFloat32 timestep) const;
 	
 	dgInt32 CalculateConvexPolygonToHullContactsDescrete (dgCollisionParamProxy& proxy) const;
 
@@ -481,9 +480,6 @@ class dgWorld
 	dgArray<dgUnsigned8> m_pairMemoryBuffer;
 	dgArray<dgUnsigned8> m_solverMatrixMemory;  
 	dgArray<dgUnsigned8> m_solverRightSideMemory;
-	
-	static dgVector m_linearContactError2;
-	static dgVector m_angularContactError2;
 	
 	friend class dgBody;
 	friend class dgBroadPhase;
