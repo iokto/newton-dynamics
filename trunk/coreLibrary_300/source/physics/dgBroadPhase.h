@@ -91,6 +91,13 @@ class dgBroadPhase
 		dgFloat64 TotalCost () const;
 	};
 
+	enum dgContactCode
+	{	
+		m_close,
+		m_persist,
+		m_separated,
+	};
+
 	void Add (dgBody* const body);
 	void Remove (dgBody* const body);
 	void InvalidateCache ();
@@ -104,7 +111,6 @@ class dgBroadPhase
 	void ImproveNodeFitness (dgNode* const node);
 	dgNode* InsertNode (dgNode* const node);
 	dgFloat32 CalculateSurfaceArea (const dgNode* const node0, const dgNode* const node1, dgVector& minBox, dgVector& maxBox) const;
-	void AddPair (dgBody* const body0, dgBody* const body1, dgFloat32 timestep, dgInt32 threadID);
 
 	static void ForceAndToqueKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void CollidingPairsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
@@ -124,6 +130,8 @@ class dgBroadPhase
 
 //	dgInt32 GetJointArray(const dgBody* const body, dgContact** const contactArray);
 	void FindCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
+	dgContactCode ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const;
+	void AddPair (dgBody* const body0, dgBody* const body1, dgFloat32 timestep, dgInt32 threadID);
 	void SubmitPairs (dgNode* const body, dgNode* const node, dgFloat32 timestep, dgInt32 threadID);
 
 	void FindGeneratedBodiesCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
@@ -143,6 +151,11 @@ class dgBroadPhase
 	dgThread::dgCriticalSection m_contacJointLock;
 	dgThread::dgCriticalSection m_criticalSectionLock;
 	bool m_recursiveChunks;
+
+	static dgVector m_linearContactError2;
+	static dgVector m_angularContactError2;
+	static dgVector m_linearContactOverlapError2;
+	static dgVector m_angularContactOverlapError2;
 
 	friend class dgBody;
 	friend class dgWorld;
