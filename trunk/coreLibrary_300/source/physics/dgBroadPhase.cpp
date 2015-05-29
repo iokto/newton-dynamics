@@ -43,11 +43,6 @@
 dgVector dgBroadPhase::m_angularContactError2(DG_CONTACT_ANGULAR_ERROR * DG_CONTACT_ANGULAR_ERROR);
 dgVector dgBroadPhase::m_linearContactError2(DG_CONTACT_TRANSLATION_ERROR * DG_CONTACT_TRANSLATION_ERROR);
 
-//#define DG_CONTACT_TRANSLATION_CLOSE_ERROR (dgFloat32 (0.05f))
-//#define DG_CONTACT_ANGULAR_CLOSE_ERROR (dgFloat32 (10.0f * 3.141592f / 180.0f))
-//dgVector dgBroadPhase::m_angularContactOverlapError2 (DG_CONTACT_ANGULAR_CLOSE_ERROR * DG_CONTACT_ANGULAR_CLOSE_ERROR);
-//dgVector dgBroadPhase::m_linearContactOverlapError2 (DG_CONTACT_TRANSLATION_CLOSE_ERROR * DG_CONTACT_TRANSLATION_CLOSE_ERROR);
-
 DG_MSC_VECTOR_ALIGMENT
 class dgBroadPhase::dgNode
 {
@@ -788,7 +783,7 @@ void dgBroadPhase::ImproveFitness()
 }
 
 
-bool dgBroadPhase::ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const
+bool dgBroadPhase::ValidateContactCache(dgContact* const contact, dgFloat32 timestep) const
 {
 	dgAssert(contact && (contact->GetId() == dgConstraint::m_contactConstraint));
 
@@ -838,7 +833,7 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 
 				contact->m_broadphaseLru = m_lru;
 				contact->m_timeOfImpact = dgFloat32(1.0e10f);
-				if (ValidateContactCache___ (contact, timestep)) {
+				if (ValidateContactCache (contact, timestep)) {
 					contact->m_contactActive = true;
 				} else {
 					dgCollidingPairCollector* const contactPairs = m_world;
