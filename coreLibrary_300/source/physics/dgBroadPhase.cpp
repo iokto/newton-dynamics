@@ -824,7 +824,6 @@ dgBroadPhase::dgContactCode dgBroadPhase::ValidateContactCache___(dgContact* con
 
 void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFloat32 timestep, dgInt32 threadID)
 {
-//	if (!dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) {
 	if (TestOverlaping (body0, body1, timestep)) {
 		dgAssert ((body0->GetInvMass().m_w != dgFloat32 (0.0f)) || (body1->GetInvMass().m_w != dgFloat32 (0.0f)) || (body0->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)) || (body1->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)));
 
@@ -844,8 +843,13 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 		}
 
 		if (isCollidable) {
-			bool newContact = false;
-			if (!contact) {
+			if (contact) {
+				contact->m_contactActive = 0;
+				contact->m_broadphaseLru = m_lru;
+				contact->m_timeOfImpact = dgFloat32 (1.0e10f);
+				contactPairs->AddPair(contact, threadID);
+
+			} else {
 				dgUnsigned32 group0_ID = dgUnsigned32 (body0->m_bodyGroupId);
 				dgUnsigned32 group1_ID = dgUnsigned32 (body1->m_bodyGroupId);
 				if (group1_ID < group0_ID) {
@@ -856,7 +860,6 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 				const dgContactMaterial* const material = &materialList->Find (key)->GetInfo();
 
 				if (material->m_flags & dgContactMaterial::m_collisionEnable) {
-					newContact = true;
 					dgThreadHiveScopeLock lock (m_world, &m_contacJointLock, false);
 					if (body0->IsRTTIType (dgBody::m_deformableBodyRTTI) || body1->IsRTTIType (dgBody::m_deformableBodyRTTI)) {
 						contact = new (m_world->m_allocator) dgDeformableContact (m_world, material);
@@ -866,14 +869,7 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 					contact->AppendToActiveList();
 					m_world->AttachConstraint (contact, body0, body1);
 				}
-			}
 
-			if (newContact) {
-				contact->m_contactActive = 0;
-				contact->m_broadphaseLru = m_lru;
-				contact->m_timeOfImpact = dgFloat32 (1.0e10f);
-				contactPairs->AddPair(contact, threadID);
-			} else if (contact) {
 				dgAssert (contact);
 				bool kinematicBodyEquilibrium = (((body0->IsRTTIType(dgBody::m_kinematicBodyRTTI) ? true : false) & body0->IsCollidable()) | ((body1->IsRTTIType(dgBody::m_kinematicBodyRTTI) ? true : false) & body1->IsCollidable())) ? false : true;
 				if (!(body0->m_equilibrium & body1->m_equilibrium & kinematicBodyEquilibrium & (contact->m_closestDistance > (DG_CACHE_DIST_TOL * dgFloat32 (4.0f))))) {
