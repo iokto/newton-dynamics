@@ -679,19 +679,19 @@ dgFloat32 dgCollisionInstance::ConvexRayCast (const dgCollisionInstance* const c
 	dgFloat32 t = dgFloat32 (1.2f);
 	if ((GetCollisionPrimityType() != m_nullCollision) && (!preFilter || preFilter(referenceBody, this, userData))) {
 		t = m_childShape->ConvexRayCast (convexShape, convexShapeMatrix, localVeloc, minT, contactOut, referenceBody, this, userData, threadId);
-				if (t <= minT) {
-					if (!(m_childShape->IsType(dgCollision::dgCollisionMesh_RTTI) || m_childShape->IsType(dgCollision::dgCollisionCompound_RTTI))) {
-						contactOut.m_shapeId0 = GetUserDataID();
-						//contactOut.m_shapeId1 = GetUserDataID();
-						contactOut.m_shapeId1 = convexShape->GetUserDataID();
-					}
-					contactOut.m_collision0 = this;
-					//contactOut.m_collision1 = this;
-					contactOut.m_collision1 = convexShape;
-				}
-	}
-				return t;
+		if (t <= minT) {
+			if (!(m_childShape->IsType(dgCollision::dgCollisionMesh_RTTI) || m_childShape->IsType(dgCollision::dgCollisionCompound_RTTI))) {
+				contactOut.m_shapeId0 = GetUserDataID();
+				//contactOut.m_shapeId1 = GetUserDataID();
+				contactOut.m_shapeId1 = convexShape->GetUserDataID();
 			}
+			contactOut.m_collision0 = this;
+			//contactOut.m_collision1 = this;
+			contactOut.m_collision1 = convexShape;
+		}
+	}
+	return t;
+}
 
 void dgCollisionInstance::CalculateBuoyancyAcceleration (const dgMatrix& matrix, const dgVector& origin, const dgVector& gravity, const dgVector& fluidPlane, dgFloat32 fluidDensity, dgFloat32 fluidViscosity, dgVector& accel, dgVector& alpha)
 {

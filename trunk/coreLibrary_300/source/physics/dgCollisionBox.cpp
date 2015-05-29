@@ -342,7 +342,7 @@ dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, cons
 		} while ((ptr != edge) && (featureCount < 3));
 	}
 
-	//featureCount = 3;
+//featureCount = 3;
 	dgInt32 count = 0;
 	switch (featureCount)
 	{

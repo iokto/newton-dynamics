@@ -170,7 +170,7 @@ class dgConstraint
 	
 	virtual void ResetMaxDOF();
 	dgInt32 GetMaxDOF() const;
-
+	
 	void SetUserData (void *userData);
 	void SetCollidable (bool state);
 	virtual void SetDestructorCallback (OnConstraintDestroy destructor) = 0;

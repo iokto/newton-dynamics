@@ -42,7 +42,7 @@ class dgCollisionConvexHull::dgConvexBox
 	dgInt32 m_vertexCount;
 	dgInt32 m_leftBox;
 	dgInt32 m_rightBox;
-}DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGMENT;
 
 dgCollisionConvexHull::dgCollisionConvexHull(dgMemoryAllocator* const allocator, dgUnsigned32 signature)
 	:dgCollisionConvex(allocator, signature, m_convexHullCollision)

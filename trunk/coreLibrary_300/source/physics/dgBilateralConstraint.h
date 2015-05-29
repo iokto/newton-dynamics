@@ -58,7 +58,7 @@ class dgBilateralConstraint: public dgConstraint
 	dgFloat32 CalculateSpringDamperAcceleration (dgInt32 index, const dgContraintDescritor& desc, dgFloat32 jointAngle, const dgVector& p0Global, const dgVector& p1Global, dgFloat32 springK, dgFloat32 springD);
 
 	void SetMaxContactsForExactSolver (bool mode, dgInt32 MaxCount);
-	
+
 
 	dgMatrix m_localMatrix0;
 	dgMatrix m_localMatrix1;
