@@ -200,8 +200,6 @@ class dgConstraint
 	virtual ~dgConstraint();
 
 	virtual bool IsBilateral () const;
-	
-
 	virtual dgUnsigned32 JacobianDerivative (dgContraintDescritor& params) = 0; 
 
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) = 0; 
@@ -266,6 +264,11 @@ inline dgConstraint::~dgConstraint()
 inline void dgConstraint::SetUpdateFeedbackFunction (ConstraintsForceFeeback function)
 {
 	m_updaFeedbackCallback = function;
+}
+
+inline bool dgConstraint::IsBilateral() const
+{
+	return false;
 }
 
 inline bool dgConstraint::IsCollidable () const

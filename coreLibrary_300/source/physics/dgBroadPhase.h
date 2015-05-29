@@ -113,7 +113,6 @@ class dgBroadPhase
 	static void AddGeneratedBodiesContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static dgInt32 CompareNodes (const dgNode* const nodeA, const dgNode* const nodeB, void* notUsed);
 
-	
 	void UpdateContactsBroadPhaseEnd ();
 	void ApplyForceAndtorque (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
 	void ApplyDeformableForceAndtorque (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
