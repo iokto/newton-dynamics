@@ -43,10 +43,10 @@
 dgVector dgBroadPhase::m_angularContactError2(DG_CONTACT_ANGULAR_ERROR * DG_CONTACT_ANGULAR_ERROR);
 dgVector dgBroadPhase::m_linearContactError2(DG_CONTACT_TRANSLATION_ERROR * DG_CONTACT_TRANSLATION_ERROR);
 
-#define DG_CONTACT_TRANSLATION_CLOSE_ERROR (dgFloat32 (0.05f))
-#define DG_CONTACT_ANGULAR_CLOSE_ERROR (dgFloat32 (10.0f * 3.141592f / 180.0f))
-dgVector dgBroadPhase::m_angularContactOverlapError2 (DG_CONTACT_ANGULAR_CLOSE_ERROR * DG_CONTACT_ANGULAR_CLOSE_ERROR);
-dgVector dgBroadPhase::m_linearContactOverlapError2 (DG_CONTACT_TRANSLATION_CLOSE_ERROR * DG_CONTACT_TRANSLATION_CLOSE_ERROR);
+//#define DG_CONTACT_TRANSLATION_CLOSE_ERROR (dgFloat32 (0.05f))
+//#define DG_CONTACT_ANGULAR_CLOSE_ERROR (dgFloat32 (10.0f * 3.141592f / 180.0f))
+//dgVector dgBroadPhase::m_angularContactOverlapError2 (DG_CONTACT_ANGULAR_CLOSE_ERROR * DG_CONTACT_ANGULAR_CLOSE_ERROR);
+//dgVector dgBroadPhase::m_linearContactOverlapError2 (DG_CONTACT_TRANSLATION_CLOSE_ERROR * DG_CONTACT_TRANSLATION_CLOSE_ERROR);
 
 DG_MSC_VECTOR_ALIGMENT
 class dgBroadPhase::dgNode
@@ -788,7 +788,7 @@ void dgBroadPhase::ImproveFitness()
 }
 
 
-dgBroadPhase::dgContactCode dgBroadPhase::ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const
+bool dgBroadPhase::ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const
 {
 	dgAssert(contact && (contact->GetId() == dgConstraint::m_contactConstraint));
 
@@ -805,20 +805,10 @@ dgBroadPhase::dgContactCode dgBroadPhase::ValidateContactCache___(dgContact* con
 		dgVector angle(contact->m_rotationAcc.m_q1, contact->m_rotationAcc.m_q2, contact->m_rotationAcc.m_q3, dgFloat32(0.0f));
 		dgVector rotatError2(angle.DotProduct4(angle));
 		if ((rotatError2 < m_angularContactError2).GetSignMask()) {
-			return m_persist;
-		} else if ((rotatError2 < m_angularContactOverlapError2).GetSignMask()) {
-			return m_close;
-		}
-	} else if ((positError2 < m_linearContactOverlapError2).GetSignMask()) {
-		dgVector rotationStep((body0->m_omega - body1->m_omega).CompProduct4(deltaTime));
-		contact->m_rotationAcc = contact->m_rotationAcc * dgQuaternion(dgFloat32(1.0f), rotationStep.m_x, rotationStep.m_y, rotationStep.m_z);
-		dgVector angle(contact->m_rotationAcc.m_q1, contact->m_rotationAcc.m_q2, contact->m_rotationAcc.m_q3, dgFloat32(0.0f));
-		dgVector rotatError2(angle.DotProduct4(angle));
-		if ((rotatError2 < m_angularContactOverlapError2).GetSignMask()) {
-			return m_close;
+			return true;
 		}
 	}
-	return m_separated;
+	return false;
 }
 
 
@@ -828,9 +818,6 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 		dgAssert ((body0->GetInvMass().m_w != dgFloat32 (0.0f)) || (body1->GetInvMass().m_w != dgFloat32 (0.0f)) || (body0->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)) || (body1->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)));
 
 		// add all pairs 
-		const dgBodyMaterialList* const materialList = m_world;  
-		dgCollidingPairCollector* const contactPairs = m_world;
-
 		bool isCollidable = true;
 		dgContact* contact = NULL;
 		{
@@ -844,10 +831,20 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 
 		if (isCollidable) {
 			if (contact) {
-				contact->m_contactActive = 0;
+//				contact->m_contactActive = 0;
+//				contact->m_broadphaseLru = m_lru;
+//				contact->m_timeOfImpact = dgFloat32 (1.0e10f);
+//				contactPairs->AddPair(contact, threadID);
+
 				contact->m_broadphaseLru = m_lru;
-				contact->m_timeOfImpact = dgFloat32 (1.0e10f);
-				contactPairs->AddPair(contact, threadID);
+				contact->m_timeOfImpact = dgFloat32(1.0e10f);
+				if (ValidateContactCache___ (contact, timestep)) {
+					contact->m_contactActive = true;
+				} else {
+					dgCollidingPairCollector* const contactPairs = m_world;
+					contact->m_contactActive = 0;
+					contactPairs->AddPair(contact, threadID);
+				}
 
 			} else {
 				dgUnsigned32 group0_ID = dgUnsigned32 (body0->m_bodyGroupId);
@@ -857,6 +854,7 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 				}
 
 				dgUnsigned32 key = (group1_ID << 16) + group0_ID;
+				const dgBodyMaterialList* const materialList = m_world;  
 				const dgContactMaterial* const material = &materialList->Find (key)->GetInfo();
 
 				if (material->m_flags & dgContactMaterial::m_collisionEnable) {
@@ -876,6 +874,7 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 					contact->m_contactActive = 0;
 					contact->m_broadphaseLru = m_lru;
 					contact->m_timeOfImpact = dgFloat32 (1.0e10f);
+					dgCollidingPairCollector* const contactPairs = m_world;
 					contactPairs->AddPair(contact, threadID);
 				}
 			}

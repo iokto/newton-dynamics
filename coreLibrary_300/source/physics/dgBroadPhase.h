@@ -130,7 +130,7 @@ class dgBroadPhase
 
 //	dgInt32 GetJointArray(const dgBody* const body, dgContact** const contactArray);
 	void FindCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
-	dgContactCode ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const;
+	bool ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const;
 	void AddPair (dgBody* const body0, dgBody* const body1, dgFloat32 timestep, dgInt32 threadID);
 	void SubmitPairs (dgNode* const body, dgNode* const node, dgFloat32 timestep, dgInt32 threadID);
 
@@ -154,8 +154,8 @@ class dgBroadPhase
 
 	static dgVector m_linearContactError2;
 	static dgVector m_angularContactError2;
-	static dgVector m_linearContactOverlapError2;
-	static dgVector m_angularContactOverlapError2;
+//	static dgVector m_linearContactOverlapError2;
+//	static dgVector m_angularContactOverlapError2;
 
 	friend class dgBody;
 	friend class dgWorld;
