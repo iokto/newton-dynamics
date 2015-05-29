@@ -29,6 +29,7 @@
 #include "dgCollisionInstance.h"
 #include "dgDeformableContact.h"
 #include "dgWorldDynamicUpdate.h"
+#include "dgBilateralConstraint.h"
 #include "dgCollisionDeformableMesh.h"
 
 #define DG_CONVEX_CAST_POOLSIZE			32
@@ -895,54 +896,12 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgVe
 
 	bool isCollidable = true;
 	dgContact* contact = NULL;
-	if ((body0->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)) || (body0->GetInvMass().m_w != dgFloat32 (0.0f))) {
+	{
 		dgThreadHiveScopeLock lock (m_world, &m_contacJointLock, false);
-		for (dgBodyMasterListRow::dgListNode* link = body0->m_masterNode->GetInfo().GetFirst(); link; link = link->GetNext()) {
-			dgConstraint* const constraint = link->GetInfo().m_joint;
-			if (constraint->GetId() != dgConstraint::m_contactConstraint) {
-				break;
-			}
-			if (link->GetInfo().m_bodyNode == body1) {
-				contact = (dgContact*)constraint;
-				isCollidable = true;
-				break;
-			}
-		}
-
-		for (dgBodyMasterListRow::dgListNode* link = body0->m_masterNode->GetInfo().GetLast(); link; link = link->GetPrev()) {
-			dgConstraint* const constraint = link->GetInfo().m_joint;
-			if (constraint->GetId() == dgConstraint::m_contactConstraint) {
-				break;
-			}
-			if (link->GetInfo().m_bodyNode == body1) {
-				isCollidable = constraint->IsCollidable();
-				break;
-			}
-		}
-	} else {
-		dgThreadHiveScopeLock lock (m_world, &m_contacJointLock, false);
-		dgAssert ((body1->GetInvMass().m_w != dgFloat32 (0.0f)) || (body1->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI)));
-		for (dgBodyMasterListRow::dgListNode* link = body1->m_masterNode->GetInfo().GetFirst(); link; link = link->GetNext()) {
-			dgConstraint* const constraint = link->GetInfo().m_joint;
-			if (constraint->GetId() != dgConstraint::m_contactConstraint) {
-				break;
-			}
-			if (link->GetInfo().m_bodyNode == body0) {
-				contact = (dgContact*)constraint;
-				isCollidable = true;
-				break;
-			}
-		}
-
-		for (dgBodyMasterListRow::dgListNode* link = body1->m_masterNode->GetInfo().GetLast(); link; link = link->GetPrev()) {
-			dgConstraint* const constraint = link->GetInfo().m_joint;
-			if (constraint->GetId() == dgConstraint::m_contactConstraint) {
-				break;
-			}
-			if (link->GetInfo().m_bodyNode == body0) {
-				isCollidable = constraint->IsCollidable();
-				break;
-			}
+		contact = m_world->FindContactJoint (body0, body1);
+		if (!contact) {
+			const dgBilateralConstraint* const bilateral = m_world->FindBilateralJoint (body0, body1);
+			isCollidable = bilateral ? bilateral->IsCollidable() : true;
 		}
 	}
 
