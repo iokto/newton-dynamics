@@ -128,9 +128,8 @@ class dgBroadPhase
 	dgNode* BuildTopDown (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 	dgNode* BuildTopDownBig (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 
-//	dgInt32 GetJointArray(const dgBody* const body, dgContact** const contactArray);
 	void FindCollidingPairs (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
-	bool ValidateContactCache___(dgContact* const contact, dgFloat32 timestep) const;
+	bool ValidateContactCache(dgContact* const contact, dgFloat32 timestep) const;
 	void AddPair (dgBody* const body0, dgBody* const body1, dgFloat32 timestep, dgInt32 threadID);
 	void SubmitPairs (dgNode* const body, dgNode* const node, dgFloat32 timestep, dgInt32 threadID);
 
@@ -154,8 +153,6 @@ class dgBroadPhase
 
 	static dgVector m_linearContactError2;
 	static dgVector m_angularContactError2;
-//	static dgVector m_linearContactOverlapError2;
-//	static dgVector m_angularContactOverlapError2;
 
 	friend class dgBody;
 	friend class dgWorld;
