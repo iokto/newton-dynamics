@@ -104,7 +104,7 @@ class dgBroadPhase
 	void ImproveNodeFitness (dgNode* const node);
 	dgNode* InsertNode (dgNode* const node);
 	dgFloat32 CalculateSurfaceArea (const dgNode* const node0, const dgNode* const node1, dgVector& minBox, dgVector& maxBox) const;
-	void AddPair (dgBody* const body0, dgBody* const body1, const dgVector& timestep2, dgInt32 threadID);
+	void AddPair (dgBody* const body0, dgBody* const body1, dgFloat32 timestep, dgInt32 threadID);
 
 	static void ForceAndToqueKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void CollidingPairsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
