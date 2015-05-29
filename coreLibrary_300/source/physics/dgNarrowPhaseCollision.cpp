@@ -949,15 +949,14 @@ void dgWorld::PopulateContacts (dgCollidingPairCollector::dgPair* const pair, dg
 
 void dgWorld::ProcessContacts (dgCollidingPairCollector::dgPair* const pair, dgFloat32 timestep, dgInt32 threadIndex)
 {
-	dgContact* const contact = pair->m_contact;
-	dgAssert (contact->m_body0);
-	dgAssert (contact->m_body1);
-	dgAssert (contact->m_body0 != contact->m_body1);
-	dgAssert (contact->m_broadphaseLru == GetBroadPhase()->m_lru);
+	dgAssert (pair->m_contact);
+	dgAssert (pair->m_contact->m_body0);
+	dgAssert (pair->m_contact->m_body1);
+	dgAssert (pair->m_contact->m_body0 != pair->m_contact->m_body1);
+	dgAssert (pair->m_contact->m_broadphaseLru == GetBroadPhase()->m_lru);
 
-	contact->m_positAcc = dgVector (dgFloat32 (0.0f));
-	contact->m_rotationAcc = dgVector (dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f));
-
+	pair->m_contact->m_positAcc = dgVector (dgFloat32 (0.0f));
+	pair->m_contact->m_rotationAcc = dgVector (dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f));
 	PopulateContacts (pair, timestep, threadIndex);
 }
 

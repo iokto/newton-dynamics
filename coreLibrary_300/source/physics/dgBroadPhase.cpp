@@ -1168,7 +1168,7 @@ void dgBroadPhase::AddGeneratedBodiesContactsKernel (void* const context, void* 
 }
 
 
-bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* const body1) const
+bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* const body1, dgFloat32 timestep) const
 {
 	bool mass0 = (body0->m_invMass.m_w != dgFloat32 (0.0f)); 
 	bool mass1 = (body1->m_invMass.m_w != dgFloat32 (0.0f)); 
@@ -1177,7 +1177,8 @@ bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* cons
 	bool isKinematic0 = body0->IsRTTIType (dgBody::m_kinematicBodyRTTI) != 0;
 	bool isKinematic1 = body1->IsRTTIType (dgBody::m_kinematicBodyRTTI) != 0;
 
-	bool tier0 = ((-dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) >> 4) != 0;
+	//bool tier0 = ((-dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) >> 4) != 0;
+	bool tier0 = true;
 	bool tier1 = !(body1->m_collision->IsType (dgCollision::dgCollisionNull_RTTI) | body0->m_collision->IsType (dgCollision::dgCollisionNull_RTTI));
 	bool tier2 = !(body0->m_sleeping & body1->m_sleeping);
 	bool tier3 = isDynamic0 & mass0; 
@@ -1203,7 +1204,7 @@ bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* cons
 			dgVector boxp1 (box0_p1 - box1_p0);
 
 			dgVector velRelative (body1->GetVelocity() - body0->GetVelocity());
-			dgFastRayTest ray (dgVector (dgFloat32 (0.0f)), velRelative);
+			dgFastRayTest ray (dgVector (dgFloat32 (0.0f)), velRelative.Scale4 (timestep * dgFloat32 (4.0f)));
 			dgFloat32 distance = ray.BoxIntersect(boxp0, boxp1);
 			ret = (distance < dgFloat32 (1.0f));
 		} else {
@@ -1220,7 +1221,7 @@ bool dgBroadPhase::TestOverlaping (const dgBody* const body0, const dgBody* cons
 }
 
 
-void dgBroadPhase::SubmitPairs (dgNode* const bodyNode, dgNode* const node, const dgVector& timeStepBound, dgInt32 threadID)
+void dgBroadPhase::SubmitPairs (dgNode* const bodyNode, dgNode* const node, dgFloat32 timestep, dgInt32 threadID)
 {
 	dgNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH];
 	pool[0] = node;
@@ -1236,8 +1237,9 @@ void dgBroadPhase::SubmitPairs (dgNode* const bodyNode, dgNode* const node, cons
 			if (!rootNode->m_left) {
 				dgAssert (!rootNode->m_right);
 				dgBody* const body1 = rootNode->m_body;
-				if (TestOverlaping (body0, body1)) {
-					AddPair (body0, body1, timeStepBound, threadID);
+
+				if (dgOverlapTest (body0->m_minAABB, body0->m_maxAABB, body1->m_minAABB, body1->m_maxAABB)) {
+					AddPair (body0, body1, timestep, threadID);
 				}
 
 			} else {
@@ -1256,7 +1258,8 @@ void dgBroadPhase::SubmitPairs (dgNode* const bodyNode, dgNode* const node, cons
 
 void dgBroadPhase::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID)
 {
-	dgVector timestep2 (descriptor->m_timestep * descriptor->m_timestep * dgFloat32 (4.0f));
+//	dgVector timestep2 (descriptor->m_timestep * descriptor->m_timestep * dgFloat32 (4.0f));
+	const dgFloat32 timestep = descriptor->m_timestep;
 	dgBodyMasterList::dgListNode* node = NULL;
 	{
 		dgThreadHiveScopeLock lock (m_world, &m_criticalSectionLock, false);
@@ -1274,7 +1277,7 @@ void dgBroadPhase::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descrip
 				for (dgNode* ptr = bodyNode; ptr->m_parent; ptr = ptr->m_parent) {
 					dgNode* const sibling = ptr->m_parent->m_right;
 					if (sibling != ptr) {
-						SubmitPairs (bodyNode, sibling, timestep2, threadID);
+						SubmitPairs (bodyNode, sibling, timestep, threadID);
 					}
 				}
 			}
