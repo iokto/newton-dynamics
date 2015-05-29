@@ -26,9 +26,9 @@
 #include "dgCollisionInstance.h"
 #include "dgWorldDynamicUpdate.h"
 
-#define REST_RELATIVE_VELOCITY		dgFloat32 (1.0e-3f)
-#define MAX_DYNAMIC_FRICTION_SPEED	dgFloat32 (0.3f)
-#define MAX_PENETRATION_STIFFNESS	dgFloat32 (50.0f)
+#define REST_RELATIVE_VELOCITY			dgFloat32 (1.0e-3f)
+#define MAX_DYNAMIC_FRICTION_SPEED		dgFloat32 (0.3f)
+#define MAX_PENETRATION_STIFFNESS		dgFloat32 (50.0f)
 
 
 
@@ -177,10 +177,10 @@ void dgContact::JacobianContactDerivative (dgContraintDescritor& params, const d
 
 	dgFloat32 relVelocErr = velocError % contact.m_normal;
 
-	dgFloat32 penetration = dgMin (contact.m_penetration, dgFloat32(0.5f));
+	dgFloat32 penetration = dgClamp (contact.m_penetration - DG_RESTING_CONTACT_PENETRATION, dgFloat32(0.0f), dgFloat32(0.5f));
 	dgFloat32 penetrationStiffness = MAX_PENETRATION_STIFFNESS * contact.m_softness;
 	dgFloat32 penetrationVeloc = penetration * penetrationStiffness;
-	dgAssert (dgAbsf (penetrationVeloc - MAX_PENETRATION_STIFFNESS * contact.m_softness * dgMin (contact.m_penetration, dgFloat32(0.5f))) < dgFloat32 (1.0e-6f));
+	dgAssert (dgAbsf (penetrationVeloc - MAX_PENETRATION_STIFFNESS * contact.m_softness * penetration) < dgFloat32 (1.0e-6f));
 	if (relVelocErr > REST_RELATIVE_VELOCITY) {
 		relVelocErr *= (restitution + dgFloat32 (1.0f));
 	}
@@ -295,7 +295,7 @@ void dgContact::JointAccelerations(dgJointAccelerationDecriptor* const params)
 				dgFloat32 restitution = (vRel <= dgFloat32 (0.0f)) ? (dgFloat32 (1.0f) + row->m_restitution) : dgFloat32 (1.0f);
 
 				dgFloat32 penetrationVeloc = dgFloat32 (0.0f);
-				if (row->m_penetration > dgFloat32 (1.0e-2f)) {
+				if (row->m_penetration > DG_RESTING_CONTACT_PENETRATION * dgFloat32 (0.125f)) {
 					if (vRel > dgFloat32 (0.0f)) {
 						dgFloat32 penetrationCorrection = vRel * timestep;
 						dgAssert (penetrationCorrection >= dgFloat32 (0.0f));

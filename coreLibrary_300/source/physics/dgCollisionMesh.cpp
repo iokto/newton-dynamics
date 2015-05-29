@@ -101,7 +101,7 @@ dgPolygonMeshDesc::dgPolygonMeshDesc(dgCollisionParamProxy& proxy, void* const u
 
 			matrix.m_posit = matrix.m_posit.CompProduct4(meshInvScale) | dgVector::m_wOne;
 			SetTransposeAbsMatrix (matrix);
-
+			
 			dgMatrix scaleMatrix (meshInvScale.CompProduct4(m_front), meshInvScale.CompProduct4(m_up), meshInvScale.CompProduct4(m_right), m_posit);
 			m_objCollision->CalcAABB (scaleMatrix, m_p0, m_p1);
 

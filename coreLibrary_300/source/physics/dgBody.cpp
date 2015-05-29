@@ -220,7 +220,7 @@ dgFloat32 dgBody::RayCast (const dgLineBox& line, OnRayCastAction filter, OnRayP
 {
 	dgAssert (filter);
 	dgVector l0 (line.m_l0);
-	//	dgVector l1 (line.m_l1);
+//	dgVector l1 (line.m_l1);
 	dgVector l1 (line.m_l0 + (line.m_l1 - line.m_l0).Scale4 (dgMin(maxT, dgFloat32 (1.0f))));
 	if (dgRayBoxClip (l0, l1, m_minAABB, m_maxAABB)) {
 		dgContactPoint contactOut;
@@ -241,7 +241,7 @@ dgFloat32 dgBody::RayCast (const dgLineBox& line, OnRayCastAction filter, OnRayP
 					maxT = filter (this, contactOut.m_collision0, p, contactOut.m_normal, contactOut.m_shapeId0, userData, t);
 				}
 			}
-		} 
+		}
 	} 
 	return maxT;
 }

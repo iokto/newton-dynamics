@@ -410,7 +410,7 @@ void dgWorld::SetCurrentHardwareMode(dgInt32 deviceIndex)
 	#ifdef _NEWTON_AMP
 	if (m_amp) {
 		m_amp->CleanUp();
-		}
+	}
 	#endif
 
 	m_hardwaredIndex = dgClamp(deviceIndex, 0, EnumerateHardwareModes() - 1);
@@ -1305,7 +1305,7 @@ void dgWorld::SerializeJointArray (dgBody** const bodyArray, dgInt32 bodyCount, 
 	dgTree<int, dgBody*> bodyMap (GetAllocator());
 	for (dgInt32 i = 0; i < bodyCount; i ++) {
 		bodyMap.Insert (i, bodyArray[i]);
-	}
+}
 
 	count /= 2;
 	dgSerializeMarker (serializeCallback, userData);

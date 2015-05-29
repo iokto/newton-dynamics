@@ -1582,7 +1582,7 @@ dgInt32 dgCollisionCompound::ClosestDistanceToConvex (dgCollisionParamProxy& pro
 
 	dgUnsigned8 pool[64 * (sizeof (dgNodeBase*) + sizeof (dgFloat32))];
 	dgUpHeap<dgNodeBase*, dgFloat32> heap (pool, sizeof (pool));
-
+	
 	dgNodeBase* node = m_root;
 	dgVector boxP0 (p0 - m_root->m_p1);
 	dgVector boxP1 (p1 - m_root->m_p0);
@@ -1662,7 +1662,7 @@ dgInt32 dgCollisionCompound::ClosestDistanceToCompound (dgCollisionParamProxy& p
 	const dgMatrix& myMatrix = compoundInstance->GetGlobalMatrix();
 	const dgMatrix& otherMatrix = otherCompoundInstance->GetGlobalMatrix();
 	dgMatrix matrix (otherMatrix * myMatrix.Inverse());
-	
+
 	const dgCollisionCompound* const otherShape = (dgCollisionCompound*)otherCompoundInstance->GetChildShape();
 	PushNode (matrix, heap, m_root, otherShape->m_root);
 
@@ -2217,7 +2217,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToCollisionTree (dgCollidingPairCo
 
 	const dgContactMaterial* const material = constraint->GetMaterial();
 	const dgVector& treeScale = treeCollisionInstance->GetScale();
-
+	
 	dgAssert (contacts);
 	dgFloat32 closestDist = dgFloat32 (1.0e10f);
 	while (stack) {
