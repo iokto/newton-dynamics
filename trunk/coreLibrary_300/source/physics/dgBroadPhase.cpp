@@ -814,23 +814,14 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 
 		// add all pairs 
 		bool isCollidable = true;
-		dgContact* contact = NULL;
-		{
-			dgThreadHiveScopeLock lock (m_world, &m_contacJointLock, false);
-			contact = m_world->FindContactJoint (body0, body1);
-			if (!contact) {
-				const dgBilateralConstraint* const bilateral = m_world->FindBilateralJoint (body0, body1);
-				isCollidable = bilateral ? bilateral->IsCollidable() : true;
-			}
+		dgContact* contact = m_world->FindContactJoint (body0, body1);
+		if (!contact) {
+			const dgBilateralConstraint* const bilateral = m_world->FindBilateralJoint (body0, body1);
+			isCollidable = bilateral ? bilateral->IsCollidable() : true;
 		}
 
 		if (isCollidable) {
 			if (contact) {
-//				contact->m_contactActive = 0;
-//				contact->m_broadphaseLru = m_lru;
-//				contact->m_timeOfImpact = dgFloat32 (1.0e10f);
-//				contactPairs->AddPair(contact, threadID);
-
 				contact->m_broadphaseLru = m_lru;
 				contact->m_timeOfImpact = dgFloat32(1.0e10f);
 				if (ValidateContactCache (contact, timestep)) {
@@ -853,13 +844,15 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 				const dgContactMaterial* const material = &materialList->Find (key)->GetInfo();
 
 				if (material->m_flags & dgContactMaterial::m_collisionEnable) {
-					dgThreadHiveScopeLock lock (m_world, &m_contacJointLock, false);
+					m_world->GlobalLock(false);
 					if (body0->IsRTTIType (dgBody::m_deformableBodyRTTI) || body1->IsRTTIType (dgBody::m_deformableBodyRTTI)) {
 						contact = new (m_world->m_allocator) dgDeformableContact (m_world, material);
 					} else {
 						contact = new (m_world->m_allocator) dgContact (m_world, material);
 					}
 					contact->AppendToActiveList();
+					m_world->GlobalUnlock();
+
 					m_world->AttachConstraint (contact, body0, body1);
 				}
 
@@ -1308,6 +1301,11 @@ void dgBroadPhase::UpdateContactsBroadPhaseEnd ()
 
 	for (dgInt32 i = 0; i < count; i ++) {
 		dgContact* const contact = deadContacs[i];
+if (contact->m_body0->m_uniqueID < contact->m_body1->m_uniqueID) {
+dgTrace (("%d %d\n", contact->m_body0->m_uniqueID, contact->m_body1->m_uniqueID));
+} else {
+dgTrace (("%d %d\n", contact->m_body1->m_uniqueID, contact->m_body0->m_uniqueID));
+}
 		m_world->DestroyConstraint (contact);
 	}
 }
