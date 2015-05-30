@@ -34,7 +34,7 @@
 //#define DEFAULT_SCENE	5			// primitive collision
 //#define DEFAULT_SCENE	6 			// Kinematic bodies
 //#define DEFAULT_SCENE	7			// primitive convex cast 
-#define DEFAULT_SCENE	8			// Box stacks
+//#define DEFAULT_SCENE	8			// Box stacks
 //#define DEFAULT_SCENE	9			// simple level mesh collision
 //#define DEFAULT_SCENE	10			// optimized level mesh collision
 //#define DEFAULT_SCENE	11			// height field Collision
@@ -54,7 +54,7 @@
 //#define DEFAULT_SCENE	25			// continuous collision
 //#define DEFAULT_SCENE	26			// paper wall continuous collision
 //#define DEFAULT_SCENE	27			// puck slide continuous collision
-//#define DEFAULT_SCENE	28          // standard joints
+#define DEFAULT_SCENE	28          // standard joints
 //#define DEFAULT_SCENE	29			// articulated joints
 //#define DEFAULT_SCENE	30			// basic rag doll
 //#define DEFAULT_SCENE	31			// basic Car
@@ -307,6 +307,7 @@ NewtonDemos::NewtonDemos(const wxString& title, const wxPoint& pos, const wxSize
 	,m_timestepAcc(0)
 	,m_fps(0.0f)
 {
+//m_autoSleepState = false;
 //m_microthreadIndex = 1;
 //m_useParallelSolver = true;
 //m_threadProfilerState = true;
@@ -369,7 +370,7 @@ m_hideVisualMeshes = true;
 SetDebugDisplayMode(2);
 
 m_showContactPoints = true;
-m_autoSleepState = false;
+
 #endif
 
 //m_useParallelSolver = true;
@@ -585,6 +586,9 @@ void NewtonDemos::LoadDemo (int index)
 
 	RestoreSettings ();
 	m_scene->ResetTimer();
+
+	// clean up all caches the engine have saved
+	NewtonInvalidateCache(m_scene->GetNewton());
 
 	END_MENU_OPTION();
 }

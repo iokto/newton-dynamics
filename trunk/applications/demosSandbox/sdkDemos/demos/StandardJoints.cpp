@@ -43,8 +43,10 @@ class CustomDistance: public CustomJoint
 		parentMatrix.m_posit.m_w = 1.0f;
 
 		dMatrix dummy;
-		CalculateLocalMatrix (childMatrix, m_localPivot, dummy);
-		CalculateLocalMatrix (parentMatrix, dummy, m_parentPivot);
+		//CalculateLocalMatrix (childMatrix, m_localPivot, dummy);
+		//CalculateLocalMatrix (parentMatrix, dummy, m_parentPivot);
+		CalculateLocalMatrix (childMatrix, m_localMatrix0, dummy);
+		CalculateLocalMatrix (parentMatrix, dummy, m_localMatrix1);
 	}
 
     void SubmitConstraints (dFloat timestep, int threadIndex)
