@@ -301,7 +301,7 @@ dgContact* dgBodyMasterList::FindContactJoint (const dgBody* body0, const dgBody
 		dgSwap(body0, body1);
 	}
 	dgContact* const contact = body0->m_masterNode->GetInfo().FindContactJoint (body1);
-	dgAssert (contact || !FindConstraintLink (body0, body1));
+	dgAssert (contact || !FindConstraintLink (body0, body1) || FindConstraintLink (body0, body1)->GetInfo().m_joint->IsBilateral());
 	return contact;
 }
 

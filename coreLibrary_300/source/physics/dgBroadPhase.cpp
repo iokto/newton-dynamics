@@ -1301,11 +1301,6 @@ void dgBroadPhase::UpdateContactsBroadPhaseEnd ()
 
 	for (dgInt32 i = 0; i < count; i ++) {
 		dgContact* const contact = deadContacs[i];
-if (contact->m_body0->m_uniqueID < contact->m_body1->m_uniqueID) {
-dgTrace (("%d %d\n", contact->m_body0->m_uniqueID, contact->m_body1->m_uniqueID));
-} else {
-dgTrace (("%d %d\n", contact->m_body1->m_uniqueID, contact->m_body0->m_uniqueID));
-}
 		m_world->DestroyConstraint (contact);
 	}
 }

@@ -451,33 +451,6 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 	dgFastAABBInfo box (p0, p1);
 	ForAllSectors (box, dgVector (dgFloat32 (0.0f)), dgFloat32 (1.0f), CalculateAllFaceEdgeNormals, this);
 
-/*
-	for (dgInt32 i = 0; i < m_nodesCount; i ++) {
-		const dgNode* const node = &m_aabb[i];
-		if (node->m_left.IsLeaf()) {
-			dgInt32 vCount = node->m_left.GetCount();
-			dgInt32 index = dgInt32 (node->m_left.GetIndex());
-			dgInt32* const face = &m_indices[index];
-			for (dgInt32 j = 0; j < vCount; j ++) {
-				if (face[vCount + 2 + j] == -1) {
-					face[vCount + 2 + j] = face[vCount + 1];
-				}
-			}
-		}
-
-		if (node->m_right.IsLeaf()) {
-			dgInt32 vCount = node->m_right.GetCount();
-			dgInt32 index = dgInt32 (node->m_right.GetIndex());
-			dgInt32* const face = &m_indices[index];
-			for (dgInt32 j = 0; j < vCount; j ++) {
-				if (face[vCount + 2 + j] == -1) {
-					face[vCount + 2 + j] = face[vCount + 1];
-				}
-			}
-		}
-	}
-*/
-
 	dgStack<dgTriplex> pool ((m_indexCount / 2) - 1);
 	const dgTriplex* const vertexArray = (dgTriplex*)GetLocalVertexPool();
 	dgInt32 normalCount = 0;
@@ -491,6 +464,7 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 
 				dgInt32 j0 = 2 * (vCount + 1) - 1;
 				dgVector normal (&vertexArray[face[vCount + 1]].m_x);
+				dgAssert (dgAbsf ((normal % normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 				dgVector p0 (&vertexArray[face[vCount - 1]].m_x);
 				for (dgInt32 j = 0; j < vCount; j ++) {
 					dgInt32 j1 = vCount + 2 + j;
@@ -499,11 +473,10 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 						dgVector e (p1 - p0);
 						dgVector n (e * normal);
 						n = n.Scale4(dgFloat32 (1.0f) / dgSqrt (n % n));
-						dgAssert (dgAbsf ((n % n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
+						dgAssert (dgAbsf ((n % n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 						pool[normalCount].m_x = n.m_x;
 						pool[normalCount].m_y = n.m_y;
 						pool[normalCount].m_z = n.m_z;
-						//face[j0] = face[vCount + 1];
 						face[j0] = -normalCount - 1;
 						normalCount ++;
 					}
@@ -521,6 +494,7 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 
 				dgInt32 j0 = 2 * (vCount + 1) - 1;
 				dgVector normal (&vertexArray[face[vCount + 1]].m_x);
+				dgAssert (dgAbsf ((normal % normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 				dgVector p0 (&vertexArray[face[vCount - 1]].m_x);
 				for (dgInt32 j = 0; j < vCount; j ++) {
 					dgInt32 j1 = vCount + 2 + j;
@@ -529,11 +503,10 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 						dgVector e (p1 - p0);
 						dgVector n (e * normal);
 						n = n.Scale4(dgFloat32 (1.0f) / dgSqrt (n % n));
-						dgAssert (dgAbsf ((n % n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
+						dgAssert (dgAbsf ((n % n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 						pool[normalCount].m_x = n.m_x;
 						pool[normalCount].m_y = n.m_y;
 						pool[normalCount].m_z = n.m_z;
-						//face[j0] = face[vCount + 1];
 						face[j0] = -normalCount - 1;
 						normalCount ++;
 					}
@@ -546,7 +519,7 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 
 	if (normalCount) {
 		dgStack<dgInt32> indexArray (normalCount);
-		dgInt32 newNormalCount = dgVertexListToIndexList (&pool[0].m_x, sizeof (dgVector), sizeof (dgTriplex), 0, normalCount, &indexArray[0], dgFloat32 (1.0e-6f));
+		dgInt32 newNormalCount = dgVertexListToIndexList (&pool[0].m_x, sizeof (dgTriplex), sizeof (dgTriplex), 0, normalCount, &indexArray[0], dgFloat32 (1.0e-6f));
 
 		dgInt32 oldCount = GetVertexCount();
 		dgTriplex* const vertexArray = (dgTriplex*) dgMallocStack (sizeof (dgTriplex) * (oldCount + newNormalCount));
@@ -568,6 +541,10 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 						dgInt32 k = -1 - face[vCount + 2 + j];
 						face[vCount + 2 + j] = indexArray[k] + oldCount;
 					}
+					#ifdef _DEBUG	
+						dgVector normal (&vertexArray[face[vCount + 2 + j]].m_x);
+						dgAssert (dgAbsf ((normal % normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+					#endif
 				}
 			}
 
@@ -577,10 +554,14 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 				dgInt32* const face = &m_indices[index];
 				for (dgInt32 j = 0; j < vCount; j ++) {
 					if (face[vCount + 2 + j] < 0) {
-						//face[vCount + 2 + j] = face[vCount + 1];
 						dgInt32 k = -1 - face[vCount + 2 + j];
 						face[vCount + 2 + j] = indexArray[k] + oldCount;
 					}
+
+					#ifdef _DEBUG	
+						dgVector normal (&vertexArray[face[vCount + 2 + j]].m_x);
+						dgAssert (dgAbsf ((normal % normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+					#endif
 				}
 			}
 		}
