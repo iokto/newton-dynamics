@@ -478,7 +478,7 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 	}
 */
 
-	dgStack<dgVector> pool ((m_indexCount / 2) - 1);
+	dgStack<dgTriplex> pool ((m_indexCount / 2) - 1);
 	const dgTriplex* const vertexArray = (dgTriplex*)GetLocalVertexPool();
 	dgInt32 normalCount = 0;
 	for (dgInt32 i = 0; i < m_nodesCount; i ++) {
@@ -499,7 +499,10 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 						dgVector e (p1 - p0);
 						dgVector n (e * normal);
 						n = n.Scale4(dgFloat32 (1.0f) / dgSqrt (n % n));
-						pool[normalCount] = n;
+						dgAssert (dgAbsf ((n % n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
+						pool[normalCount].m_x = n.m_x;
+						pool[normalCount].m_y = n.m_y;
+						pool[normalCount].m_z = n.m_z;
 						//face[j0] = face[vCount + 1];
 						face[j0] = -normalCount - 1;
 						normalCount ++;
@@ -526,7 +529,10 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 						dgVector e (p1 - p0);
 						dgVector n (e * normal);
 						n = n.Scale4(dgFloat32 (1.0f) / dgSqrt (n % n));
-						pool[normalCount] = n;
+						dgAssert (dgAbsf ((n % n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
+						pool[normalCount].m_x = n.m_x;
+						pool[normalCount].m_y = n.m_y;
+						pool[normalCount].m_z = n.m_z;
 						//face[j0] = face[vCount + 1];
 						face[j0] = -normalCount - 1;
 						normalCount ++;
@@ -542,14 +548,14 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 		dgStack<dgInt32> indexArray (normalCount);
 		dgInt32 newNormalCount = dgVertexListToIndexList (&pool[0].m_x, sizeof (dgVector), sizeof (dgTriplex), 0, normalCount, &indexArray[0], dgFloat32 (1.0e-6f));
 
-		dgInt32 vCount = GetVertexCount();
-		dgTriplex* const vertexArray = (dgTriplex*) dgMallocStack (sizeof (dgTriplex) * (vCount + newNormalCount));
-		memcpy (vertexArray, GetLocalVertexPool(), sizeof (dgTriplex) * vCount);
-		memcpy (&vertexArray[vCount], &pool[0].m_x, sizeof (dgTriplex) * newNormalCount);
+		dgInt32 oldCount = GetVertexCount();
+		dgTriplex* const vertexArray = (dgTriplex*) dgMallocStack (sizeof (dgTriplex) * (oldCount + newNormalCount));
+		memcpy (vertexArray, GetLocalVertexPool(), sizeof (dgTriplex) * oldCount);
+		memcpy (&vertexArray[oldCount], &pool[0].m_x, sizeof (dgTriplex) * newNormalCount);
 		dgFreeStack(GetLocalVertexPool());
 
 		m_localVertex = &vertexArray[0].m_x;
-		m_vertexCount = vCount + newNormalCount;
+		m_vertexCount = oldCount + newNormalCount;
 
 		for (dgInt32 i = 0; i < m_nodesCount; i ++) {
 			const dgNode* const node = &m_aabb[i];
@@ -560,7 +566,7 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 				for (dgInt32 j = 0; j < vCount; j ++) {
 					if (face[vCount + 2 + j] < 0) {
 						dgInt32 k = -1 - face[vCount + 2 + j];
-						face[vCount + 2 + j] = indexArray[k] + vCount;
+						face[vCount + 2 + j] = indexArray[k] + oldCount;
 					}
 				}
 			}
@@ -573,7 +579,7 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 					if (face[vCount + 2 + j] < 0) {
 						//face[vCount + 2 + j] = face[vCount + 1];
 						dgInt32 k = -1 - face[vCount + 2 + j];
-						face[vCount + 2 + j] = indexArray[k] + vCount;
+						face[vCount + 2 + j] = indexArray[k] + oldCount;
 					}
 				}
 			}
