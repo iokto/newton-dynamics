@@ -73,8 +73,8 @@ class CustomDistance: public CustomJoint
 		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
 	}
 
-	dMatrix m_localPivot;
-	dMatrix m_parentPivot;
+	//dMatrix m_localPivot;
+	//dMatrix m_parentPivot;
 	dFloat m_distance;
 };
 
@@ -541,7 +541,7 @@ void StandardJoints (DemoEntityManager* const scene)
     dVector location (0.0f, 0.0f, 0.0f, 0.0f);
     dVector size (1.5f, 2.0f, 2.0f, 0.0f);
 
-	//AddDistance (scene, dVector (-20.0f, 0.0f, -20.0f));
+	AddDistance (scene, dVector (-20.0f, 0.0f, -20.0f));
 	AddBallAndSockectWithFriction (scene, dVector (-20.0f, 0.0f, -15.0f));
 	Add6DOF (scene, dVector (-20.0f, 0.0f, -10.0f));
 	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -5.0f));

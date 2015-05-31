@@ -22,16 +22,14 @@ static void PhysicsApplyPrecessionTorque (const NewtonBody* body, dFloat timeste
 {
 	PhysicsApplyGravityForce (body, timestep, threadIndex);
 
-/*
 	dVector omega;
-	dMatrix rotation;
 	dMatrix inertiaMatrix;
 	NewtonBodyGetOmega(body, &omega[0]);
-	NewtonBodyGetMatrix(body, &rotation[0][0]);
 	NewtonBodyGetInertiaMatrix(body, &inertiaMatrix[0][0]);
-	dVector angularMomentum(rotation.UnrotateVector(inertiaMatrix.RotateVector(omega)));
-	dTrace(("%f %f %f %f\n", angularMomentum[0], angularMomentum[1], angularMomentum[2], angularMomentum % angularMomentum));
-*/
+	dVector angularMomentum (inertiaMatrix.RotateVector(omega));
+	dVector torque (angularMomentum * omega);
+	NewtonBodySetTorque(body, &torque[0]);
+	//dTrace(("%f %f %f %f\n", angularMomentum[0], angularMomentum[1], angularMomentum[2], sqrt (angularMomentum % angularMomentum)));
 }
 
 
@@ -71,6 +69,7 @@ void PrecessingTops (DemoEntityManager* const scene)
 			dMatrix bodyMatrix;
 			NewtonBodyGetMatrix(body, &bodyMatrix[0][0]);
 			matrix.m_posit = bodyMatrix.m_posit;
+			matrix.m_posit.m_y += 1.0f; 
 			NewtonBodySetMatrix(body, &matrix[0][0]);
 
 			NewtonBodySetOmega (body, &omega[0]);

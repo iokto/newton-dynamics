@@ -829,6 +829,8 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 				} else {
 					dgCollidingPairCollector* const contactPairs = m_world;
 					contact->m_contactActive = 0;
+					contact->m_positAcc = dgVector::m_zero;
+					contact->m_rotationAcc = dgQuaternion();
 					contactPairs->AddPair(contact, threadID);
 				}
 
