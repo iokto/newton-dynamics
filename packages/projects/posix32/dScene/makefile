@@ -22,6 +22,7 @@ INCLUDED_PATH = ../../../dScene
 SRC_PATH = ../../../dScene
 
 SDK_MATH = ../../../dMath
+SDK_ANIMATION = ../../../dAnimation
 SDK_CONTAINERS = ../../../dContainers
 SDK_XML = ../../../thirdParty/tinyxml
 
@@ -30,6 +31,7 @@ NEWTON_SDK = ../../../posix32
 
 LIB_SRCS = \
 	$(SRC_PATH)/dBoneNodeInfo.cpp \
+	$(SRC_PATH)/dLineNodeInfo.cpp \
 	$(SRC_PATH)/dCollisionBoxNodeInfo.cpp \
 	$(SRC_PATH)/dCollisionCapsuleNodeInfo.cpp \
 	$(SRC_PATH)/dCollisionChamferCylinderNodeInfo.cpp \
@@ -73,7 +75,7 @@ COMPILER = gcc
 
 # POSIX options	 gcc 4.2.2
 CPU_FLAGS = -O2 -g -msse  -msse2 -ffloat-store -ffast-math -freciprocal-math -funsafe-math-optimizations -fsingle-precision-constant 
-FLAGS = -c -Wall -Wno-strict-aliasing -D_POSIX_VER  $(CPU_FLAGS) -I$(NEWTON_SDK) -I$(INCLUDED_PATH) -I$(SDK_MATH) -I$(SDK_CONTAINERS) -I$(SDK_XML) 
+FLAGS = -c -Wall -Wno-strict-aliasing -D_POSIX_VER  $(CPU_FLAGS) -I$(NEWTON_SDK) -I$(INCLUDED_PATH) -I$(SDK_MATH) -I$(SDK_ANIMATION) -I$(SDK_CONTAINERS) -I$(SDK_XML) 
  
 
 
