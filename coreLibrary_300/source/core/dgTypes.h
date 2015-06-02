@@ -102,6 +102,7 @@
 #if (defined (_POSIX_VER) || defined (_POSIX_VER_64) || defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
 	#include <unistd.h>
 	#include <assert.h>
+	#ifndef __ARMCC_VERSION
 	extern "C" 
 	{ 
 		// for SSE3 and up
@@ -113,6 +114,7 @@
 			#include <smmintrin.h>
 		#endif
 	} 
+#endif
 #endif
 
 #ifdef _MACOSX_VER
