@@ -360,6 +360,7 @@ void dgWorld::AddSentinelBody()
 	m_sentinelBody = CreateDynamicBody(instance, dgGetIdentityMatrix());
 	instance->Release();
 	dgCollidingPairCollector::m_sentinel = m_sentinelBody;
+	m_broadPhase->Remove(m_sentinelBody);
 }
 
 dgBody* dgWorld::GetSentinelBody() const
@@ -950,7 +951,6 @@ bool dgWorld::AreBodyConnectedByJoints (dgBody* const originSrc, dgBody* const t
 
 void dgWorld::FlushCache()
 {
-
 	// delete all contacts
 	dgActiveContacts& contactList = *this;
 	for (dgActiveContacts::dgListNode* contactNode = contactList.GetFirst(); contactNode; ) {

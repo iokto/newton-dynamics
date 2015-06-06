@@ -233,12 +233,17 @@ class dgWorldDynamicUpdate
 	void UpdateDynamics (dgFloat32 timestep);
 
 	private:
+	void ColorIslands (dgBodyMasterList::dgListNode* node, dgInt32 threadID);
+	void GetIslandStart (dgIsland* const insland, dgBody* const body, dgBodyMasterList::dgListNode** const buffer, dgInt32 color, dgInt32 threadID);
+
 	void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
 	//void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgInt32 jountCount, dgInt32 rowsCount, dgInt32 isContinueCollisionIsland, dgInt32 forceExactSolver);
 	void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jountCount, dgInt32 forceExactSolver);
 
 	static dgInt32 CompareIslands (const dgIsland* const islandA, const dgIsland* const islandB, void* notUsed);
 	static void CalculateIslandReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID);
+
+	static void ColorIslands (void* const world, void* const node, dgInt32 threadID); 
 
 	static void IntegrateInslandParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void InitializeBodyArrayParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
@@ -277,6 +282,7 @@ class dgWorldDynamicUpdate
 	void CalculateSimpleBodyReactionsForces (const dgIsland* const island, dgInt32 rowStart, dgInt32 threadID, dgFloat32 timestep, dgFloat32 maxAccNorm) const;
 
 
+	void IntegrateSingleBody (dgDynamicBody* const body, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadID) const;
 	void IntegrateArray (const dgIsland* const island, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadID) const;
 	void CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow, dgVector& accNorm) const;
 
@@ -285,13 +291,16 @@ class dgWorldDynamicUpdate
 	dgInt32 GetJacobianDerivatives (dgContraintDescritor& constraintParamOut, dgJointInfo* const jointInfo, dgConstraint* const constraint, dgJacobianMatrixElement* const matrixRow, dgInt32 rowCount) const;
 	
 
+	dgJacobianMemory m_solverMemory;
+	dgThread::dgCriticalSection m_softBodyCriticalSectionLock;
+
 	dgInt32 m_bodies;
 	dgInt32 m_joints;
 	dgInt32 m_islands;
-	dgUnsigned32 m_markLru;
-	dgJacobianMemory m_solverMemory;
-	dgThread::dgCriticalSection m_softBodyCriticalSectionLock;
-	dgBody* m_sentinelBody;
+	dgInt32 m_markLru;
+	dgInt32 m_baseColor;
+	dgInt32 m_currentColor;
+	dgFloat32 m_currTimestep;
 	static dgVector m_velocTol;
 	static dgVector m_eulerTaylorCorrection;
 

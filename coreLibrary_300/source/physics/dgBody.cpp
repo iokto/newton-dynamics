@@ -492,9 +492,9 @@ void dgBody::SetMassMatrix(dgFloat32 mass, dgFloat32 Ixx, dgFloat32 Iyy, dgFloat
 		SetAparentMassMatrix (m_mass);
 
 	} else {
-		Ixx = mass * dgAbsf (Ixx);
-		Iyy = mass * dgAbsf (Iyy);
-		Izz = mass * dgAbsf (Izz);
+		Ixx = dgAbsf (Ixx);
+		Iyy = dgAbsf (Iyy);
+		Izz = dgAbsf (Izz);
 
 		dgFloat32 Ixx1 = dgClamp (Ixx, dgFloat32 (0.001f) * mass, dgFloat32 (1000.0f) * mass);
 		dgFloat32 Iyy1 = dgClamp (Iyy, dgFloat32 (0.001f) * mass, dgFloat32 (1000.0f) * mass);
@@ -509,6 +509,7 @@ void dgBody::SetMassMatrix(dgFloat32 mass, dgFloat32 Ixx, dgFloat32 Iyy, dgFloat
 		m_mass.m_z = Izz1;
 		m_mass.m_w = mass;
 
+		
 		m_invMass.m_x = dgFloat32 (1.0f) / Ixx1;
 		m_invMass.m_y = dgFloat32 (1.0f) / Iyy1;
 		m_invMass.m_z = dgFloat32 (1.0f) / Izz1;
