@@ -33,6 +33,7 @@ dgBodyMasterListRow::dgBodyMasterListRow ()
 	:dgList<dgBodyMasterListCell>(NULL)
 	,m_body (NULL)
 	,m_contactCount(0)
+	,m_lru(0)
 {
 }
 
@@ -46,7 +47,7 @@ dgBodyMasterListRow::dgListNode* dgBodyMasterListRow::AddContactJoint (dgConstra
 	dgThreadHiveScopeLock lock (body->m_world, &m_body->m_criticalSectionLock, false);
 
 	body->m_world->GlobalLock(false);
-	dgListNode* const node = Addtop();
+	dgListNode* const node = Addtop(dgBodyMasterListCell (joint, body));
 	body->m_world->GlobalUnlock();
 
 #ifdef _DEBUG
@@ -54,9 +55,6 @@ dgBodyMasterListRow::dgListNode* dgBodyMasterListRow::AddContactJoint (dgConstra
 		dgAssert (ptr->GetInfo().m_bodyNode->m_uniqueID != body->m_uniqueID);
 	}
 #endif
-
-	node->GetInfo().m_joint = joint;
-	node->GetInfo().m_bodyNode = body;
 
 	m_contactCount ++;
 	if (m_contactCount > 1) {
@@ -90,11 +88,8 @@ dgBodyMasterListRow::dgListNode* dgBodyMasterListRow::AddBilateralJoint (dgConst
 	dgThreadHiveScopeLock lock (body->m_world, &m_body->m_criticalSectionLock, false);
 
 	body->m_world->GlobalLock(false);
-	dgListNode* const node = Append();
+	dgListNode* const node = Append(dgBodyMasterListCell (joint, body));
 	body->m_world->GlobalUnlock();
-	
-	node->GetInfo().m_joint = joint;
-	node->GetInfo().m_bodyNode = body;
 	return node;
 }
 
@@ -240,6 +235,7 @@ void dgBodyMasterListRow::SortList()
 dgBodyMasterList::dgBodyMasterList (dgMemoryAllocator* const allocator)
 	:dgList<dgBodyMasterListRow>(allocator)
 	,m_disableBodies(allocator)
+	,m_lru(0)
 	,m_deformableCount(0)
 	,m_constraintCount (0)
 {
@@ -442,4 +438,9 @@ void dgBodyMasterList::SortMasterList()
 			InsertAfter (prev, entry);
 		}
 	}
+}
+
+void dgBodyMasterList::ResetColor ()
+{
+	dgAssert (0);
 }
