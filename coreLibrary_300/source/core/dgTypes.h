@@ -62,7 +62,7 @@
 		#include <windows.h>
 		#include <crtdbg.h>
 		#ifndef _DURANGO
-		       #include <tlhelp32.h>
+			#include <tlhelp32.h>
 		#endif
 	#pragma warning (pop) 
 #endif
@@ -103,18 +103,18 @@
 	#include <unistd.h>
 	#include <assert.h>
 	#ifndef __ARMCC_VERSION
-	extern "C" 
-	{ 
-		// for SSE3 and up
-		#include <pmmintrin.h> 
-		#include <emmintrin.h> 
-		#include <mmintrin.h> 
-		#ifdef __SSE4_1__
-			#define DG_SSE4_INSTRUCTIONS_SET
-			#include <smmintrin.h>
-		#endif
-	} 
-#endif
+		extern "C" 
+		{ 
+			// for SSE3 and up
+			#include <pmmintrin.h> 
+			#include <emmintrin.h> 
+			#include <mmintrin.h> 
+			#ifdef __SSE4_1__
+				#define DG_SSE4_INSTRUCTIONS_SET
+				#include <smmintrin.h>
+			#endif
+		} 
+	#endif
 #endif
 
 #ifdef _MACOSX_VER
@@ -124,7 +124,7 @@
     #if (defined __i386__ || defined __x86_64__)
 		#include <pmmintrin.h> 
 		#include <emmintrin.h>  //sse3
-        #include <mmintrin.h>    
+        #include <mmintrin.h> 
 		#ifdef __SSE4_1__
 			#define DG_SSE4_INSTRUCTIONS_SET
 			#include <smmintrin.h>
@@ -133,15 +133,15 @@
 #endif
 
 
-		#ifdef DG_SSE4_INSTRUCTIONS_SET
+#ifdef DG_SSE4_INSTRUCTIONS_SET
 	#undef DG_SCALAR_VECTOR_CLASS
-		#endif
+#endif
 
 #if defined (_NEWTON_USE_DOUBLE) || defined (__ppc__) || defined (ANDROID) || defined (IOS)
 	#undef DG_SSE4_INSTRUCTIONS_SET
 	#ifndef DG_SCALAR_VECTOR_CLASS
 		#define DG_SCALAR_VECTOR_CLASS
-    #endif
+	#endif
 #endif
 
 
@@ -197,7 +197,7 @@
 #endif
 
 #if ((defined (_WIN_32_VER) || defined (_WIN_64_VER)) && (_MSC_VER  >= 1600))
-#include <stdint.h>
+	#include <stdint.h>
 	typedef int8_t dgInt8;
 	typedef uint8_t dgUnsigned8;
 
@@ -354,7 +354,7 @@ dgInt32 dgBinarySearch (T const* array, dgInt32 elements, const T& entry, dgInt3
 			index2 = index1;
 		}
 	}
-
+	
 	index0 = (index0 > 0) ? index0 - 1 : 0;
 	index2 = ((index2 + 1) < elements) ? index2 + 1 : elements;
 	dgInt32 index = index0 - 1;
@@ -371,7 +371,7 @@ dgInt32 dgBinarySearch (T const* array, dgInt32 elements, const T& entry, dgInt3
 }
 
 
-template <class T> 
+template <class T>
 dgInt32 dgBinarySearchIndirect(T** const array, dgInt32 elements, const T& entry, dgInt32(*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
 	dgInt32 index0 = 0;
@@ -739,9 +739,6 @@ enum dgSerializeRevisionNumber
 
 void dgSerializeMarker(dgSerialize serializeCallback, void* const userData);
 dgInt32 dgDeserializeMarker(dgDeserialize serializeCallback, void* const userData);
-
-
-typedef dgUnsigned32 (dgApi *OnGetPerformanceCountCallback) ();
 
 
 dgUnsigned64 dgGetTimeInMicrosenconds();
