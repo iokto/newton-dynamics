@@ -234,12 +234,12 @@ class dgWorldDynamicUpdate
 
 	private:
 	void GetFirstIslandBodies (dgWorldDynamicUpdateSyncDescriptor* const descriptor);
-	void ExpandInsland (dgIsland* const insland, dgDynamicBody* const body, dgDynamicBody** const stackPoolBuffer);
+	void ExpandInsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer);
 	void ColorIsland (dgIsland* const insland, dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, dgInt32 color, dgInt32 threadID);
+	void BuildIsland (dgIsland* const island, dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 bodyIndex, dgInt32 jointIndex, dgInt32 color, dgInt32 hasExactSolverJoints);
 
-	void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
-	//void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgInt32 jountCount, dgInt32 rowsCount, dgInt32 isContinueCollisionIsland, dgInt32 forceExactSolver);
-	void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jountCount, dgInt32 forceExactSolver);
+	//void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
+	//void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jountCount, dgInt32 forceExactSolver);
 
 	static dgInt32 CompareIslands (const dgIsland* const islandA, const dgIsland* const islandB, void* notUsed);
 	static void CalculateIslandReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID);
@@ -247,7 +247,7 @@ class dgWorldDynamicUpdate
 	static void ColorIslands (void* const context, void* const node, dgInt32 threadID); 
 	static void ExpandInslands (void* const context, void* const world, dgInt32 threadID);
 
-	static void IntegrateInslandParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
+	static void IntegrateIslandParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void InitializeBodyArrayParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void BuildJacobianMatrixParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void SolverInitInternalForcesParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
@@ -262,7 +262,7 @@ class dgWorldDynamicUpdate
 	void CreateParallelArrayBatchArrays (dgParallelSolverSyncData* const solverSyncData, dgJointInfo* const constraintArray, const dgIsland* const island) const;
 
 	void FindActiveJointAndBodies (dgIsland* const island); 
-	void IntegrateInslandParallel(dgParallelSolverSyncData* const syncData) const; 
+	void IntegrateIslandParallel(dgParallelSolverSyncData* const syncData) const; 
 	void InitilizeBodyArrayParallel (dgParallelSolverSyncData* const syncData) const; 
 	void BuildJacobianMatrixParallel (dgParallelSolverSyncData* const syncData) const; 
 	void SolverInitInternalForcesParallel (dgParallelSolverSyncData* const syncData) const; 
