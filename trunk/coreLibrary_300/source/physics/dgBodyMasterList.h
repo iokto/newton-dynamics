@@ -74,7 +74,7 @@ class dgBodyMasterListRow: public dgList<dgBodyMasterListCell>
 	dgBody* m_body;
 	dgListNode* m_acceleratedSearch[3];
 	dgInt32 m_contactCount;
-	dgInt32 m_lru;
+	dgInt32 m_color;
 	static dgInt32 m_contactCountReversal[];
 	friend class dgBodyMasterList;
 	friend class dgWorldDynamicUpdate;
