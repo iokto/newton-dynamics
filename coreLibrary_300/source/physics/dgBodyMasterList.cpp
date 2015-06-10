@@ -33,7 +33,7 @@ dgBodyMasterListRow::dgBodyMasterListRow ()
 	:dgList<dgBodyMasterListCell>(NULL)
 	,m_body (NULL)
 	,m_contactCount(0)
-	,m_lru(0)
+	,m_color(0)
 {
 }
 
@@ -442,5 +442,8 @@ void dgBodyMasterList::SortMasterList()
 
 void dgBodyMasterList::ResetColor ()
 {
-	dgAssert (0);
+	for (dgListNode* node = GetFirst(); node; node = node->GetNext()) { 
+		dgBodyMasterListRow& row = node->GetInfo();
+		row.m_color = 0;
+	}
 }
