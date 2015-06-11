@@ -965,7 +965,8 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 				contact->m_broadphaseLru = m_lru;
 				contact->m_timeOfImpact = dgFloat32(1.0e10f);
 				if (ValidateContactCache (contact, timestep)) {
-					contact->m_contactActive = true;
+					// It does not have to set the value because it should be the same ar previous update.
+					//contact->m_contactActive = (contact->m_closestDistance < dgFloat32 (0.0f)) ? true : false;
 				} else {
 					dgCollidingPairCollector* const contactPairs = m_world;
 					contact->m_contactActive = 0;
