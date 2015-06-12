@@ -216,8 +216,9 @@ class dgConstraint
 	dgBodyMasterListRow::dgListNode* m_link0;
 	dgBodyMasterListRow::dgListNode* m_link1;
 	ConstraintsForceFeeback m_updaFeedbackCallback;
-	dgUnsigned32 m_dynamicsLru;
+	dgInt32 m_color;
 	dgUnsigned32 m_index;
+	dgUnsigned32 m_dynamicsLru;
 	
 	dgUnsigned32 m_maxDOF			:  6;
 	dgUnsigned32 m_constId			:  6;		
@@ -244,8 +245,9 @@ inline dgConstraint::dgConstraint()
 	,m_link0(NULL)
 	,m_link1(NULL)
 	,m_updaFeedbackCallback(NULL)
-	,m_dynamicsLru(0)
+	,m_color(0)
 	,m_index(0)
+	,m_dynamicsLru(0)
 	,m_maxDOF(6)
 	,m_constId(m_unknownConstraint)
 	,m_enableCollision(false)

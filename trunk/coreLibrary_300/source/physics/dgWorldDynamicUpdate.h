@@ -234,7 +234,7 @@ class dgWorldDynamicUpdate
 
 	private:
 	void GetFirstIslandBodies (dgWorldDynamicUpdateSyncDescriptor* const descriptor);
-	void ExpandInsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer);
+	void ExpandIsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer);
 	void ColorIsland (dgIsland* const insland, dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, dgInt32 color, dgInt32 threadID);
 	void BuildIsland (dgIsland* const island, dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 bodyIndex, dgInt32 jointIndex, dgInt32 color, dgInt32 hasExactSolverJoints);
 
@@ -245,7 +245,7 @@ class dgWorldDynamicUpdate
 	static void CalculateIslandReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID);
 
 	static void ColorIslands (void* const context, void* const node, dgInt32 threadID); 
-	static void ExpandInslands (void* const context, void* const world, dgInt32 threadID);
+	static void ExpandIslands (void* const context, void* const world, dgInt32 threadID);
 
 	static void IntegrateIslandParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void InitializeBodyArrayParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
