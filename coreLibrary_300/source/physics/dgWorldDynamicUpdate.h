@@ -78,8 +78,20 @@ class dgBodyInfo
 {
 	public:
 	dgBody* m_body;
-	dgInt32 m_index;
+//	dgInt32 m_index;
 };
+
+class dgJointInfo
+{
+	public:
+	dgConstraint* m_joint;
+	dgInt32 m_m0;
+	dgInt32 m_m1;
+	dgInt32 m_pairStart;
+	dgInt16 m_pairCount;
+	dgInt16 m_pairActiveCount;
+};
+
 
 class dgIsland
 {
@@ -92,18 +104,6 @@ class dgIsland
 	dgInt32 m_rowsStart;
 	dgUnsigned32 m_isContinueCollision	: 1;
 	dgUnsigned32 m_hasExactSolverJoints : 1;
-};
-
-
-class dgJointInfo
-{
-	public:
-	dgConstraint* m_joint;
-	dgInt32 m_m0;
-	dgInt32 m_m1;
-	dgInt32 m_pairStart;
-	dgInt16 m_pairCount;
-	dgInt16 m_pairActiveCount;
 };
 
 
@@ -234,8 +234,8 @@ class dgWorldDynamicUpdate
 
 	private:
 	void GetFirstIslandBodies (dgWorldDynamicUpdateSyncDescriptor* const descriptor);
-	dgIsland ColorIsland (dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, dgInt32 color);
-	void ExpandIsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer);
+	dgIsland ColorIsland (dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, const dgInt32 stackSize, const dgInt32 color, const dgInt32 threadID);
+	void ExpandIsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer, const dgInt32 stackSize);
 	void BuildIsland (dgIsland* const island, dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 bodyIndex, dgInt32 jointIndex, dgInt32 color, dgInt32 hasExactSolverJoints);
 
 	//void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
