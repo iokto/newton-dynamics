@@ -1112,12 +1112,14 @@ void dgWorldDynamicUpdate::ExpandIslands(void* const context, void* const worldC
 }
 
 
-void dgWorldDynamicUpdate::ColorIsland(dgIsland* const island, dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPool, dgInt32 color, dgInt32 threadID)
+dgIsland dgWorldDynamicUpdate::ColorIsland(dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPool, dgInt32 color)
 {
-	bool isSingle = true;
-	dgInt32 stack = 1;
+	dgIsland island;
 	dgInt32 bodyCount = 0;
 	dgInt32 jointCount = 0;
+/*
+	bool isSingle = true;
+	dgInt32 stack = 1;
 	stackPool[0] = body->m_masterNode;
 	while (stack) {
 		stack--;
@@ -1163,10 +1165,10 @@ void dgWorldDynamicUpdate::ColorIsland(dgIsland* const island, dgDynamicBody* co
 			}
 		}
 	}
-
-	island->m_bodyCount = bodyCount;
-	island->m_jointCount = jointCount;
-	return;
+*/
+	island.m_bodyCount = bodyCount;
+	island.m_jointCount = jointCount;
+	return island;
 }
 
 
@@ -1194,7 +1196,7 @@ void dgWorldDynamicUpdate::ColorIslands(void* const context, void* const nodePtr
 			dgInt32 nodeColor = dgInterlockedExchange(&row->m_color, row->m_color);
 			if (nodeColor < baseColor) {
 				const dgInt32 color = dgAtomicExchangeAndAdd(&world->m_currentColor, 1);
-				world->ColorIsland(&island, body, stackPool, color, threadID);
+				dgIsland island (world->ColorIsland(body, stackPool, color));
 				if (island.m_bodyCount) {
 					island.m_bodyCount++;
 
