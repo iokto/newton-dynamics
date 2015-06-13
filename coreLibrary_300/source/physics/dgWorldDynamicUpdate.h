@@ -37,13 +37,8 @@
 #define	DG_FREEZZING_VELOCITY_DRAG		dgFloat32 (0.9f)
 #define	DG_SOLVER_MAX_ERROR				(DG_FREEZE_MAG * dgFloat32 (0.5f))
 
-#ifdef _MAC_IPHONE
-	#define LINEAR_SOLVER_SUB_STEPS		2
-#else 
-	#define LINEAR_SOLVER_SUB_STEPS		3
-#endif
 
-#define DG_BASE_ITERATION_COUNT			4
+#define DG_SOLVER_ITERATION_COUNT		4
 
 
 // the solver is a RK order, but instead of weighting the intermediate derivative by the usual 1/6, 1/3, 1/3, 1/6 coefficients
@@ -125,6 +120,7 @@ class dgParallelSolverSyncData
 	dgFloat32 m_firstPassCoef;
 
 	dgInt32 m_lock;
+	dgInt32 m_passes;
 	dgInt32 m_maxPasses;
 	dgInt32 m_bodyCount;
 	dgInt32 m_jointCount;
@@ -286,7 +282,7 @@ class dgWorldDynamicUpdate
 
 	void IntegrateSingleBody (dgDynamicBody* const body, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadID) const;
 	void IntegrateArray (const dgIsland* const island, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadID) const;
-	void CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow, dgVector& accNorm) const;
+	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	void CalculateIslandContacts (dgIsland* const island, dgFloat32 timestep, dgInt32 currLru, dgInt32 threadID) const;
 	void GetJacobianDerivatives (const dgIsland* const island, dgInt32 threadID, dgInt32 rowCount, dgFloat32 timestep) const;	

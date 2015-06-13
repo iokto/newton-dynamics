@@ -41,6 +41,7 @@
 #define DG_PARALLEL_JOINT_COUNT_CUT_OFF		(128)
 #define DG_ISLAND_STACK_DEPTH				(1024 * 8)
 
+int xxxxxxxxxxx;
 
 dgVector dgWorldDynamicUpdate::m_velocTol (dgFloat32 (1.0e-18f));
 dgVector dgWorldDynamicUpdate::m_eulerTaylorCorrection (dgFloat32 (1.0f / 12.0f));
@@ -1182,8 +1183,6 @@ dgIsland dgWorldDynamicUpdate::ColorIsland(dgDynamicBody* const body, dgBodyMast
 						stackPool[stack] = body1->m_masterNode;
 						stack++;
 						dgAssert(stack < stackSize);
-					} else {
-						row1->m_color = color;
 					}
 				}
 			}
@@ -1216,7 +1215,7 @@ void dgWorldDynamicUpdate::ColorIslands(void* const context, void* const nodePtr
 	dgInt32 baseColor = world->m_baseColor;
 	const dgInt32 threadCount = world->GetThreadCount();
 
-
+xxxxxxxxxxx ++;
 
 	dgBodyMasterList::dgListNode* node = (dgBodyMasterList::dgListNode*) nodePtr;
 	while (node) {
