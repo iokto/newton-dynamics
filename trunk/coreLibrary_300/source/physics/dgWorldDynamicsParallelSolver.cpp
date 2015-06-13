@@ -55,13 +55,14 @@ void dgWorldDynamicUpdate::CalculateReactionForcesParallel (const dgIsland* cons
 	internalForces[0].m_linear = dgVector::m_zero;
 	internalForces[0].m_angular = dgVector::m_zero;
 
-	const dgInt32 maxPasses = dgInt32 (world->m_solverMode + LINEAR_SOLVER_SUB_STEPS);
+	const dgInt32 maxPasses = 4;
 	syncData.m_timestep = timestep;
 	syncData.m_invTimestep = (timestep > dgFloat32 (0.0f)) ? dgFloat32 (1.0f) / timestep : dgFloat32 (0.0f);
 	syncData.m_invStepRK = (dgFloat32 (1.0f) / dgFloat32 (maxPasses));
 	syncData.m_timestepRK = syncData.m_timestep * syncData.m_invStepRK;
 	syncData.m_invTimestepRK = syncData.m_invTimestep * dgFloat32 (maxPasses);
 	syncData.m_maxPasses = maxPasses;
+	syncData.m_passes = world->m_solverMode - 1;
 
 	syncData.m_bodyCount = bodyCount;
 	syncData.m_jointCount = jointsCount;
@@ -448,8 +449,10 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 	dgWorld* const world = (dgWorld*) this;
 	const dgInt32 threadCounts = world->GetThreadCount();	
 
-	dgInt32 maxPasses = syncData->m_maxPasses;
+	const dgInt32 passes = syncData->m_passes;
+	const dgInt32 maxPasses = syncData->m_maxPasses;
 	syncData->m_firstPassCoef = dgFloat32 (0.0f);
+
 	for (dgInt32 step = 0; step < maxPasses; step ++) {
 
 		syncData->m_atomicIndex = 0;
@@ -460,7 +463,8 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 		syncData->m_firstPassCoef = dgFloat32 (1.0f);
 
 		dgFloat32 accNorm = DG_SOLVER_MAX_ERROR * dgFloat32 (2.0f);
-		for (dgInt32 passes = 0; (passes < DG_BASE_ITERATION_COUNT) && (accNorm > DG_SOLVER_MAX_ERROR); passes ++) {
+		//for (dgInt32 passes = 0; (passes < DG_BASE_ITERATION_COUNT) && (accNorm > DG_SOLVER_MAX_ERROR); passes ++) {
+		for (dgInt32 k = 0; (k < passes) && (accNorm > accNorm); k ++) {
 			for (dgInt32 i = 0; i < threadCounts; i ++) {
 				syncData->m_accelNorm[i] = dgVector (dgFloat32 (0.0f));
 			}
@@ -527,6 +531,8 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 
 void dgWorldDynamicUpdate::CalculateJointsForceParallelKernel (void* const context, void* const worldContext, dgInt32 threadID)
 {
+	dgAssert (0);
+/*
 	dgParallelSolverSyncData* const syncData = (dgParallelSolverSyncData*) context;
 	dgWorld* const world = (dgWorld*) worldContext;
 
@@ -591,4 +597,5 @@ void dgWorldDynamicUpdate::CalculateJointsForceParallelKernel (void* const conte
 	}
 
 	syncData->m_accelNorm[threadID] = accNorm;
+*/
 }

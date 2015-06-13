@@ -855,9 +855,9 @@ void dgWorldDynamicUpdate::InitJointForce (dgJointInfo* const jointInfo, dgJacob
 	}
 }
 
-void dgWorldDynamicUpdate::CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow, dgVector& norm) const
+dgFloat32 dgWorldDynamicUpdate::CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
 {
-	dgVector accNorm (norm);
+	dgVector accNorm (dgVector::m_zero);
 
 	dgFloat32 cacheForce[DG_CONSTRAINT_MAX_ROWS + 4];
 	cacheForce[0] = dgFloat32(1.0f);
@@ -954,7 +954,7 @@ void dgWorldDynamicUpdate::CalculateJointForce (dgJointInfo* const jointInfo, co
 			internalForces[m1].m_angular = angularM1;
 		}
 	}
-	norm = accNorm;
+	return accNorm.GetScalar();
 }
 
 void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island, dgInt32 threadIndex, dgFloat32 timestep, dgFloat32 maxAccNorm) const
@@ -987,7 +987,7 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 		}
 	}
 
-	dgInt32 maxPasses = dgInt32 (world->m_solverMode + LINEAR_SOLVER_SUB_STEPS);
+	const dgInt32 maxPasses = 4;
 
 	dgFloat32 invTimestep = (timestep > dgFloat32 (0.0f)) ? dgFloat32 (1.0f) / timestep : dgFloat32 (0.0f);
 	dgFloat32 invStepRK = (dgFloat32 (1.0f) / dgFloat32 (maxPasses));
@@ -1004,6 +1004,7 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 	joindDesc.m_invTimeStep = invTimestepRK;
 	joindDesc.m_firstPassCoefFlag = dgFloat32 (0.0f);
 
+	const dgInt32 passes = world->m_solverMode + 2;
 	for (dgInt32 step = 0; step < maxPasses; step ++) {
 		if (joindDesc.m_firstPassCoefFlag == dgFloat32 (0.0f)) {
 			for (dgInt32 curJoint = 0; curJoint < jointCount; curJoint ++) {
@@ -1034,12 +1035,13 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 			}
 		}
 
-		dgVector accNorm (maxAccNorm * dgFloat32 (2.0f));
-		for (dgInt32 passes = 0; (passes < DG_BASE_ITERATION_COUNT) && (accNorm.m_x > maxAccNorm); passes ++) {
-			accNorm = dgVector (dgFloat32 (0.0f));
+		dgFloat32 accNorm (maxAccNorm * dgFloat32 (2.0f));
+		for (dgInt32 k = 0; (k < passes) && (accNorm > maxAccNorm); k ++) {
+			accNorm = dgFloat32 (0.0f);
 			for (dgInt32 curJoint = 0; curJoint < jointCount; curJoint ++) {
 				dgJointInfo* const jointInfo = &constraintArray[curJoint];
-				CalculateJointForce (jointInfo, bodyArray, internalForces, matrixRow, accNorm);
+				dgFloat32 accel = CalculateJointForce (jointInfo, bodyArray, internalForces, matrixRow);
+				accNorm = (accel > accNorm) ? accel : accNorm;
 			}
 		}
 
