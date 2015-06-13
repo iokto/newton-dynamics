@@ -234,8 +234,8 @@ class dgWorldDynamicUpdate
 
 	private:
 	void GetFirstIslandBodies (dgWorldDynamicUpdateSyncDescriptor* const descriptor);
+	dgIsland ColorIsland (dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, dgInt32 color);
 	void ExpandIsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer);
-	void ColorIsland (dgIsland* const insland, dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, dgInt32 color, dgInt32 threadID);
 	void BuildIsland (dgIsland* const island, dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 bodyIndex, dgInt32 jointIndex, dgInt32 color, dgInt32 hasExactSolverJoints);
 
 	//void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
