@@ -72,6 +72,7 @@ dgWorldDynamicUpdate::dgWorldDynamicUpdate()
 	,m_islands(0)
 	,m_markLru(0)
 	,m_softBodyCriticalSectionLock()
+	,m_islandMemory(NULL)
 {
 }
 
@@ -79,23 +80,25 @@ dgWorldDynamicUpdate::dgWorldDynamicUpdate()
 void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 {
 	dgWorld* const world = (dgWorld*) this;
-	world->m_dynamicsLru = world->m_dynamicsLru + DG_BODY_LRU_STEP;
+	dgBodyMasterList& masterList = *world;
 
 	m_bodies = 0;
 	m_joints = 0;
 	m_islands = 0;
+	world->m_dynamicsLru = world->m_dynamicsLru + DG_BODY_LRU_STEP;
 	m_markLru = world->m_dynamicsLru;
 
 	dgBody* const sentinelBody = world->m_sentinelBody;
 	sentinelBody->m_index = 0; 
 	sentinelBody->m_dynamicsLru = m_markLru;
+
+	m_islandMemory = (dgIsland*) alloca ((masterList.GetCount() + 256) * sizeof (dgIsland));
 	BuildIslands(timestep);
 
 	dgInt32 maxRowCount = 0;
-	dgIsland* const islandsArray = (dgIsland*) &world->m_islandMemory[0];
 	for (dgInt32 i = 0; i < m_islands; i ++) {
-		islandsArray[i].m_rowsStart = maxRowCount;
-		maxRowCount += islandsArray[i].m_rowsCount;
+		m_islandMemory[i].m_rowsStart = maxRowCount;
+		maxRowCount += m_islandMemory[i].m_rowsCount;
 	}
 	m_solverMemory.Init (world, maxRowCount, m_bodies);
 
@@ -115,7 +118,7 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	}
 	world->SynchronizationBarrier();
 
-	dgSort (islandsArray, m_islands, CompareIslands); 
+	dgSort (m_islandMemory, m_islands, CompareIslands); 
 
 	if (!(world->m_amp && (world->m_hardwaredIndex > 0))) {
 		dgInt32 index = 0;
@@ -123,14 +126,14 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 //useParallel = 1;
 		if (useParallel) {
 			useParallel = useParallel && m_joints && m_islands;
-			useParallel = useParallel && ((threadCount * islandsArray[0].m_jointCount) >= m_joints);
-			useParallel = useParallel && (islandsArray[0].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
+			useParallel = useParallel && ((threadCount * m_islandMemory[0].m_jointCount) >= m_joints);
+			useParallel = useParallel && (m_islandMemory[0].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
 			while (useParallel) {
-				CalculateReactionForcesParallel(&islandsArray[index], timestep);
+				CalculateReactionForcesParallel(&m_islandMemory[index], timestep);
 				index ++;
 				useParallel = useParallel && (index < m_islands);
-				useParallel = useParallel && ((threadCount * islandsArray[index].m_jointCount) >= m_joints);
-				useParallel = useParallel && (islandsArray[index].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
+				useParallel = useParallel && ((threadCount * m_islandMemory[index].m_jointCount) >= m_joints);
+				useParallel = useParallel && (m_islandMemory[index].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
 			}
 		}
 
@@ -146,10 +149,11 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	} else {
 		#ifdef _NEWTON_AMP 
 			
-			world->m_amp->ConstraintSolver (m_islands, islandsArray, timestep);
+			world->m_amp->ConstraintSolver (m_islands, m_islandMemory, timestep);
 		#endif
 	}
 
+	m_islandMemory = NULL;
 	// integrate soft body dynamics phase 2
 	dgDeformableBodiesUpdate* const softBodyList = world;
     softBodyList->SolveConstraintsAndIntegrate (timestep);
@@ -483,18 +487,15 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 	}
 
 	if (bodyCount > 1) {
-		world->m_islandMemory.ExpandCapacityIfNeessesary (m_islands, sizeof (dgIsland));
-		dgIsland* const islandArray = (dgIsland*) &world->m_islandMemory[0];
-
-		islandArray[m_islands].m_bodyStart = m_bodies;
-		islandArray[m_islands].m_jointStart = m_joints;
-		islandArray[m_islands].m_bodyCount = bodyCount;
-		islandArray[m_islands].m_jointCount = jointCount;
+		m_islandMemory[m_islands].m_bodyStart = m_bodies;
+		m_islandMemory[m_islands].m_jointStart = m_joints;
+		m_islandMemory[m_islands].m_bodyCount = bodyCount;
+		m_islandMemory[m_islands].m_jointCount = jointCount;
 		
-		islandArray[m_islands].m_rowsStart = 0;
+		m_islandMemory[m_islands].m_rowsStart = 0;
 
-		islandArray[m_islands].m_hasExactSolverJoints = hasExactSolverJoints;
-		islandArray[m_islands].m_isContinueCollision = false;
+		m_islandMemory[m_islands].m_hasExactSolverJoints = hasExactSolverJoints;
+		m_islandMemory[m_islands].m_isContinueCollision = false;
 
 		dgJointInfo* const constraintArrayPtr = (dgJointInfo*) &world->m_jointsMemory[0];
 		dgJointInfo* const constraintArray = &constraintArrayPtr[m_joints];
@@ -556,8 +557,8 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 		if (isContinueCollisionIsland) {
 			rowsCount = dgMax(rowsCount, 64);
 		}
-		islandArray[m_islands].m_rowsCount = rowsCount;
-		islandArray[m_islands].m_isContinueCollision = isContinueCollisionIsland;
+		m_islandMemory[m_islands].m_rowsCount = rowsCount;
+		m_islandMemory[m_islands].m_isContinueCollision = isContinueCollisionIsland;
 
 
 		if (hasExactSolverJoints) {
@@ -573,7 +574,7 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 					dgAssert (joint->IsBilateral());
 					dgBilateralConstraint* const bilateralJoint = (dgBilateralConstraint*) joint;
 					if (bilateralJoint->m_useExactSolver && (bilateralJoint->m_useExactSolverContactLimit < contactJointCount)) {
-						islandArray[m_islands].m_hasExactSolverJoints = 0;
+						m_islandMemory[m_islands].m_hasExactSolverJoints = 0;
 						break;
 					}
 				}

@@ -444,7 +444,6 @@ class dgWorld
 	dgListenerList m_preListener;
 	dgListenerList m_postListener;
 	dgTree<void*, unsigned> m_perInstanceData;
-	dgArray<dgUnsigned8> m_islandMemory; 
 	dgArray<dgUnsigned8> m_bodiesMemory; 
 	dgArray<dgUnsigned8> m_jointsMemory; 
 	dgArray<dgUnsigned8> m_solverMatrixMemory;  

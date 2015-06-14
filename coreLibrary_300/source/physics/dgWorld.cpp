@@ -56,7 +56,6 @@
 
 #define DG_DEFAULT_SOLVER_ITERATION_COUNT	4
 
-#define DG_INITIAL_ISLAND_SIZE		(1024 * 4)
 #define DG_INITIAL_BODIES_SIZE		(1024 * 4)
 #define DG_INITIAL_JOINTS_SIZE		(1024 * 4)
 #define DG_INITIAL_JACOBIAN_SIZE	(1024 * 16)
@@ -227,7 +226,6 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,m_preListener(allocator)
 	,m_postListener(allocator)
 	,m_perInstanceData(allocator)
-	,m_islandMemory (DG_INITIAL_ISLAND_SIZE, allocator, 64)
 	,m_bodiesMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 	,m_jointsMemory (DG_INITIAL_JOINTS_SIZE, allocator, 64)
 	,m_solverMatrixMemory (DG_INITIAL_JACOBIAN_SIZE, allocator, 64)
