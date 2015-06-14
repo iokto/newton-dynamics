@@ -123,9 +123,8 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 useParallel = 1;
 		if (useParallel) {
 			useParallel = useParallel && m_joints && m_islands;
-			useParallel = useParallel && ((threadCount * islandsArray[0].m_jointCount) >= m_joints);
-			useParallel = useParallel && (islandsArray[0].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
-useParallel = 1;
+//			useParallel = useParallel && ((threadCount * islandsArray[0].m_jointCount) >= m_joints);
+//			useParallel = useParallel && (islandsArray[0].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
 			while (useParallel) {
 				CalculateReactionForcesParallel(&islandsArray[index], timestep);
 				index ++;
@@ -284,7 +283,6 @@ void dgWorldDynamicUpdate::SpanningTree (dgDynamicBody* const body, dgDynamicBod
 
 							hasExactSolverJoints |= constraint->m_useExactSolver;
 							
-							constraint->m_index = dgUnsigned32 (jointCount);
 							dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 							constraintArray[jointIndex].m_joint = constraint;
 							jointCount ++;
@@ -308,7 +306,6 @@ void dgWorldDynamicUpdate::SpanningTree (dgDynamicBody* const body, dgDynamicBod
 
 						hasExactSolverJoints |= constraint->m_useExactSolver;
 						
-						constraint->m_index = dgUnsigned32 (jointCount);
 						dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 						constraintArray[jointIndex].m_joint = constraint;
 						jointCount ++;
@@ -454,7 +451,6 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 
 						hasExactSolverJoints |= constraint->m_useExactSolver;
 						
-						constraint->m_index = dgUnsigned32 (jointCount);
 						dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 						constraintArray[jointIndex].m_joint = constraint;
 
@@ -789,7 +785,7 @@ void dgWorldDynamicUpdate::GetJacobianDerivatives (const dgIsland* const island,
 
 		dgAssert(jointInfo->m_m0 < island->m_bodyCount);
 		dgAssert(jointInfo->m_m1 < island->m_bodyCount);
-		dgAssert (constraint->m_index == dgUnsigned32(j));
+		//dgAssert (constraint->m_index == dgUnsigned32(j));
 
 		rowCount = GetJacobianDerivatives (constraintParams, jointInfo, constraint, matrixRow, rowCount);
 		dgAssert (rowCount <= island->m_rowsCount);
