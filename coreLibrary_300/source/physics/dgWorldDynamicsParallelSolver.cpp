@@ -34,10 +34,10 @@ void dgWorldDynamicUpdate::CalculateReactionForcesParallel (const dgIsland* cons
 	dgParallelSolverSyncData syncData;
 
 	dgWorld* const world = (dgWorld*) this;
+	dgBodyMasterList& masterList = *world;
 
-	world->m_pairMemoryBuffer.ExpandCapacityIfNeessesary (island->m_jointCount + 1024, sizeof (dgInt32));
-	syncData.m_bodyLocks = (dgInt32*) (&world->m_pairMemoryBuffer[0]);
-	memset (syncData.m_bodyLocks, 0, island->m_bodyCount * sizeof (syncData.m_bodyLocks[0]));
+	syncData.m_bodyLocks = (dgInt32*) alloca ((island->m_bodyCount + 1024) * sizeof (dgInt32));
+	memset (syncData.m_bodyLocks, 0, island->m_bodyCount * sizeof (dgInt32));
 
 	dgInt32 bodyCount = island->m_bodyCount;
 	dgInt32 jointsCount = island->m_jointCount;
