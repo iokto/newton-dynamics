@@ -227,10 +227,6 @@ class dgWorld
 
 	void SetFrictionThreshold (dgFloat32 acceletion);
 
-
-	dgBody* GetIslandBody (const void* const island, dgInt32 index) const;
-
-
 	void* GetListenerUserData (void* const listener) const;
 	void* FindPreListener (const char* const nameid) const;
 	void* FindPostListener (const char* const nameid) const;

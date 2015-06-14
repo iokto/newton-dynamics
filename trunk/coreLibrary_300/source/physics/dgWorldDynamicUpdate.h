@@ -221,12 +221,14 @@ class dgJacobianMemory
 
 class dgWorldDynamicUpdate
 {
+	public:
 	dgWorldDynamicUpdate();
 	void UpdateDynamics (dgFloat32 timestep);
+	dgBody* GetIslandBody (const void* const island, dgInt32 index) const;
 
 	private:
-	void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
-	//void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgInt32 jountCount, dgInt32 rowsCount, dgInt32 isContinueCollisionIsland, dgInt32 forceExactSolver);
+	void BuildIslands(dgFloat32 timestep);
+	void SpanningTree (dgDynamicBody* const body, dgDynamicBody** const queueBuffer, dgFloat32 timestep);
 	void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jountCount, dgInt32 forceExactSolver);
 
 	static dgInt32 CompareIslands (const dgIsland* const islandA, const dgIsland* const islandB, void* notUsed);
