@@ -451,7 +451,7 @@ void dgWorldDynamicUpdate::BuildJacobianMatrix (dgIsland* const island, dgInt32 
 		}
 	}
 	
-	dgAssert (jointCount);
+	//dgAssert (jointCount);
 	if (jointCount) {
 		dgInt32 rowCount = 0;
 		dgJointInfo* const constraintArrayPtr = (dgJointInfo*) &world->m_jointsMemory[0];
