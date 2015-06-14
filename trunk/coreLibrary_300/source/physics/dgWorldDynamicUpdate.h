@@ -101,6 +101,14 @@ class dgJointInfo
 class dgParallelSolverSyncData
 {
 	public:
+	class dgParallelJointMap
+	{
+		public:
+		dgInt32 m_color;
+		dgInt32 m_bashCount;
+		dgInt32 m_jointIndex;
+	};
+
 	dgParallelSolverSyncData()
 	{
 		memset (this, 0, sizeof (dgParallelSolverSyncData));
@@ -126,6 +134,7 @@ class dgParallelSolverSyncData
 
 	dgInt32* m_bodyLocks;  
 	const dgIsland* m_island;
+	dgParallelJointMap* m_jointConflicts;
 	dgInt32 m_hasJointFeeback[DG_MAX_THREADS_HIVE_COUNT];
 };
 
@@ -246,7 +255,8 @@ class dgWorldDynamicUpdate
 	static void UpdateFeedbackForcesParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void UpdateBodyVelocityParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void FindActiveJointAndBodies (void* const context, void* const worldContext, dgInt32 threadID); 
-	void CreateParallelArrayBatchArrays (dgParallelSolverSyncData* const solverSyncData, dgJointInfo* const constraintArray, const dgIsland* const island) const;
+	static dgInt32 SortJointInfoByColor(const dgParallelSolverSyncData::dgParallelJointMap* const indirectIndexA, const dgParallelSolverSyncData::dgParallelJointMap* const indirectIndexB, void* const context);
+	//void CreateParallelArrayBatchArrays (dgParallelSolverSyncData* const solverSyncData, dgJointInfo* const constraintArray, const dgIsland* const island) const;
 
 	void FindActiveJointAndBodies (dgIsland* const island); 
 	void IntegrateIslandParallel(dgParallelSolverSyncData* const syncData) const; 
@@ -256,6 +266,7 @@ class dgWorldDynamicUpdate
 	void CalculateForcesGameModeParallel (dgParallelSolverSyncData* const syncData) const; 
 
 	void CalculateReactionForcesParallel (const dgIsland* const island, dgFloat32 timestep) const;
+	void LinearizeJointParallelArray(dgParallelSolverSyncData* const solverSyncData, dgJointInfo* const constraintArray, const dgIsland* const island) const;
 	void ApplyNetTorqueAndForce (dgDynamicBody* const body, const dgVector& invTimeStep, const dgVector& accNorm, const dgVector& mask) const;
 	void ApplyNetVelcAndOmega (dgDynamicBody* const body, const dgJacobian& forceAndTorque, const dgVector& timestep4, const dgVector& speedFreeze2, const dgVector& mask) const;
 	
