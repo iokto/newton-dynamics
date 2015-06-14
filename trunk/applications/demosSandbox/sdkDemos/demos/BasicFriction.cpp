@@ -71,7 +71,7 @@ void Friction (DemoEntityManager* const scene)
 	NewtonWorld* const world = scene->GetNewton();
 	int defaultMaterialID = NewtonMaterialGetDefaultGroupID (world);
 	NewtonMaterialSetCollisionCallback (world, defaultMaterialID, defaultMaterialID, NULL, UserOnAABBOverlap, UserContactFriction); 
-
+	//NewtonMaterialSetDefaultCollidable(world, defaultMaterialID, defaultMaterialID, 0);
 
 	// customize the scene after loading
 	// set a user friction variable in the body for variable friction demos
