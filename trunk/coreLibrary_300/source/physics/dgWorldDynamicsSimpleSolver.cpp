@@ -292,7 +292,7 @@ void dgWorldDynamicUpdate::CalculateIslandContacts (dgIsland* const island, dgFl
 
 				if (processContacts) {
 					dgContactPoint contactArray[DG_MAX_CONTATCS];
-					dgCollidingPairCollector::dgPair pair;
+					dgBroadPhase::dgPair pair;
 
 					contact->m_maxDOF = 0;
 					contact->m_broadphaseLru = currLru;

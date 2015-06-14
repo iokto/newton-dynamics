@@ -60,7 +60,6 @@
 #define DG_INITIAL_BODIES_SIZE		(1024 * 4)
 #define DG_INITIAL_JOINTS_SIZE		(1024 * 4)
 #define DG_INITIAL_JACOBIAN_SIZE	(1024 * 16)
-#define DG_INITIAL_CONTACT_SIZE		(1024 * 32)
 
 
 /*
@@ -217,7 +216,6 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgBodyCollisionList(allocator)
 	,dgDeformableBodiesUpdate(allocator)
 	,dgActiveContacts(allocator) 
-	,dgCollidingPairCollector()
 	,dgWorldDynamicUpdate()
 	,dgMutexThread("dgMutexThread", DG_MUTEX_THREAD_ID)
 	,dgAsyncThread("dgAsyncThread", DG_ASYNC_THREAD_ID)
@@ -232,7 +230,6 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,m_islandMemory (DG_INITIAL_ISLAND_SIZE, allocator, 64)
 	,m_bodiesMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 	,m_jointsMemory (DG_INITIAL_JOINTS_SIZE, allocator, 64)
-	,m_pairMemoryBuffer (DG_INITIAL_CONTACT_SIZE, allocator, 64)
 	,m_solverMatrixMemory (DG_INITIAL_JACOBIAN_SIZE, allocator, 64)
 	,m_solverRightSideMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 {
@@ -305,8 +302,6 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	m_broadPhase = new (allocator) dgBroadPhaseDefault(this);
 	//m_broadPhase = new (allocator) dgBroadPhasePersistent(this);
 
-	dgCollidingPairCollector::Init ();
-	
 	//m_pointCollision = new (m_allocator) dgCollisionPoint(m_allocator);
 	dgCollision* const pointCollison = new (m_allocator) dgCollisionPoint(m_allocator);
 	m_pointCollision = CreateInstance(pointCollison, 0, dgGetIdentityMatrix());
@@ -359,7 +354,6 @@ void dgWorld::AddSentinelBody()
 	collision->Release();
 	m_sentinelBody = CreateDynamicBody(instance, dgGetIdentityMatrix());
 	instance->Release();
-	dgCollidingPairCollector::m_sentinel = m_sentinelBody;
 }
 
 dgBody* dgWorld::GetSentinelBody() const
@@ -1264,7 +1258,7 @@ void dgWorld::SerializeJointArray (dgBody** const bodyArray, dgInt32 bodyCount, 
 	dgTree<int, dgBody*> bodyMap (GetAllocator());
 	for (dgInt32 i = 0; i < bodyCount; i ++) {
 		bodyMap.Insert (i, bodyArray[i]);
-}
+	}
 
 	count /= 2;
 	dgSerializeMarker (serializeCallback, userData);
@@ -1283,8 +1277,8 @@ void dgWorld::SerializeJointArray (dgBody** const bodyArray, dgInt32 bodyCount, 
 					dgInt32 body1; 
 					dgAssert (joint->GetBody0());
 					dgAssert (joint->GetBody1());
-					body0 = (joint->GetBody0() != m_sentinel) ? bodyMap.Find (joint->GetBody0())->GetInfo() : -1;
-					body1 = (joint->GetBody1() != m_sentinel) ? bodyMap.Find (joint->GetBody1())->GetInfo() : -1;
+					body0 = (joint->GetBody0() != m_sentinelBody) ? bodyMap.Find (joint->GetBody0())->GetInfo() : -1;
+					body1 = (joint->GetBody1() != m_sentinelBody) ? bodyMap.Find (joint->GetBody1())->GetInfo() : -1;
 
 					serializeCallback(userData, &body0, sizeof (body0));
 					serializeCallback(userData, &body1, sizeof (body1));
