@@ -189,7 +189,7 @@ class NewtonDemosApp: public wxApp
 		frame->GetEventHandler()->ProcessEvent(loadDemo);
 
 		// select solve mode
-		wxMenuEvent solverMode (wxEVT_COMMAND_MENU_SELECTED, NewtonDemos::ID_SOLVER_MODE + 1);
+		wxMenuEvent solverMode (wxEVT_COMMAND_MENU_SELECTED, NewtonDemos::ID_SOLVER_MODE + 3);
 		frame->GetEventHandler()->ProcessEvent(solverMode);
 
 		return true;
@@ -296,7 +296,7 @@ NewtonDemos::NewtonDemos(const wxString& title, const wxPoint& pos, const wxSize
 	,m_hasJoysticController(false)
 	,m_shiftKey(false)
 	,m_controlKey(false)
-	,m_solverModeIndex(1)
+	,m_solverModeIndex(3)
 	,m_debugDisplayMode(0)
 	,m_mousePosX(0)
 	,m_mousePosY(0)
@@ -462,8 +462,6 @@ wxMenuBar* NewtonDemos::CreateMainMenu()
 		dAssert (m_solverModeIndex >= 0);
 		dAssert (m_solverModeIndex < int (sizeof (m_solverModes)/sizeof (m_solverModes[0])));
 		optionsMenu->Check (ID_SOLVER_MODE + m_solverModeIndex, true);
-
-
 
 		optionsMenu->AppendSeparator();
 		optionsMenu->AppendRadioItem(ID_SHOW_COLLISION_MESH, wxT("Hide collision Mesh"));

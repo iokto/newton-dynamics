@@ -329,7 +329,7 @@ class dgWorld
 	dgContactMaterial* GetNextMaterial (dgContactMaterial* material) const;
 
 	void SetThreadsCount (dgInt32 count);
-
+	
 	//Parallel Job dispatcher for user related stuff
 	void ExecuteUserJob (dgWorkerThreadTaskCallback userJobKernel, void* const userJobKernelContext);
 
@@ -342,7 +342,7 @@ class dgWorld
 
 	dgInt32 GetBroadPhaseType() const;
 	void SetBroadPhaseType (dgInt32 type);
-
+	
 	dgFloat32 GetContactMergeTolerance() const;
 	void SetContactMergeTolerance(dgFloat32 tolerenace);
 
@@ -449,7 +449,7 @@ class dgWorld
 	dgListenerList m_preListener;
 	dgListenerList m_postListener;
 	dgTree<void*, unsigned> m_perInstanceData;
-	//dgArray<dgUnsigned8> m_islandMemory; 
+	dgArray<dgUnsigned8> m_islandMemory; 
 	dgArray<dgUnsigned8> m_bodiesMemory; 
 	dgArray<dgUnsigned8> m_jointsMemory; 
 	dgArray<dgUnsigned8> m_pairMemoryBuffer;

@@ -56,11 +56,11 @@
 
 #define DG_DEFAULT_SOLVER_ITERATION_COUNT	4
 
-//#define DG_INITIAL_ISLAND_SIZE		(1024 * 4)
-#define DG_INITIAL_BODIES_SIZE				(1024 * 4)
-#define DG_INITIAL_JOINTS_SIZE				(1024 * 4)
-#define DG_INITIAL_JACOBIAN_SIZE			(1024 * 16)
-#define DG_INITIAL_CONTACT_SIZE				(1024 * 32)
+#define DG_INITIAL_ISLAND_SIZE		(1024 * 4)
+#define DG_INITIAL_BODIES_SIZE		(1024 * 4)
+#define DG_INITIAL_JOINTS_SIZE		(1024 * 4)
+#define DG_INITIAL_JACOBIAN_SIZE	(1024 * 16)
+#define DG_INITIAL_CONTACT_SIZE		(1024 * 32)
 
 
 /*
@@ -229,7 +229,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,m_preListener(allocator)
 	,m_postListener(allocator)
 	,m_perInstanceData(allocator)
-	//,m_islandMemory (DG_INITIAL_ISLAND_SIZE, allocator, 64)
+	,m_islandMemory (DG_INITIAL_ISLAND_SIZE, allocator, 64)
 	,m_bodiesMemory (DG_INITIAL_BODIES_SIZE, allocator, 64)
 	,m_jointsMemory (DG_INITIAL_JOINTS_SIZE, allocator, 64)
 	,m_pairMemoryBuffer (DG_INITIAL_CONTACT_SIZE, allocator, 64)
@@ -511,8 +511,8 @@ void dgWorld::InitBody (dgBody* const body, dgCollisionInstance* const collision
 	body->SetMassMatrix (DG_INFINITE_MASS * dgFloat32 (2.0f), DG_INFINITE_MASS, DG_INFINITE_MASS, DG_INFINITE_MASS);
 	body->SetMatrix (matrix);
 	if (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI)) {
-	    m_broadPhase->Add (body);
-        }
+		m_broadPhase->Add (body);
+	}
 }
 
 void dgWorld::BodyEnableSimulation (dgBody* const body)

@@ -31,19 +31,8 @@ class dgBilateralConstraint;
 class dgBodyMasterListCell
 {
 	public:
-	dgBodyMasterListCell ()
-	{
-		dgAssert (0);
-	}
-	dgBodyMasterListCell (dgConstraint* const joint, dgBody* const body)
-		:m_joint(joint)
-		,m_bodyNode(body)
-		,m_lru(0)
-	{
-	}
 	dgConstraint* m_joint;
 	dgBody* m_bodyNode;
-	dgInt32 m_lru;
 };
 
 class dgBodyMasterListRow: public dgList<dgBodyMasterListCell>
@@ -74,10 +63,8 @@ class dgBodyMasterListRow: public dgList<dgBodyMasterListCell>
 	dgBody* m_body;
 	dgListNode* m_acceleratedSearch[3];
 	dgInt32 m_contactCount;
-	dgInt32 m_color;
 	static dgInt32 m_contactCountReversal[];
 	friend class dgBodyMasterList;
-	friend class dgWorldDynamicUpdate;
 };
 
 class dgBodyMasterList: public dgList<dgBodyMasterListRow>
@@ -99,13 +86,11 @@ class dgBodyMasterList: public dgList<dgBodyMasterListRow>
 	dgUnsigned32 MakeSortMask(const dgBody* const body) const;
 	void SortMasterList();
 
-	void ResetColor ();
-
 	public:
 	dgTree<int, dgBody*> m_disableBodies;
-	dgInt32 m_lru;
 	dgInt32 m_deformableCount;
-	dgInt32 m_constraintCount;
+	dgUnsigned32 m_constraintCount;
+
 };
 
 #endif

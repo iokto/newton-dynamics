@@ -37,9 +37,9 @@
 #endif
 
 
+
 #define DG_CCD_EXTRA_CONTACT_COUNT			(8 * 3)
 #define DG_PARALLEL_JOINT_COUNT_CUT_OFF		(128)
-#define DG_ISLAND_STACK_DEPTH				(1024 * 8)
 
 
 dgVector dgWorldDynamicUpdate::m_velocTol (dgFloat32 (1.0e-18f));
@@ -53,9 +53,6 @@ class dgWorldDynamicUpdateSyncDescriptor
 		memset (this, 0, sizeof (dgWorldDynamicUpdateSyncDescriptor));
 	}
 
-	dgWorld* m_world;
-	dgIsland* m_IslandArray;
-	dgDynamicBody** m_firstIslandBody;
 	dgFloat32 m_timestep;
 	dgInt32 m_atomicCounter;
 	
@@ -80,14 +77,10 @@ dgBody* dgWorld::GetIslandBody (const void* const islandPtr, dgInt32 index) cons
 
 
 dgWorldDynamicUpdate::dgWorldDynamicUpdate()
-	:m_islandMemory(NULL)
-	,m_bodies(0)
+	:m_bodies(0)
 	,m_joints(0)
 	,m_islands(0)
 	,m_markLru(0)
-	,m_baseColor(0)
-	,m_currentColor(0)
-	,m_currTimestep(0)
 	,m_softBodyCriticalSectionLock()
 {
 }
@@ -95,54 +88,33 @@ dgWorldDynamicUpdate::dgWorldDynamicUpdate()
 
 void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 {
-/*
 	dgWorld* const world = (dgWorld*) this;
-	dgBodyMasterList& masterList = *world;
-
-//	dgUnsigned32 updateTime = world->m_getPerformanceCount();
-
 	world->m_dynamicsLru = world->m_dynamicsLru + DG_BODY_LRU_STEP;
-	m_markLru = world->m_dynamicsLru;
-//	dgUnsigned32 lru = m_markLru - 1;
-	dgAssert (masterList.GetFirst()->GetInfo().GetBody() == world->m_sentinelBody);
-
-	dgBody* const sentinelBody = world->m_sentinelBody;
-	sentinelBody->m_index = 0; 
-	sentinelBody->m_dynamicsLru = m_markLru;
-	sentinelBody->m_resting = true;
-	sentinelBody->m_active = false;
-	sentinelBody->m_equilibrium = true;
-
-	if (m_currentColor > 0x7fffffff) {
-		m_currentColor = 0;
-		masterList.ResetColor();
-	}
 
 	m_bodies = 0;
 	m_joints = 0;
 	m_islands = 0;
-	m_currTimestep = timestep;
-	m_baseColor = m_currentColor + 1;
-	m_currentColor += 2;
-	const dgInt32 threadsCount = world->GetThreadCount();
-	m_solverMemory.Init (world, threadsCount * 4, threadsCount * 4);
+	m_markLru = world->m_dynamicsLru;
 
-	dgWorldDynamicUpdateSyncDescriptor descriptor;
-	descriptor.m_world = world;
-	descriptor.m_timestep = timestep;
-	descriptor.m_firstIsland = 0;
-	descriptor.m_islandCount = m_islands;
-	descriptor.m_atomicCounter = 0;
-	descriptor.m_IslandArray = (dgIsland*) alloca ((masterList.GetCount() + 16) * sizeof (dgIsland));
+	dgUnsigned32 lru = m_markLru - 1;
 
-	GetFirstIslandBodies(&descriptor);
+	dgBodyMasterList& me = *world;
 
-/*
-	for (dgBodyMasterList::dgListNode* node = masterList.GetLast(); node; node = node->GetPrev()) {
+	world->m_pairMemoryBuffer.ExpandCapacityIfNeessesary (4 * me.GetCount(), sizeof (dgBody*));
+
+	dgAssert (me.GetFirst()->GetInfo().GetBody() == world->m_sentinelBody);
+
+static int xxx;
+xxx++;
+
+	dgBody* const sentinelBody = world->m_sentinelBody;
+	sentinelBody->m_index = 0; 
+	sentinelBody->m_dynamicsLru = m_markLru;
+
+	for (dgBodyMasterList::dgListNode* node = me.GetLast(); node; node = node->GetPrev()) {
 		const dgBodyMasterListRow& graphNode = node->GetInfo();
 		dgBody* const body = graphNode.GetBody();	
 
-		//if ((body->GetType() == dgBody::m_kinamticBody) || (body->GetInvMass().m_w == dgFloat32(0.0f))) {
 		if (body->GetInvMass().m_w == dgFloat32(0.0f)) {
 #ifdef _DEBUG
 			for (; node; node = node->GetPrev()) {
@@ -165,79 +137,19 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	}
 
 	dgInt32 maxRowCount = 0;
-	descriptor.m_islandCount = m_islands;
-	dgIsland* const islandsArray = descriptor.m_IslandArray;
+	dgIsland* const islandsArray = (dgIsland*) &world->m_islandMemory[0];
 	for (dgInt32 i = 0; i < m_islands; i ++) {
 		islandsArray[i].m_rowsStart = maxRowCount;
 		maxRowCount += islandsArray[i].m_rowsCount;
 	}
 	m_solverMemory.Init (world, maxRowCount, m_bodies);
-*/
 
-	dgWorld* const world = (dgWorld*) this;
-	world->m_dynamicsLru = world->m_dynamicsLru + DG_BODY_LRU_STEP;
-
-	m_bodies = 0;
-	m_joints = 0;
-	m_islands = 0;
-	m_markLru = world->m_dynamicsLru;
-
-	dgUnsigned32 lru = m_markLru - 1;
-	dgBodyMasterList& masterList = *world;
-
-	m_islandMemory = (dgIsland*) alloca ((masterList.GetCount() + 16) * sizeof (dgIsland));
-	world->m_pairMemoryBuffer.ExpandCapacityIfNeessesary(4 * masterList.GetCount(), sizeof (dgBody*));
-
-	dgAssert(masterList.GetFirst()->GetInfo().GetBody() == world->m_sentinelBody);
-
-	dgBody* const sentinelBody = world->m_sentinelBody;
-	sentinelBody->m_index = 0;
-	sentinelBody->m_dynamicsLru = m_markLru;
-
-	for (dgBodyMasterList::dgListNode* node = masterList.GetLast(); node; node = node->GetPrev()) {
-		const dgBodyMasterListRow& graphNode = node->GetInfo();
-		dgBody* const body = graphNode.GetBody();
-
-		//if ((body->GetType() == dgBody::m_kinamticBody) || (body->GetInvMass().m_w == dgFloat32(0.0f))) {
-		if (body->GetInvMass().m_w == dgFloat32(0.0f)) {
-#ifdef _DEBUG
-			for (; node; node = node->GetPrev()) {
-				//dgAssert ((body->GetType() == dgBody::m_kinamticBody) ||(node->GetInfo().GetBody()->GetInvMass().m_w == dgFloat32(0.0f)));
-				dgAssert(node->GetInfo().GetBody()->GetInvMass().m_w == dgFloat32(0.0f));
-			}
-#endif
-			break;
-		}
-
-		if (body->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
-			dgDynamicBody* const dynamicBody = (dgDynamicBody*)body;
-			if (dynamicBody->m_dynamicsLru < lru) {
-				if (!(dynamicBody->m_freeze | dynamicBody->m_spawnnedFromCallback | dynamicBody->m_sleeping)) {
-					SpanningTree(dynamicBody, timestep);
-				}
-			}
-			dynamicBody->m_spawnnedFromCallback = false;
-		}
-	}
-
-	dgInt32 maxRowCount = 0;
-	dgIsland* const islandArray = m_islandMemory;
-	for (dgInt32 i = 0; i < m_islands; i++) {
-		islandArray[i].m_rowsStart = maxRowCount;
-		maxRowCount += islandArray[i].m_rowsCount;
-	}
-	m_solverMemory.Init(world, maxRowCount, m_bodies);
-
-	dgInt32 threadCount = world->GetThreadCount();
+	dgInt32 threadCount = world->GetThreadCount();	
 
 	dgWorldDynamicUpdateSyncDescriptor descriptor;
 	descriptor.m_timestep = timestep;
 	descriptor.m_firstIsland = 0;
 	descriptor.m_islandCount = m_islands;
-
-
-
-
 	descriptor.m_atomicCounter = 0;
 
 	sentinelBody->m_resting = true;
@@ -248,22 +160,23 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	}
 	world->SynchronizationBarrier();
 
-	dgSort (islandArray, m_islands, CompareIslands); 
+	dgSort (islandsArray, m_islands, CompareIslands); 
 
 	if (!(world->m_amp && (world->m_hardwaredIndex > 0))) {
 		dgInt32 index = 0;
 		dgInt32 useParallel = world->m_useParallelSolver && (threadCount > 1);
-//useParallel = 1;
+useParallel = 1;
 		if (useParallel) {
-			useParallel = useParallel && m_joints;
-			useParallel = useParallel && ((threadCount * islandArray[0].m_jointCount) >= m_joints);
-			useParallel = useParallel && (islandArray[0].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
+			useParallel = useParallel && m_joints && m_islands;
+			useParallel = useParallel && ((threadCount * islandsArray[0].m_jointCount) >= m_joints);
+			useParallel = useParallel && (islandsArray[0].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
+useParallel = 1;
 			while (useParallel) {
-				CalculateReactionForcesParallel(&islandArray[index], timestep);
+				CalculateReactionForcesParallel(&islandsArray[index], timestep);
 				index ++;
 				useParallel = useParallel && (index < m_islands);
-				useParallel = useParallel && ((threadCount * islandArray[index].m_jointCount) >= m_joints);
-				useParallel = useParallel && (islandArray[index].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
+				useParallel = useParallel && ((threadCount * islandsArray[index].m_jointCount) >= m_joints);
+				useParallel = useParallel && (islandsArray[index].m_jointCount > DG_PARALLEL_JOINT_COUNT_CUT_OFF);
 			}
 		}
 
@@ -279,7 +192,7 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	} else {
 		#ifdef _NEWTON_AMP 
 			
-			world->m_amp->ConstraintSolver (m_islands, islandArray, timestep);
+			world->m_amp->ConstraintSolver (m_islands, islandsArray, timestep);
 		#endif
 	}
 
@@ -287,6 +200,7 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	dgDeformableBodiesUpdate* const softBodyList = world;
     softBodyList->SolveConstraintsAndIntegrate (timestep);
 }
+
 
 
 void dgJacobianMemory::Init (dgWorld* const world, dgInt32 rowsCount, dgInt32 bodyCount)
@@ -319,7 +233,7 @@ dgInt32 dgWorldDynamicUpdate::CompareIslands (const dgIsland* const islandA, con
 
 
 
-void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 timestep)
+void dgWorldDynamicUpdate::SpanningTree (dgDynamicBody* const body, dgFloat32 timestep)
 {
 	dgInt32 bodyCount = 0;
 	dgInt32 jointCount = 0;
@@ -327,37 +241,37 @@ void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 tim
 	dgUnsigned32 lruMark = m_markLru - 1;
 	dgInt32 isInEquilibrium = 1;
 	dgInt32 hasExactSolverJoints = 0;
-	dgFloat32 haviestMass = dgFloat32(0.0f);
+	dgFloat32 haviestMass = dgFloat32 (0.0f);
 
 	dgDynamicBody* heaviestBody = NULL;
 	dgWorld* const world = (dgWorld*) this;
-	dgQueue<dgDynamicBody*> queue((dgDynamicBody**)&world->m_pairMemoryBuffer[0], dgInt32((world->m_pairMemoryBuffer.GetBytesCapacity() >> 1) / sizeof (void*)));
-
+	dgQueue<dgDynamicBody*> queue ((dgDynamicBody**) &world->m_pairMemoryBuffer[0], dgInt32 ((world->m_pairMemoryBuffer.GetBytesCapacity()>>1)/sizeof (void*)));
+	
 	dgDynamicBody** const staticPool = &queue.m_pool[queue.m_mod];
 
 	body->m_dynamicsLru = lruMark;
 
-	queue.Insert(body);
+	queue.Insert (body);
 	while (!queue.IsEmpty()) {
 		dgInt32 count = queue.m_firstIndex - queue.m_lastIndex;
 		if (count < 0) {
-			dgAssert(0);
+			dgAssert (0);
 			count += queue.m_mod;
 		}
 
 		dgInt32 index = queue.m_lastIndex;
-		queue.Reset();
+		queue.Reset ();
 
-		for (dgInt32 j = 0; j < count; j++) {
+		for (dgInt32 j = 0; j < count; j ++) {
 			dgDynamicBody* const srcBody = queue.m_pool[index];
-			dgAssert(srcBody);
-			dgAssert(srcBody->GetInvMass().m_w > dgFloat32(0.0f));
-			dgAssert(srcBody->m_dynamicsLru == lruMark);
-			dgAssert(srcBody->m_masterNode);
+			dgAssert (srcBody);
+			dgAssert (srcBody->GetInvMass().m_w > dgFloat32 (0.0f));
+			dgAssert (srcBody->m_dynamicsLru == lruMark);
+			dgAssert (srcBody->m_masterNode);
 
 			dgInt32 bodyIndex = m_bodies + bodyCount;
 			world->m_bodiesMemory.ExpandCapacityIfNeessesary(bodyIndex, sizeof (dgBodyInfo));
-			dgBodyInfo* const bodyArray = (dgBodyInfo*)&world->m_bodiesMemory[0];
+			dgBodyInfo* const bodyArray = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
 			bodyArray[bodyIndex].m_body = srcBody;
 
 			srcBody->m_sleeping = false;
@@ -367,17 +281,17 @@ void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 tim
 				heaviestBody = srcBody;
 			}
 
-			bodyCount++;
+			bodyCount ++;
 
 			for (dgBodyMasterListRow::dgListNode* jointNode = srcBody->m_masterNode->GetInfo().GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
 				dgBodyMasterListCell* const cell = &jointNode->GetInfo();
 				dgConstraint* const constraint = cell->m_joint;
-				dgAssert(constraint);
+				dgAssert (constraint);
 				dgBody* const linkBody = cell->m_bodyNode;
-				dgAssert((constraint->m_body0 == srcBody) || (constraint->m_body1 == srcBody));
-				dgAssert((constraint->m_body0 == linkBody) || (constraint->m_body1 == linkBody));
+				dgAssert ((constraint->m_body0 == srcBody) || (constraint->m_body1 == srcBody));
+				dgAssert ((constraint->m_body0 == linkBody) || (constraint->m_body1 == linkBody));
 				const dgContact* const contact = (constraint->GetId() == dgConstraint::m_contactConstraint) ? (dgContact*)constraint : NULL;
-				if (linkBody->IsCollidable() && (!contact || contact->m_maxDOF || (srcBody->m_continueCollisionMode | linkBody->m_continueCollisionMode))) {
+				if (linkBody->IsCollidable() && (!contact || contact->m_maxDOF || (srcBody->m_continueCollisionMode | linkBody->m_continueCollisionMode))) { 
 					dgDynamicBody* const body = (dgDynamicBody*)linkBody;
 
 					isInEquilibrium &= srcBody->m_equilibrium;
@@ -388,73 +302,73 @@ void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 tim
 
 					if (body->m_dynamicsLru < lruMark) {
 						body->m_dynamicsLru = lruMark;
-						if (body->m_invMass.m_w > dgFloat32(0.0f)) {
-							queue.Insert(body);
+						if (body->m_invMass.m_w > dgFloat32 (0.0f)) { 
+							queue.Insert (body);
 						} else {
 							dgInt32 duplicateBody = 0;
-							for (; duplicateBody < staticCount; duplicateBody++) {
+							for (; duplicateBody < staticCount; duplicateBody ++) {
 								if (staticPool[duplicateBody] == srcBody) {
 									break;
 								}
 							}
 							if (duplicateBody == staticCount) {
 								staticPool[staticCount] = srcBody;
-								staticCount++;
-								dgAssert(srcBody->m_invMass.m_w > dgFloat32(0.0f));
+								staticCount ++;
+								dgAssert (srcBody->m_invMass.m_w > dgFloat32 (0.0f));
 							}
 
+							
+							dgAssert (dgInt32 (constraint->m_dynamicsLru) != m_markLru);
 
-							dgAssert(dgInt32(constraint->m_dynamicsLru) != m_markLru);
-
-							dgInt32 jointIndex = m_joints + jointCount;
+							dgInt32 jointIndex = m_joints + jointCount; 
 
 							world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
 
 							hasExactSolverJoints |= constraint->m_useExactSolver;
-
-							constraint->m_index = dgUnsigned32(jointCount);
-							dgJointInfo* const constraintArray = (dgJointInfo*)&world->m_jointsMemory[0];
+							
+							constraint->m_index = dgUnsigned32 (jointCount);
+							dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 							constraintArray[jointIndex].m_joint = constraint;
-							jointCount++;
+							jointCount ++;
 
-							dgAssert(constraint->m_body0);
-							dgAssert(constraint->m_body1);
+							dgAssert (constraint->m_body0);
+							dgAssert (constraint->m_body1);
 						}
 
-					} else if (body->m_invMass.m_w == dgFloat32(0.0f)) {
+					} else if (body->m_invMass.m_w == dgFloat32 (0.0f)) { 
 						dgInt32 duplicateBody = 0;
-						for (; duplicateBody < staticCount; duplicateBody++) {
+						for (; duplicateBody < staticCount; duplicateBody ++) {
 							if (staticPool[duplicateBody] == srcBody) {
 								break;
 							}
 						}
 						if (duplicateBody == staticCount) {
 							staticPool[staticCount] = srcBody;
-							staticCount++;
-							dgAssert(srcBody->m_invMass.m_w > dgFloat32(0.0f));
+							staticCount ++;
+							dgAssert (srcBody->m_invMass.m_w > dgFloat32 (0.0f));
 						}
+					
+						dgAssert (dgInt32 (constraint->m_dynamicsLru) != m_markLru);
 
-						dgAssert(dgInt32(constraint->m_dynamicsLru) != m_markLru);
-
-						dgInt32 jointIndex = m_joints + jointCount;
+						dgInt32 jointIndex = m_joints + jointCount; 
 						world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
 
 						hasExactSolverJoints |= constraint->m_useExactSolver;
-
-						constraint->m_index = dgUnsigned32(jointCount);
-						dgJointInfo* const constraintArray = (dgJointInfo*)&world->m_jointsMemory[0];
+						
+						constraint->m_index = dgUnsigned32 (jointCount);
+						dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 						constraintArray[jointIndex].m_joint = constraint;
-						jointCount++;
+						jointCount ++;
 
-						dgAssert(constraint->m_body0);
-						dgAssert(constraint->m_body1);
+						dgAssert (constraint->m_body0);
+						dgAssert (constraint->m_body1);
 					}
 				}
 			}
 
-			index++;
+			index ++;
 			if (index >= queue.m_mod) {
-				dgAssert(0);
+				dgAssert (0);
 				index = 0;
 			}
 		}
@@ -469,11 +383,11 @@ void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 tim
 	}
 
 
-	dgBodyInfo* const bodyArray = (dgBodyInfo*)&world->m_bodiesMemory[0];
-	dgJointInfo* const constraintArray = (dgJointInfo*)&world->m_jointsMemory[0];
+	dgBodyInfo* const bodyArray = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
+	dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 
 	if (isInEquilibrium) {
-		for (dgInt32 i = 0; i < bodyCount; i++) {
+		for (dgInt32 i = 0; i < bodyCount; i ++) {
 			dgBody* const body = bodyArray[m_bodies + i].m_body;
 			body->m_dynamicsLru = m_markLru;
 			body->m_sleeping = true;
@@ -485,8 +399,8 @@ void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 tim
 			record.m_count = bodyCount;
 			record.m_strideInByte = sizeof (dgBodyInfo);
 			record.m_bodyArray = &bodyArray[m_bodies].m_body;
-			if (!world->m_islandUpdate(world, &record, bodyCount)) {
-				for (dgInt32 i = 0; i < bodyCount; i++) {
+			if (!world->m_islandUpdate (world, &record, bodyCount)) {
+				for (dgInt32 i = 0; i < bodyCount; i ++) {
 					dgBody* const body = bodyArray[m_bodies + i].m_body;
 					body->m_dynamicsLru = m_markLru;
 				}
@@ -495,34 +409,34 @@ void dgWorldDynamicUpdate::SpanningTree(dgDynamicBody* const body, dgFloat32 tim
 		}
 
 		if (staticCount) {
-			queue.Reset();
-			for (dgInt32 i = 0; i < staticCount; i++) {
+			queue.Reset ();
+			for (dgInt32 i = 0; i < staticCount; i ++) {
 				dgDynamicBody* const body = staticPool[i];
 				body->m_dynamicsLru = m_markLru;
-				queue.Insert(body);
-				dgAssert(dgInt32(body->m_dynamicsLru) == m_markLru);
+				queue.Insert (body);
+				dgAssert (dgInt32 (body->m_dynamicsLru) == m_markLru);
 			}
 
-			const dgInt32 vectorStride = dgInt32(sizeof (dgVector) / sizeof (dgFloat32));
-			for (dgInt32 i = 0; i < jointCount; i++) {
+			const dgInt32 vectorStride = dgInt32 (sizeof (dgVector) / sizeof (dgFloat32));
+			for (dgInt32 i = 0; i < jointCount; i ++) {
 				dgConstraint* const constraint = constraintArray[m_joints + i].m_joint;
 				constraint->m_dynamicsLru = m_markLru;
 				dgInt32 rows = (constraint->m_maxDOF + vectorStride - 1) & (-vectorStride);
-				constraintArray[m_joints + i].m_pairCount = dgInt16(rows);
+				constraintArray[m_joints + i].m_pairCount = dgInt16 (rows);
 			}
 		} else {
-			dgAssert(heaviestBody);
-			queue.Insert(heaviestBody);
+			dgAssert (heaviestBody);
+			queue.Insert (heaviestBody);
 			heaviestBody->m_dynamicsLru = m_markLru;
 		}
 
-		BuildIsland(queue, timestep, jointCount, hasExactSolverJoints);
+		BuildIsland (queue, timestep, jointCount, hasExactSolverJoints);
 	}
 }
 
 
 
-void dgWorldDynamicUpdate::BuildIsland(dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jointCount, dgInt32 hasExactSolverJoints)
+void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jointCount, dgInt32 hasExactSolverJoints)
 {
 	dgInt32 bodyCount = 1;
 	dgUnsigned32 lruMark = m_markLru;
@@ -530,118 +444,117 @@ void dgWorldDynamicUpdate::BuildIsland(dgQueue<dgDynamicBody*>& queue, dgFloat32
 	dgWorld* const world = (dgWorld*) this;
 	world->m_bodiesMemory.ExpandCapacityIfNeessesary(m_bodies, sizeof (dgBodyInfo));
 
-	dgBodyInfo* const bodyArray0 = (dgBodyInfo*)&world->m_bodiesMemory[0];
+	dgBodyInfo* const bodyArray0 = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
 
-	const dgInt32 vectorStride = dgInt32(sizeof (dgVector) / sizeof (dgFloat32));
+	const dgInt32 vectorStride = dgInt32 (sizeof (dgVector) / sizeof (dgFloat32));
 
 	bodyArray0[m_bodies].m_body = world->m_sentinelBody;
-	dgAssert(world->m_sentinelBody->m_index == 0);
-	dgAssert(dgInt32(world->m_sentinelBody->m_dynamicsLru) == m_markLru);
+	dgAssert (world->m_sentinelBody->m_index == 0); 
+	dgAssert (dgInt32 (world->m_sentinelBody->m_dynamicsLru) == m_markLru); 
 
 	while (!queue.IsEmpty()) {
 
 		dgInt32 count = queue.m_firstIndex - queue.m_lastIndex;
 		if (count < 0) {
-			dgAssert(0);
+			dgAssert (0);
 			count += queue.m_mod;
 		}
 
 		dgInt32 index = queue.m_lastIndex;
-		queue.Reset();
+		queue.Reset ();
 
-		for (dgInt32 j = 0; j < count; j++) {
+		for (dgInt32 j = 0; j < count; j ++) {
 
 			dgDynamicBody* const body = queue.m_pool[index];
-			dgAssert(body);
-			dgAssert(body->m_dynamicsLru == lruMark);
-			dgAssert(body->m_masterNode);
+			dgAssert (body);
+			dgAssert (body->m_dynamicsLru == lruMark);
+			dgAssert (body->m_masterNode);
 
-			if (body->m_invMass.m_w > dgFloat32(0.0f)) {
+			if (body->m_invMass.m_w > dgFloat32 (0.0f)) { 
 				dgInt32 bodyIndex = m_bodies + bodyCount;
 				world->m_bodiesMemory.ExpandCapacityIfNeessesary(bodyIndex, sizeof (dgBodyInfo));
-				dgBodyInfo* const bodyArray1 = (dgBodyInfo*)&world->m_bodiesMemory[0];
+				dgBodyInfo* const bodyArray1 = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
 
-				body->m_index = bodyCount;
+				body->m_index = bodyCount; 
 				body->m_active = false;
 				body->m_resting = true;
 				bodyArray1[bodyIndex].m_body = body;
-				bodyCount++;
+				bodyCount ++;
 			}
 
 
 			for (dgBodyMasterListRow::dgListNode* jointNode = body->m_masterNode->GetInfo().GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
 				dgBodyMasterListCell* const cell = &jointNode->GetInfo();
 				dgConstraint* const constraint = cell->m_joint;
-				dgAssert(constraint);
+				dgAssert (constraint);
 				dgBody* const linkBody = cell->m_bodyNode;
-				dgAssert((constraint->m_body0 == body) || (constraint->m_body1 == body));
-				dgAssert((constraint->m_body0 == linkBody) || (constraint->m_body1 == linkBody));
+				dgAssert ((constraint->m_body0 == body) || (constraint->m_body1 == body));
+				dgAssert ((constraint->m_body0 == linkBody) || (constraint->m_body1 == linkBody));
 				const dgContact* const contact = (constraint->GetId() == dgConstraint::m_contactConstraint) ? (dgContact*)constraint : NULL;
 				dgInt32 ccdMode = contact ? (body->m_continueCollisionMode | linkBody->m_continueCollisionMode) : 0;
-				if (linkBody->IsCollidable() && (!contact || contact->m_maxDOF || ccdMode)) {
+				if (linkBody->IsCollidable() && (!contact || contact->m_maxDOF || ccdMode)) { 
 					dgDynamicBody* const body = (dgDynamicBody*)linkBody;
 
 					if (constraint->m_dynamicsLru != lruMark) {
 						constraint->m_dynamicsLru = lruMark;
 
-						dgInt32 jointIndex = m_joints + jointCount;
+						dgInt32 jointIndex = m_joints + jointCount; 
 						world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
 
 						hasExactSolverJoints |= constraint->m_useExactSolver;
-
-						constraint->m_index = dgUnsigned32(jointCount);
-						dgJointInfo* const constraintArray = (dgJointInfo*)&world->m_jointsMemory[0];
+						
+						constraint->m_index = dgUnsigned32 (jointCount);
+						dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 						constraintArray[jointIndex].m_joint = constraint;
 
 						//dgInt32 rows = dgInt32 ((constraint->m_maxDOF & (dgInt32 (sizeof (dgVector) / sizeof (dgFloat32)) - 1)) ? ((constraint->m_maxDOF & (-dgInt32 (sizeof (dgVector) / sizeof (dgFloat32)))) + dgInt32 (sizeof (dgVector) / sizeof (dgFloat32))) : constraint->m_maxDOF);
 						dgInt32 rows = (constraint->m_maxDOF + vectorStride - 1) & (-vectorStride);
 						//rowsCount += (rows + (ccdMode ? DG_CCD_EXTRA_CONTACT_COUNT : 0));
-						constraintArray[jointIndex].m_pairCount = dgInt16(rows);
+ 						constraintArray[jointIndex].m_pairCount = dgInt16 (rows);
 
-						jointCount++;
+						jointCount ++;
 
-						dgAssert(constraint->m_body0);
-						dgAssert(constraint->m_body1);
+						dgAssert (constraint->m_body0);
+						dgAssert (constraint->m_body1);
 					}
 
 					if (body->m_dynamicsLru != lruMark) {
-						if (body->m_invMass.m_w > dgFloat32(0.0f)) {
-							queue.Insert(body);
+						if (body->m_invMass.m_w > dgFloat32 (0.0f)) { 
+							queue.Insert (body);
 							body->m_dynamicsLru = lruMark;
 						}
 					}
 				}
 			}
 
-			index++;
+			index ++;
 			if (index >= queue.m_mod) {
-				dgAssert(0);
+				dgAssert (0);
 				index = 0;
 			}
 		}
 	}
 
 	if (bodyCount > 1) {
-		//world->m_islandMemory.ExpandCapacityIfNeessesary(m_islands, sizeof (dgIsland));
-		dgAssert (m_islands < ((dgBodyMasterList*)world) ->GetCount());
-		dgIsland* const islandArray = m_islandMemory;
+		world->m_islandMemory.ExpandCapacityIfNeessesary (m_islands, sizeof (dgIsland));
+		dgIsland* const islandArray = (dgIsland*) &world->m_islandMemory[0];
 
 		islandArray[m_islands].m_bodyStart = m_bodies;
 		islandArray[m_islands].m_jointStart = m_joints;
 		islandArray[m_islands].m_bodyCount = bodyCount;
 		islandArray[m_islands].m_jointCount = jointCount;
-
+		
 		islandArray[m_islands].m_rowsStart = 0;
 
 		islandArray[m_islands].m_hasExactSolverJoints = hasExactSolverJoints;
 		islandArray[m_islands].m_isContinueCollision = false;
 
-		dgJointInfo* const constraintArrayPtr = (dgJointInfo*)&world->m_jointsMemory[0];
+		dgJointInfo* const constraintArrayPtr = (dgJointInfo*) &world->m_jointsMemory[0];
 		dgJointInfo* const constraintArray = &constraintArrayPtr[m_joints];
 
 		dgInt32 rowsCount = 0;
 		dgInt32 isContinueCollisionIsland = 0;
-		for (dgInt32 i = 0; i < jointCount; i++) {
+		for (dgInt32 i = 0; i < jointCount; i ++) {
 			dgConstraint* const joint = constraintArray[i].m_joint;
 			rowsCount += constraintArray[i].m_pairCount;
 			if (joint->GetId() == dgConstraint::m_contactConstraint) {
@@ -660,29 +573,29 @@ void dgWorldDynamicUpdate::BuildIsland(dgQueue<dgDynamicBody*>& queue, dgFloat32
 
 					const dgCollisionInstance* const collision0 = body0->m_collision;
 					const dgCollisionInstance* const collision1 = body1->m_collision;
-					dgFloat32 dist = dgMax(body0->m_collision->GetBoxMinRadius(), body1->m_collision->GetBoxMinRadius()) * dgFloat32(0.25f);
+					dgFloat32 dist = dgMax (body0->m_collision->GetBoxMinRadius(), body1->m_collision->GetBoxMinRadius()) * dgFloat32 (0.25f);
 
-					dgVector relVeloc(veloc1 - veloc0);
-					dgVector relOmega(omega1 - omega0);
-					dgVector relVelocMag2(relVeloc.DotProduct4(relVeloc));
-					dgVector relOmegaMag2(relOmega.DotProduct4(relOmega));
+					dgVector relVeloc (veloc1 - veloc0);
+					dgVector relOmega (omega1 - omega0);
+					dgVector relVelocMag2 (relVeloc.DotProduct4 (relVeloc));
+					dgVector relOmegaMag2 (relOmega.DotProduct4 (relOmega));
 
-					if ((relOmegaMag2.m_w > dgFloat32(1.0f)) || ((relVelocMag2.m_w * timestep * timestep) > (dist * dist))) {
+					if ((relOmegaMag2.m_w > dgFloat32 (1.0f)) || ((relVelocMag2.m_w * timestep * timestep) > (dist * dist))) {
 						dgTriplex normals[16];
 						dgTriplex points[16];
 						dgInt64 attrib0[16];
 						dgInt64 attrib1[16];
 						dgFloat32 penetrations[16];
 						dgFloat32 timeToImpact = timestep;
-						const dgInt32 ccdContactCount = world->CollideContinue(collision0, body0->m_matrix, veloc0, omega0, collision1, body1->m_matrix, veloc1, omega1,
-							timeToImpact, points, normals, penetrations, attrib0, attrib1, 6, 0);
+						const dgInt32 ccdContactCount = world->CollideContinue (collision0, body0->m_matrix, veloc0, omega0, collision1, body1->m_matrix, veloc1, omega1, 
+																				timeToImpact, points, normals, penetrations, attrib0, attrib1, 6, 0);
 
-						for (dgInt32 j = 0; j < ccdContactCount; j++) {
-							dgVector point(&points[j].m_x);
-							dgVector normal(&normals[j].m_x);
-							dgVector vel0(veloc0 + omega0 * (point - com0));
-							dgVector vel1(veloc1 + omega1 * (point - com1));
-							dgVector vRel(vel1 - vel0);
+						for (dgInt32 j = 0; j < ccdContactCount; j ++) {
+							dgVector point (&points[j].m_x);
+							dgVector normal (&normals[j].m_x);
+							dgVector vel0 (veloc0 + omega0 * (point - com0));
+							dgVector vel1 (veloc1 + omega1 * (point - com1));
+							dgVector vRel (vel1 - vel0);
 							dgFloat32 contactDistTravel = vRel.DotProduct4(normal).m_w * timestep;
 							ccdJoint |= (contactDistTravel > dist);
 						}
@@ -702,16 +615,16 @@ void dgWorldDynamicUpdate::BuildIsland(dgQueue<dgDynamicBody*>& queue, dgFloat32
 
 		if (hasExactSolverJoints) {
 			dgInt32 contactJointCount = 0;
-			for (dgInt32 i = 0; i < jointCount; i++) {
+			for (dgInt32 i = 0; i < jointCount; i ++) {
 				dgConstraint* const joint = constraintArray[i].m_joint;
-				contactJointCount += (joint->GetId() == dgConstraint::m_contactConstraint);
+				contactJointCount += (joint->GetId() == dgConstraint::m_contactConstraint); 
 			}
 
-			for (dgInt32 i = 0; i < jointCount; i++) {
+			for (dgInt32 i = 0; i < jointCount; i ++) {
 				dgConstraint* const joint = constraintArray[i].m_joint;
 				if (joint->m_useExactSolver) {
-					dgAssert(joint->IsBilateral());
-					dgBilateralConstraint* const bilateralJoint = (dgBilateralConstraint*)joint;
+					dgAssert (joint->IsBilateral());
+					dgBilateralConstraint* const bilateralJoint = (dgBilateralConstraint*) joint;
 					if (bilateralJoint->m_useExactSolver && (bilateralJoint->m_useExactSolverContactLimit < contactJointCount)) {
 						islandArray[m_islands].m_hasExactSolverJoints = 0;
 						break;
@@ -720,639 +633,11 @@ void dgWorldDynamicUpdate::BuildIsland(dgQueue<dgDynamicBody*>& queue, dgFloat32
 			}
 		}
 
-		m_islands++;
+		m_islands ++;
 		m_bodies += bodyCount;
 		m_joints += jointCount;
 	}
 }
-
-
-void dgWorldDynamicUpdate::BuildIsland(dgIsland* const island, dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 bodyCount, dgInt32 jointCount, dgInt32 color, dgInt32 hasExactSolverJoints)
-{
-	dgUnsigned32 lruMark = m_markLru;
-	dgWorld* const world = (dgWorld*) this;
-
-	dgBodyInfo* const bodyArrayPtr = (dgBodyInfo*)&world->m_bodiesMemory[0];
-	dgJointInfo* const constraintArrayPtr = (dgJointInfo*)&world->m_jointsMemory[0];
-
-	dgBodyInfo* const bodyArray = &bodyArrayPtr[island->m_bodyStart];
-	dgJointInfo* const constraintArray = &constraintArrayPtr[island->m_jointStart];
-
-	dgInt32 baseColor = m_baseColor;
-	const dgInt32 vectorStride = dgInt32(sizeof (dgVector) / sizeof (dgFloat32));
-
-	bodyArray[0].m_body = world->m_sentinelBody;
-	dgAssert(world->m_sentinelBody->m_index == 0);
-	dgAssert(dgInt32(world->m_sentinelBody->m_dynamicsLru) == m_markLru);
-
-	while (!queue.IsEmpty()) {
-		dgInt32 count = queue.m_firstIndex - queue.m_lastIndex;
-		if (count < 0) {
-			dgAssert(0);
-			count += queue.m_mod;
-		}
-
-		dgInt32 index = queue.m_lastIndex;
-		queue.Reset();
-
-		for (dgInt32 j = 0; j < count; j++) {
-
-			dgDynamicBody* const body0 = queue.m_pool[index];
-			dgAssert(body0);
-			dgAssert(body0->m_masterNode);
-			dgAssert(body0->m_dynamicsLru == lruMark);
-			dgAssert(body0->GetInvMass().m_w > dgFloat32(0.0f));
-
-			//body0->m_index = bodyCount;
-			body0->m_active = false;
-			body0->m_resting = true;
-
-			for (dgBodyMasterListRow::dgListNode* jointNode = body0->m_masterNode->GetInfo().GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
-				dgBodyMasterListCell* const cell = &jointNode->GetInfo();
-				dgDynamicBody* const body1 = (dgDynamicBody*)cell->m_bodyNode;
-				dgBodyMasterListRow* const row1 = &body1->m_masterNode->GetInfo();
-
-				if (row1->m_color == color) {
-					dgConstraint* const constraint = cell->m_joint;
-
-					dgAssert(constraint);
-					dgAssert(constraint->m_body0);
-					dgAssert(constraint->m_body1);
-					dgAssert((constraint->m_body0 == body0) || (constraint->m_body1 == body0));
-					dgAssert((constraint->m_body0 == body1) || (constraint->m_body1 == body1));
-
-					if (body1->m_invMass.m_w > dgFloat32(0.0f)) {
-						if (body1->m_dynamicsLru != lruMark) {
-							body1->m_dynamicsLru = lruMark;
-							queue.Insert(body1);
-							bodyArray[bodyCount].m_body = body1;
-							body1->m_index = bodyCount;
-							bodyCount ++;
-							dgAssert (bodyCount <= island->m_bodyCount);
-						}
-					}
-				
-					//const dgContact* const contact = (constraint->GetId() == dgConstraint::m_contactConstraint) ? (dgContact*)constraint : NULL;
-					//dgInt32 ccdMode = contact ? (body->m_continueCollisionMode | linkBody->m_continueCollisionMode) : 0;
-					//if (linkBody->IsCollidable() && (!contact || contact->m_maxDOF || ccdMode)) {
-					if ((constraint->m_color > baseColor) && (constraint->m_dynamicsLru != lruMark)) {
-						constraint->m_dynamicsLru = lruMark;
-						hasExactSolverJoints |= constraint->m_useExactSolver;
-
-						constraint->m_index = dgUnsigned32(jointCount);
-						constraintArray[jointCount].m_joint = constraint;
-						dgInt32 rows = (constraint->m_maxDOF + vectorStride - 1) & (-vectorStride);
-						constraintArray[jointCount].m_pairCount = dgInt16(rows);
-
-						jointCount++;
-						dgAssert(jointCount <= island->m_jointCount);
-					}
-				}
-			}
-
-			index++;
-			if (index >= queue.m_mod) {
-				dgAssert(0);
-				index = 0;
-			}
-		}
-	}
-
-	dgAssert (bodyCount >= 2);
-	dgAssert (jointCount >= 1);
-
-	//world->m_islandMemory.ExpandCapacityIfNeessesary(m_islands, sizeof (dgIsland));
-	//dgIsland* const islandArray = (dgIsland*)&world->m_islandMemory[0];
-
-	//islandArray[m_islands].m_bodyStart = m_bodies;
-	//islandArray[m_islands].m_jointStart = m_joints;
-	//islandArray[m_islands].m_bodyCount = bodyCount;
-	//islandArray[m_islands].m_jointCount = jointCount;
-	//islandArray[m_islands].m_rowsStart = 0;
-
-	island->m_hasExactSolverJoints = hasExactSolverJoints;
-	island->m_isContinueCollision = false;
-
-	dgInt32 rowsCount = 0;
-	dgInt32 isContinueCollisionIsland = 0;
-	for (dgInt32 i = 0; i < jointCount; i++) {
-		dgConstraint* const joint = constraintArray[i].m_joint;
-		rowsCount += constraintArray[i].m_pairCount;
-		if (joint->GetId() == dgConstraint::m_contactConstraint) {
-			const dgBody* const body0 = joint->m_body0;
-			const dgBody* const body1 = joint->m_body1;
-			if (body0->m_continueCollisionMode | body1->m_continueCollisionMode) {
-				dgInt32 ccdJoint = false;
-				const dgVector& veloc0 = body0->m_veloc;
-				const dgVector& veloc1 = body1->m_veloc;
-
-				const dgVector& omega0 = body0->m_omega;
-				const dgVector& omega1 = body1->m_omega;
-
-				const dgVector& com0 = body0->m_globalCentreOfMass;
-				const dgVector& com1 = body1->m_globalCentreOfMass;
-
-				const dgCollisionInstance* const collision0 = body0->m_collision;
-				const dgCollisionInstance* const collision1 = body1->m_collision;
-				dgFloat32 dist = dgMax(body0->m_collision->GetBoxMinRadius(), body1->m_collision->GetBoxMinRadius()) * dgFloat32(0.25f);
-
-				dgVector relVeloc(veloc1 - veloc0);
-				dgVector relOmega(omega1 - omega0);
-				dgVector relVelocMag2(relVeloc.DotProduct4(relVeloc));
-				dgVector relOmegaMag2(relOmega.DotProduct4(relOmega));
-
-				if ((relOmegaMag2.m_w > dgFloat32(1.0f)) || ((relVelocMag2.m_w * timestep * timestep) > (dist * dist))) {
-					dgTriplex normals[16];
-					dgTriplex points[16];
-					dgInt64 attrib0[16];
-					dgInt64 attrib1[16];
-					dgFloat32 penetrations[16];
-					dgFloat32 timeToImpact = timestep;
-					const dgInt32 ccdContactCount = world->CollideContinue(collision0, body0->m_matrix, veloc0, omega0, collision1, body1->m_matrix, veloc1, omega1,
-																		   timeToImpact, points, normals, penetrations, attrib0, attrib1, 6, 0);
-
-					for (dgInt32 j = 0; j < ccdContactCount; j++) {
-						dgVector point(&points[j].m_x);
-						dgVector normal(&normals[j].m_x);
-						dgVector vel0(veloc0 + omega0 * (point - com0));
-						dgVector vel1(veloc1 + omega1 * (point - com1));
-						dgVector vRel(vel1 - vel0);
-						dgFloat32 contactDistTravel = vRel.DotProduct4(normal).m_w * timestep;
-						ccdJoint |= (contactDistTravel > dist);
-					}
-				}
-				//ccdJoint = body0->m_continueCollisionMode | body1->m_continueCollisionMode;
-				isContinueCollisionIsland |= ccdJoint;
-				rowsCount += DG_CCD_EXTRA_CONTACT_COUNT;
-			}
-		}
-	}
-	
-	if (isContinueCollisionIsland) {
-		rowsCount = dgMax(rowsCount, 64);
-	}
-
-	island->m_rowsCount = rowsCount;
-	island->m_isContinueCollision = isContinueCollisionIsland;
-
-	if (hasExactSolverJoints) {
-		dgInt32 contactJointCount = 0;
-		for (dgInt32 i = 0; i < jointCount; i++) {
-			dgConstraint* const joint = constraintArray[i].m_joint;
-			contactJointCount += (joint->GetId() == dgConstraint::m_contactConstraint);
-		}
-
-		for (dgInt32 i = 0; i < jointCount; i++) {
-			dgConstraint* const joint = constraintArray[i].m_joint;
-			if (joint->m_useExactSolver) {
-				dgAssert(joint->IsBilateral());
-				dgBilateralConstraint* const bilateralJoint = (dgBilateralConstraint*)joint;
-				if (bilateralJoint->m_useExactSolver && (bilateralJoint->m_useExactSolverContactLimit < contactJointCount)) {
-					island->m_hasExactSolverJoints = 0;
-					break;
-				}
-			}
-		}
-	}
-}
-
-
-void dgWorldDynamicUpdate::ExpandIsland (dgIsland* const island, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer, const dgInt32 stacksize)
-{
-	dgUnsigned32 lruMark = m_markLru - 1;
-	dgInt32 isInEquilibrium = 1;
-	
-	dgInt32 hasExactSolverJoints = 0;
-	dgFloat32 haviestMass = dgFloat32(0.0f);
-	dgDynamicBody* heaviestBody = NULL;
-	dgWorld* const world = (dgWorld*) this;
-
-	dgAssert (stacksize > 16);
-	dgQueue<dgDynamicBody*> queue(stackPoolBuffer, stacksize - 16);
-
-	dgBodyInfo* const bodyArrayPtr = (dgBodyInfo*)&world->m_bodiesMemory[0];
-	dgJointInfo* const constraintArrayPtr = (dgJointInfo*)&world->m_jointsMemory[0];
-
-	dgBodyInfo* const bodyArray = &bodyArrayPtr[island->m_bodyStart];
-	dgJointInfo* const constraintArray = &constraintArrayPtr[island->m_jointStart];
-	 
-	dgInt32 bodyCount = 1;
-	dgInt32 jointCount = 0;
-	dgInt32 baseColor = m_baseColor;
-	dgInt32 color = body->m_masterNode->GetInfo().m_color;
-	
-	dgAssert (body->m_dynamicsLru != lruMark);
-	body->m_dynamicsLru = lruMark;
-	queue.Insert(body);
-
-	bool hasLinksToStatic = false;
-	while (!queue.IsEmpty()) {
-		dgInt32 count = queue.m_firstIndex - queue.m_lastIndex;
-		if (count < 0) {
-			dgAssert(0);
-			count += queue.m_mod;
-		}
-
-		dgInt32 index = queue.m_lastIndex;
-		queue.Reset();
-
-		for (dgInt32 j = 0; j < count; j++) {
-			dgDynamicBody* const body0 = queue.m_pool[index];
-
-			dgAssert(body0);
-			dgAssert(body0->m_masterNode);
-			dgAssert (body0->m_dynamicsLru == lruMark);
-			dgAssert(body0->GetInvMass().m_w > dgFloat32(0.0f));
-			
-			body0->m_sleeping = false;
-			isInEquilibrium &= body0->m_equilibrium;
-			isInEquilibrium &= body0->m_autoSleep;
-			
-			if (body0->m_mass.m_w > haviestMass) {
-				haviestMass = body0->m_mass.m_w;
-				heaviestBody = body0;
-			}
-	
-			bool isLinkedToStatic = false;
-			for (dgBodyMasterListRow::dgListNode* jointNode = body0->m_masterNode->GetInfo().GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
-				dgBodyMasterListCell* const cell = &jointNode->GetInfo();
-				dgConstraint* const constraint = cell->m_joint;
-				dgAssert (constraint->m_dynamicsLru != lruMark);
-
-				dgDynamicBody* const body1 = (dgDynamicBody*) jointNode->GetInfo().m_bodyNode;
-				if ((body1->m_invMass.m_w == dgFloat32(0.0f)) && (constraint->m_color > baseColor)) {
-					hasLinksToStatic = true;
-					if (!isLinkedToStatic) {
-						isLinkedToStatic = true;
-						bodyArray[bodyCount].m_body = body0;
-						body0->m_index = bodyCount;
-						bodyCount++;
-						dgAssert (bodyCount <= island->m_bodyCount);
-					}
-					dgAssert(dgInt32(constraint->m_dynamicsLru) != m_markLru);
-					hasExactSolverJoints |= constraint->m_useExactSolver;
-
-					constraint->m_dynamicsLru = lruMark;
-					constraint->m_index = dgUnsigned32(jointCount);
-					constraintArray[jointCount].m_joint = constraint;
-					jointCount++;
-					dgAssert (jointCount <= island->m_jointCount);
-
-					dgAssert(constraint->m_body0);
-					dgAssert(constraint->m_body1);
-
-				} else if (body1->m_masterNode->GetInfo().m_color == color) {
-					if (body1->m_dynamicsLru != lruMark) {
-						body1->m_dynamicsLru = lruMark;
-						queue.Insert(body1);
-					}
-				}
-
-	/*
-				dgBodyMasterListCell* const cell = &jointNode->GetInfo();
-
-				dgConstraint* const constraint = cell->m_joint;
-				dgAssert(constraint);
-				dgBody* const linkBody = cell->m_bodyNode;
-				dgAssert((constraint->m_body0 == srcBody) || (constraint->m_body1 == srcBody));
-				dgAssert((constraint->m_body0 == linkBody) || (constraint->m_body1 == linkBody));
-
-				const dgContact* const contact = (constraint->GetId() == dgConstraint::m_contactConstraint) ? (dgContact*)constraint : NULL;
-				if (linkBody->IsCollidable() && (!contact || contact->m_maxDOF || (srcBody->m_continueCollisionMode | linkBody->m_continueCollisionMode))) {
-					dgDynamicBody* const body = (dgDynamicBody*)linkBody;
-
-					isInEquilibrium &= srcBody->m_equilibrium;
-					isInEquilibrium &= srcBody->m_autoSleep;
-
-					isInEquilibrium &= body->m_equilibrium;
-					isInEquilibrium &= body->m_autoSleep;
-
-					if (body->m_dynamicsLru < lruMark) {
-						body->m_dynamicsLru = lruMark;
-						if (body->m_invMass.m_w > dgFloat32(0.0f)) {
-							queue.Insert(body);
-						} else {
-							dgInt32 duplicateBody = 0;
-							for (; duplicateBody < staticCount; duplicateBody++) {
-								if (staticPool[duplicateBody] == srcBody) {
-									break;
-								}
-							}
-							if (duplicateBody == staticCount) {
-								staticPool[staticCount] = srcBody;
-								staticCount++;
-								dgAssert(srcBody->m_invMass.m_w > dgFloat32(0.0f));
-							}
-
-
-							dgAssert(dgInt32(constraint->m_dynamicsLru) != m_markLru);
-
-							dgInt32 jointIndex = m_joints + jointCount;
-
-							world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
-
-							hasExactSolverJoints |= constraint->m_useExactSolver;
-
-							constraint->m_index = dgUnsigned32(jointCount);
-							dgJointInfo* const constraintArray = (dgJointInfo*)&world->m_jointsMemory[0];
-							constraintArray[jointIndex].m_joint = constraint;
-							jointCount++;
-
-							dgAssert(constraint->m_body0);
-							dgAssert(constraint->m_body1);
-						}
-					} else if (body->m_invMass.m_w == dgFloat32(0.0f)) {
-						dgInt32 duplicateBody = 0;
-						for (; duplicateBody < staticCount; duplicateBody++) {
-							if (staticPool[duplicateBody] == srcBody) {
-								break;
-							}
-						}
-						if (duplicateBody == staticCount) {
-							staticPool[staticCount] = srcBody;
-							staticCount++;
-							dgAssert(srcBody->m_invMass.m_w > dgFloat32(0.0f));
-						}
-
-						dgAssert(dgInt32(constraint->m_dynamicsLru) != m_markLru);
-
-						dgInt32 jointIndex = m_joints + jointCount;
-						world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
-
-						hasExactSolverJoints |= constraint->m_useExactSolver;
-
-						constraint->m_index = dgUnsigned32(jointCount);
-						dgJointInfo* const constraintArray = (dgJointInfo*)&world->m_jointsMemory[0];
-						constraintArray[jointIndex].m_joint = constraint;
-						jointCount++;
-
-						dgAssert(constraint->m_body0);
-						dgAssert(constraint->m_body1);
-					}
-				}
-	*/
-			}
-
-			index++;
-			if (index >= queue.m_mod) {
-				dgAssert(0);
-				index = 0;
-			}
-		}
-	}
-
-	if (bodyCount == 2) {
-		isInEquilibrium &= body->m_equilibrium;
-		isInEquilibrium &= body->m_autoSleep;
-	}
-
-	if (isInEquilibrium) {
-		for (dgInt32 i = 1; i < bodyCount; i++) {
-			dgBody* const body = bodyArray[i].m_body;
-			body->m_dynamicsLru = m_markLru;
-			body->m_sleeping = true;
-		}
-		island->m_bodyCount = 0;
-		island->m_jointCount = 0;
-		island->m_rowsCount = 0;
-	} else {
-		if (world->m_islandUpdate) {
-			dgAssert(0);
-/*
-			dgIslandCallbackStruct record;
-			record.m_world = world;
-			record.m_count = bodyCount;
-			record.m_strideInByte = sizeof (dgBodyInfo);
-			record.m_bodyArray = &bodyArray[m_bodies].m_body;
-			if (!world->m_islandUpdate(world, &record, bodyCount)) {
-				for (dgInt32 i = 0; i < bodyCount; i++) {
-					dgBody* const body = bodyArray[m_bodies + i].m_body;
-					body->m_dynamicsLru = m_markLru;
-				}
-				return;
-			}
-*/
-		}
-
-		if (hasLinksToStatic) {
-			queue.Reset();
-			for (dgInt32 i = 1; i < bodyCount; i++) {
-				dgBody* const body = bodyArray[i].m_body;
-				body->m_index = i;
-				body->m_dynamicsLru = m_markLru;
-				queue.Insert((dgDynamicBody*)body);
-				dgAssert(dgInt32(body->m_dynamicsLru) == m_markLru);
-			}
-
-			const dgInt32 vectorStride = dgInt32(sizeof (dgVector) / sizeof (dgFloat32));
-			for (dgInt32 i = 0; i < jointCount; i++) {
-				dgConstraint* const constraint = constraintArray[i].m_joint;
-				constraint->m_dynamicsLru = m_markLru;
-				dgInt32 rows = (constraint->m_maxDOF + vectorStride - 1) & (-vectorStride);
-				constraintArray[i].m_pairCount = dgInt16(rows);
-			}
-		} else {
-			dgAssert(heaviestBody);
-			bodyCount = 2;
-			queue.Insert(heaviestBody);
-			bodyArray[1].m_body = heaviestBody;
-			heaviestBody->m_dynamicsLru = m_markLru;
-			heaviestBody->m_index = 1;
-		}
-
-		BuildIsland(island, queue, timestep, bodyCount, jointCount, color, hasExactSolverJoints);
-	}
-}
-
-void dgWorldDynamicUpdate::ExpandIslands(void* const context, void* const worldContext, dgInt32 threadID)
-{
-	dgWorldDynamicUpdateSyncDescriptor* const descriptor = (dgWorldDynamicUpdateSyncDescriptor*)context;
-
-	dgWorld* const world = (dgWorld*)worldContext;
-	dgBodyMasterList& masterList = *world;
-
-	dgAssert(world == descriptor->m_world);
-	dgInt32 count = descriptor->m_islandCount;
-	dgFloat32 timestep = descriptor->m_timestep;
-	dgIsland* const islandArray = descriptor->m_IslandArray;
-	dgDynamicBody** const bodyArray = descriptor->m_firstIslandBody;
-
-	dgInt32 stacksize = 2 * masterList.GetCount() + 128;
-	dgDynamicBody** const stackPoolBuffer = (dgDynamicBody**)alloca(stacksize * sizeof (dgDynamicBody*));
-	for (dgInt32 i = dgAtomicExchangeAndAdd(&descriptor->m_atomicCounter, 1); i < count; i = dgAtomicExchangeAndAdd(&descriptor->m_atomicCounter, 1)) {
-		dgIsland* const island = &islandArray[i];
-		dgDynamicBody* const body = bodyArray[i];
-		world->ExpandIsland(island, body, timestep, stackPoolBuffer, stacksize);
-	}
-}
-
-
-dgIsland dgWorldDynamicUpdate::ColorIsland(dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPool, const dgInt32 stackSize, const dgInt32 color, const dgInt32 threadID)
-{
-	dgIsland island;
-	dgInt32 bodyCount = 0;
-	dgInt32 jointCount = 0;
-	dgWorld* const world = (dgWorld*) this;
-	{
-		dgBodyMasterListRow* const row = &body->m_masterNode->GetInfo();
-		dgThreadHiveScopeLock lock (world, &body->m_criticalSectionLock, false);
-		dgAssert (row->m_color < m_baseColor);
-		if ((row->m_color > color) && (row->m_color > m_baseColor)){
-			island.m_bodyCount = 0;
-			island.m_jointCount = 0;
-			return island;
-		}
-		row->m_color = color;
-	}
-
-	bool isSingle = true;
-	dgInt32 stack = 1;
-	stackPool[0] = body->m_masterNode;
-	while (stack) {
-		stack--;
-		dgBodyMasterListRow* const row0 = &stackPool[stack]->GetInfo();
-		dgDynamicBody* const body0 = (dgDynamicBody*)row0->GetBody();
-		dgAssert(dgInterlockedExchange(&row0->m_color, row0->m_color) == color);
-		bodyCount++;
-
-		for (dgBodyMasterListRow::dgListNode* jointNode = row0->GetFirst(); jointNode; jointNode = jointNode->GetNext()) {
-			dgBodyMasterListCell* const cell = &jointNode->GetInfo();
-			dgBody* const body1 = cell->m_bodyNode;
-			dgBodyMasterListRow* const row1 = &body1->m_masterNode->GetInfo();
-
-			dgThreadHiveScopeLock lock (world, &body1->m_criticalSectionLock, false);
-			if (row1->m_color > color) {
-				island.m_bodyCount = 0;
-				island.m_jointCount = 0;
-				return island;
-			}
-
-			dgConstraint* const constraint = cell->m_joint;
-			dgAssert(constraint);
-			dgAssert((constraint->m_body0 == body0) || (constraint->m_body1 == body0));
-			dgAssert((constraint->m_body0 == body1) || (constraint->m_body1 == body1));
-
-			const dgContact* const contact = (constraint->GetId() == dgConstraint::m_contactConstraint) ? (dgContact*)constraint : NULL;
-			if (body1->IsCollidable() && (!contact || contact->m_maxDOF || (body0->m_continueCollisionMode | body1->m_continueCollisionMode))) {
-				isSingle = false;
-				if (constraint->m_color != color) {
-					constraint->m_color = color;
-					jointCount++;
-				}
-
-				if (row1->m_color < color) {
-					if (body1->m_invMass.m_w > dgFloat32(0.0f)) {
-						row1->m_color = color;
-						stackPool[stack] = body1->m_masterNode;
-						stack++;
-						dgAssert(stack < stackSize);
-					}
-				}
-			}
-		}
-		if (isSingle) {
-			IntegrateSingleBody(body0, dgFloat32(0.0f), m_currTimestep, threadID);
-			island.m_bodyCount = 0;
-			island.m_jointCount = 0;
-			return island;
-		}
-	}
-
-	island.m_bodyCount = bodyCount;
-	island.m_jointCount = jointCount;
-	return island;
-}
-
-
-void dgWorldDynamicUpdate::ColorIslands(void* const context, void* const nodePtr, dgInt32 threadID)
-{
-	dgWorldDynamicUpdateSyncDescriptor* const descriptor = (dgWorldDynamicUpdateSyncDescriptor*)context;
-
-	dgWorld* const world = descriptor->m_world;
-	dgBodyMasterList& masterList = *world;
-	dgInt32 stackSize = 2 * masterList.GetCount() + 128;
-	dgBodyMasterList::dgListNode** stackPool = (dgBodyMasterList::dgListNode**) alloca(stackSize * sizeof (dgBodyMasterList::dgListNode*));
-	dgIsland* const islandArray = descriptor->m_IslandArray;
-	dgDynamicBody** const bodyArray = descriptor->m_firstIslandBody;
-
-	dgInt32 baseColor = world->m_baseColor;
-	const dgInt32 threadCount = world->GetThreadCount();
-
-	dgBodyMasterList::dgListNode* node = (dgBodyMasterList::dgListNode*) nodePtr;
-	while (node) {
-		dgBodyMasterListRow* const row = &node->GetInfo();
-		dgDynamicBody* const body = (dgDynamicBody*)row->GetBody();
-		dgAssert(body->IsRTTIType(dgBody::m_dynamicBodyRTTI));
-		dgAssert(body->GetInvMass().m_w > dgFloat32(0.0f));
-		if (body->IsCollidable() && !(body->m_freeze | body->m_spawnnedFromCallback | body->m_sleeping)) {
-			dgThreadHiveScopeLock lock(world, &body->m_criticalSectionLock, false);
-			dgInt32 nodeColor = nodeColor = row->m_color;
-		
-			if (nodeColor < baseColor) {
-				const dgInt32 color = dgAtomicExchangeAndAdd(&world->m_currentColor, 1);
-				dgIsland island (world->ColorIsland(body, stackPool, stackSize, color, threadID));
-				if (island.m_bodyCount) {
-					island.m_bodyCount++;
-
-					dgAssert(island.m_jointCount > 0);
-					dgInt32 index = dgAtomicExchangeAndAdd(&world->m_islands, 1);
-					dgAtomicExchangeAndAdd(&world->m_bodies, island.m_bodyCount);
-					dgAtomicExchangeAndAdd(&world->m_joints, island.m_jointCount);
-
-					bodyArray[index] = body;
-					islandArray[index] = island;
-				}
-			}
-		}
-		for (dgInt32 i = 0; i < threadCount; i++) {
-			node = (node && (node->GetPrev()->GetInfo().GetBody()->GetInvMass().m_w != dgFloat32(0.0f))) ? node->GetPrev() : NULL;
-		}
-	}
-}
-
-
-
-void dgWorldDynamicUpdate::GetFirstIslandBodies(dgWorldDynamicUpdateSyncDescriptor* const descriptor)
-{
-	dgWorld* const world = (dgWorld*) this;
-	dgBodyMasterList& masterList = *world;
-
-	const dgInt32 threadsCount = world->GetThreadCount();
-	world->m_bodiesMemory.ExpandCapacityIfNeessesary((threadsCount + 32), sizeof (dgBodyInfo));
-	world->m_jointsMemory.ExpandCapacityIfNeessesary((threadsCount + 32), sizeof (dgJointInfo));
-	descriptor->m_firstIslandBody = (dgDynamicBody**)alloca((masterList.GetCount() + 32) * sizeof (dgDynamicBody*));
-
-	dgBodyMasterList::dgListNode* node = (masterList.GetLast()->GetInfo().GetBody()->GetInvMass().m_w != dgFloat32(0.0f)) ? masterList.GetLast() : NULL;
-	for (dgInt32 i = 0; i < threadsCount; i++) {
-		world->QueueJob(ColorIslands, descriptor, node);
-		node = (node && (node->GetPrev()->GetInfo().GetBody()->GetInvMass().m_w != NULL)) ? node->GetPrev() : NULL;
-	}
-	world->SynchronizationBarrier();
-
-	world->m_bodiesMemory.ExpandCapacityIfNeessesary((m_bodies + 32), sizeof (dgBodyInfo));
-	world->m_jointsMemory.ExpandCapacityIfNeessesary((m_joints + 32), sizeof (dgJointInfo));
-
-	if (m_islands) {
-		descriptor->m_atomicCounter = 0;
-		descriptor->m_islandCount = m_islands;
-
-		dgInt32 bodyStart = 0;
-		dgInt32 jointStart = 0;
-		dgIsland* const islandArray = descriptor->m_IslandArray;
-		for (dgInt32 i = 0; i < m_islands; i++) {
-			islandArray[i].m_bodyStart = bodyStart;
-			islandArray[i].m_jointStart = jointStart;
-			bodyStart += islandArray[i].m_bodyCount;
-			jointStart += islandArray[i].m_jointCount;
-		}
-
-		for (dgInt32 i = 0; i < threadsCount; i++) {
-			world->QueueJob(ExpandIslands, descriptor, world);
-		}
-		world->SynchronizationBarrier();
-	}
-}
-
 
 
 void dgWorldDynamicUpdate::FindActiveJointAndBodies (dgIsland* const island)
@@ -1423,15 +708,15 @@ void dgWorldDynamicUpdate::FindActiveJointAndBodies (void* const context, void* 
 
 	dgWorld* const world = (dgWorld*) worldContext;
 	dgInt32 count = descriptor->m_islandCount;
-	dgIsland* const islands = world->m_islandMemory;
+	dgIsland* const islands = &((dgIsland*)&world->m_islandMemory[0])[descriptor->m_firstIsland];
 
 	for (dgInt32 i = dgAtomicExchangeAndAdd(&descriptor->m_atomicCounter, 1); i < count; i = dgAtomicExchangeAndAdd(&descriptor->m_atomicCounter, 1)) {
 		dgIsland* const island = &islands[i]; 
-		if (island->m_bodyCount) {
-			world->FindActiveJointAndBodies (island); 
-		}
+		world->FindActiveJointAndBodies (island); 
 	}
 }
+
+
 
 void dgWorldDynamicUpdate::CalculateIslandReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID)
 {
@@ -1440,13 +725,11 @@ void dgWorldDynamicUpdate::CalculateIslandReactionForcesKernel (void* const cont
 	dgFloat32 timestep = descriptor->m_timestep;
 	dgWorld* const world = (dgWorld*) worldContext;
 	dgInt32 count = descriptor->m_islandCount;
-	dgIsland* const islands = world->m_islandMemory;
+	dgIsland* const islands = &((dgIsland*)&world->m_islandMemory[0])[descriptor->m_firstIsland];
 
 	for (dgInt32 i = dgAtomicExchangeAndAdd(&descriptor->m_atomicCounter, 1); i < count; i = dgAtomicExchangeAndAdd(&descriptor->m_atomicCounter, 1)) {
 		dgIsland* const island = &islands[i]; 
-		if (island->m_bodyCount) {
-			world->CalculateIslandReactionForces (island, timestep, threadID);
-		}
+		world->CalculateIslandReactionForces (island, timestep, threadID);
 	}
 }
 
@@ -1535,39 +818,6 @@ void dgWorldDynamicUpdate::GetJacobianDerivatives (const dgIsland* const island,
 		dgAssert (rowCount <= island->m_rowsCount);
 	}
 }
-
-void dgWorldDynamicUpdate::IntegrateSingleBody (dgDynamicBody* const body, dgFloat32 accelTol2, dgFloat32 timestep, dgInt32 threadID) const
-{
-	if (!body->m_equilibrium) {
-		body->AddDampingAcceleration();
-		body->CalcInvInertiaMatrix ();
-	}
-	if (body->m_active) {
-		body->m_netForce = body->m_accel;
-		body->m_netTorque = body->m_alpha;
-	}
-
-	dgIsland island;
-	island.m_bodyCount = 2;
-	island.m_bodyStart = threadID * 2;
-	island.m_jointCount = 0;
-	island.m_jointStart = 0;
-	island.m_rowsCount = 0;
-	island.m_rowsStart = 0;
-	island.m_isContinueCollision = false;
-	island.m_hasExactSolverJoints = false;
-
-	dgWorld* const world = body->GetWorld();
-	dgBodyInfo* const bodyArrayPtr = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
-	dgBodyInfo* const bodyArray = &bodyArrayPtr[island.m_bodyStart]; 
-	bodyArray[0].m_body = NULL;
-	//bodyArray[0].m_index = 0;
-	bodyArray[1].m_body = body;
-	//bodyArray[1].m_index = 0;
-	ApplyExternalForcesAndAcceleration (&island, threadID, timestep, dgFloat32 (0.0f));
-	IntegrateArray (&island, DG_SOLVER_MAX_ERROR, timestep, threadID); 
-}
-
 
 void dgWorldDynamicUpdate::IntegrateArray (const dgIsland* const island, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadIndex) const
 {

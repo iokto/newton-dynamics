@@ -27,7 +27,7 @@
 #include "dgDynamicBody.h"
 #include "dgWorldDynamicUpdate.h"
 
-#define dgParalletSolverStackPoolSize (1<<8)
+//#define dgParalletSolverStackPoolSize (1<<8)
 
 void dgWorldDynamicUpdate::CalculateReactionForcesParallel (const dgIsland* const island, dgFloat32 timestep) const
 {
@@ -62,7 +62,7 @@ void dgWorldDynamicUpdate::CalculateReactionForcesParallel (const dgIsland* cons
 	syncData.m_timestepRK = syncData.m_timestep * syncData.m_invStepRK;
 	syncData.m_invTimestepRK = syncData.m_invTimestep * dgFloat32 (maxPasses);
 	syncData.m_maxPasses = maxPasses;
-	syncData.m_passes = world->m_solverMode - 1;
+	syncData.m_passes = world->m_solverMode;
 
 	syncData.m_bodyCount = bodyCount;
 	syncData.m_jointCount = jointsCount;
@@ -109,6 +109,7 @@ void dgWorldDynamicUpdate::InitializeBodyArrayParallelKernel (void* const contex
 			dgAssert (bodyArray[0].m_body->IsRTTIType (dgBody::m_dynamicBodyRTTI) || (((dgDynamicBody*)bodyArray[0].m_body)->m_alpha % ((dgDynamicBody*)bodyArray[0].m_body)->m_alpha) == dgFloat32 (0.0f));
 
 			dgBody* const body = bodyArray[i].m_body;
+			dgAssert (body->m_index == i);
 			if (!body->m_equilibrium) {
 				dgAssert (body->m_invMass.m_w > dgFloat32 (0.0f));
 				body->AddDampingAcceleration();
@@ -449,6 +450,9 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 	dgWorld* const world = (dgWorld*) this;
 	const dgInt32 threadCounts = world->GetThreadCount();	
 
+static int xxx;
+xxx ++;
+
 	const dgInt32 passes = syncData->m_passes;
 	const dgInt32 maxPasses = syncData->m_maxPasses;
 	syncData->m_firstPassCoef = dgFloat32 (0.0f);
@@ -463,11 +467,7 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 		syncData->m_firstPassCoef = dgFloat32 (1.0f);
 
 		dgFloat32 accNorm = DG_SOLVER_MAX_ERROR * dgFloat32 (2.0f);
-		//for (dgInt32 passes = 0; (passes < DG_BASE_ITERATION_COUNT) && (accNorm > DG_SOLVER_MAX_ERROR); passes ++) {
-		for (dgInt32 k = 0; (k < passes) && (accNorm > accNorm); k ++) {
-			for (dgInt32 i = 0; i < threadCounts; i ++) {
-				syncData->m_accelNorm[i] = dgVector (dgFloat32 (0.0f));
-			}
+		for (dgInt32 k = 0; (k < passes) && (accNorm >  DG_SOLVER_MAX_ERROR); k ++) {
 			syncData->m_atomicIndex = 0;
 			for (dgInt32 i = 0; i < threadCounts; i ++) {
 				world->QueueJob (CalculateJointsForceParallelKernel, syncData, world);
@@ -476,7 +476,7 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 
 			accNorm = dgFloat32 (0.0f);
 			for (dgInt32 i = 0; i < threadCounts; i ++) {
-				accNorm = dgMax (accNorm, syncData->m_accelNorm[i].m_x);
+				accNorm = dgMax (accNorm, syncData->m_accelNorm[i]);
 			}
 		}
 
@@ -531,8 +531,6 @@ void dgWorldDynamicUpdate::CalculateForcesGameModeParallel (dgParallelSolverSync
 
 void dgWorldDynamicUpdate::CalculateJointsForceParallelKernel (void* const context, void* const worldContext, dgInt32 threadID)
 {
-	dgAssert (0);
-/*
 	dgParallelSolverSyncData* const syncData = (dgParallelSolverSyncData*) context;
 	dgWorld* const world = (dgWorld*) worldContext;
 
@@ -545,13 +543,13 @@ void dgWorldDynamicUpdate::CalculateJointsForceParallelKernel (void* const conte
 	dgJacobian* const internalForces = &world->m_solverMemory.m_internalForces[0];
 	const int jointCount = syncData->m_jointCount;
 	dgInt32* const globalLock  = &syncData->m_lock;
-	
 
+/*
 	dgInt32 pool [dgParalletSolverStackPoolSize];
 	dgQueue<dgInt32> queue(pool, dgParalletSolverStackPoolSize);
 
 	dgInt32* const atomicIndex = &syncData->m_atomicIndex;
-	dgVector accNorm (syncData->m_accelNorm[threadID]);
+	dgFloat32 accNorm = dgFloat32 (0.0f);
 
 	dgInt32* const bodyLocks = syncData->m_bodyLocks;
 	queue.Insert(dgAtomicExchangeAndAdd(atomicIndex, 1));
@@ -586,7 +584,8 @@ void dgWorldDynamicUpdate::CalculateJointsForceParallelKernel (void* const conte
 				dgJointInfo* const jointInfo = &constraintArray[jointIndex];
 				dgAssert(jointInfo->m_m0 == m0);
 				dgAssert(jointInfo->m_m1 == m1);
-				world->CalculateJointForce (jointInfo, bodyArray, internalForces, matrixRow, accNorm);
+				dgFloat32 accel = world->CalculateJointForce (jointInfo, bodyArray, internalForces, matrixRow);
+				accNorm = (accel > accNorm) ? accel : accNorm;
 			}
 			if (queue.IsEmpty()) {
 				queue.Insert(dgAtomicExchangeAndAdd(atomicIndex, 1));
@@ -595,7 +594,32 @@ void dgWorldDynamicUpdate::CalculateJointsForceParallelKernel (void* const conte
 			dgSpinUnlock(&bodyLocks[m1]);
 		}
 	}
+*/	
+	dgInt32* const bodyLocks = syncData->m_bodyLocks;
+	dgInt32* const atomicIndex = &syncData->m_atomicIndex;
+	dgFloat32 accNorm = dgFloat32(0.0f);
+	for (dgInt32 i = dgAtomicExchangeAndAdd(atomicIndex, 1); i < jointCount; i = dgAtomicExchangeAndAdd(atomicIndex, 1)) {
+		dgJointInfo* const jointInfo = &constraintArray[i];
+		dgInt32 m0 = jointInfo->m_m0;
+		dgInt32 m1 = jointInfo->m_m1;
+		dgSpinLock(globalLock, false);
+			while (bodyLocks[m0] | bodyLocks[m1]) {
+				dgAssert (0);
+			}
+			bodyLocks[m0] = m0 > 0;
+			bodyLocks[m1] = m1 > 0;
+		dgSpinUnlock(globalLock);
+		
+		dgFloat32 accel = world->CalculateJointForce(jointInfo, bodyArray, internalForces, matrixRow);
+		accNorm = (accel > accNorm) ? accel : accNorm;
+
+		if (m0) {
+			dgInterlockedExchange(&bodyLocks[m0], 0);
+		}
+		if (m1) {
+			dgInterlockedExchange(&bodyLocks[m1], 0);
+		}
+	}
 
 	syncData->m_accelNorm[threadID] = accNorm;
-*/
 }

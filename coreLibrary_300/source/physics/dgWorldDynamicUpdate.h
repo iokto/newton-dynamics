@@ -70,20 +70,7 @@ class dgBodyInfo
 {
 	public:
 	dgBody* m_body;
-//	dgInt32 m_index;
 };
-
-class dgJointInfo
-{
-	public:
-	dgConstraint* m_joint;
-	dgInt32 m_m0;
-	dgInt32 m_m1;
-	dgInt32 m_pairStart;
-	dgInt16 m_pairCount;
-	dgInt16 m_pairActiveCount;
-};
-
 
 class dgIsland
 {
@@ -99,6 +86,18 @@ class dgIsland
 };
 
 
+class dgJointInfo
+{
+	public:
+	dgConstraint* m_joint;
+	dgInt32 m_m0;
+	dgInt32 m_m1;
+	dgInt32 m_pairStart;
+	dgInt16 m_pairCount;
+	dgInt16 m_pairActiveCount;
+};
+
+
 class dgParallelSolverSyncData
 {
 	public:
@@ -107,7 +106,7 @@ class dgParallelSolverSyncData
 		memset (this, 0, sizeof (dgParallelSolverSyncData));
 	}
 
-	dgVector m_accelNorm[DG_MAX_THREADS_HIVE_COUNT];
+	dgFloat32 m_accelNorm[DG_MAX_THREADS_HIVE_COUNT];
 
 	dgFloat32 m_timestep;
 	dgFloat32 m_invTimestep;
@@ -226,21 +225,14 @@ class dgWorldDynamicUpdate
 	void UpdateDynamics (dgFloat32 timestep);
 
 	private:
-	void GetFirstIslandBodies (dgWorldDynamicUpdateSyncDescriptor* const descriptor);
-	dgIsland ColorIsland (dgDynamicBody* const body, dgBodyMasterList::dgListNode** const stackPoolBuffer, const dgInt32 stackSize, const dgInt32 color, const dgInt32 threadID);
-	void ExpandIsland (dgIsland* const insland, dgDynamicBody* const body, dgFloat32 timestep, dgDynamicBody** const stackPoolBuffer, const dgInt32 stackSize);
-	void BuildIsland (dgIsland* const island, dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 bodyIndex, dgInt32 jointIndex, dgInt32 color, dgInt32 hasExactSolverJoints);
-
 	void SpanningTree (dgDynamicBody* const body, dgFloat32 timestep);
+	//void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgInt32 jountCount, dgInt32 rowsCount, dgInt32 isContinueCollisionIsland, dgInt32 forceExactSolver);
 	void BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat32 timestep, dgInt32 jountCount, dgInt32 forceExactSolver);
 
 	static dgInt32 CompareIslands (const dgIsland* const islandA, const dgIsland* const islandB, void* notUsed);
 	static void CalculateIslandReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID);
 
-	static void ColorIslands (void* const context, void* const node, dgInt32 threadID); 
-	static void ExpandIslands (void* const context, void* const world, dgInt32 threadID);
-
-	static void IntegrateIslandParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
+	static void IntegrateInslandParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void InitializeBodyArrayParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void BuildJacobianMatrixParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void SolverInitInternalForcesParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
@@ -278,7 +270,6 @@ class dgWorldDynamicUpdate
 	dgFloat32 CalculateJointForce(dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 	dgFloat32 CalculateJointForces(const dgIsland* const island, dgInt32 rowStart, dgInt32 joint, dgFloat32* const forceStep, dgFloat32 maxAccNorm, const dgJacobianPair* const JMinv) const;
 
-	void IntegrateSingleBody (dgDynamicBody* const body, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadID) const;
 	void IntegrateArray (const dgIsland* const island, dgFloat32 accelTolerance, dgFloat32 timestep, dgInt32 threadID) const;
 
 	void CalculateIslandContacts (dgIsland* const island, dgFloat32 timestep, dgInt32 currLru, dgInt32 threadID) const;
@@ -286,17 +277,13 @@ class dgWorldDynamicUpdate
 	dgInt32 GetJacobianDerivatives (dgContraintDescritor& constraintParamOut, dgJointInfo* const jointInfo, dgConstraint* const constraint, dgJacobianMatrixElement* const matrixRow, dgInt32 rowCount) const;
 	
 
-	dgIsland* m_islandMemory;
-	dgJacobianMemory m_solverMemory;
-	dgThread::dgCriticalSection m_softBodyCriticalSectionLock;
-
 	dgInt32 m_bodies;
 	dgInt32 m_joints;
 	dgInt32 m_islands;
-	dgInt32 m_markLru;
-	dgInt32 m_baseColor;
-	dgInt32 m_currentColor;
-	dgFloat32 m_currTimestep;
+	dgUnsigned32 m_markLru;
+	dgJacobianMemory m_solverMemory;
+	dgThread::dgCriticalSection m_softBodyCriticalSectionLock;
+//	dgBody* m_sentinelBody;
 	static dgVector m_velocTol;
 	static dgVector m_eulerTaylorCorrection;
 
