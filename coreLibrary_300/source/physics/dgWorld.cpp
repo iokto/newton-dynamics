@@ -54,12 +54,13 @@
 #include "dgAmpInstance.h"
 #endif
 
+#define DG_DEFAULT_SOLVER_ITERATION_COUNT	4
 
 //#define DG_INITIAL_ISLAND_SIZE		(1024 * 4)
-#define DG_INITIAL_BODIES_SIZE		(1024 * 4)
-#define DG_INITIAL_JOINTS_SIZE		(1024 * 4)
-#define DG_INITIAL_JACOBIAN_SIZE	(1024 * 16)
-#define DG_INITIAL_CONTACT_SIZE		(1024 * 32)
+#define DG_INITIAL_BODIES_SIZE				(1024 * 4)
+#define DG_INITIAL_JOINTS_SIZE				(1024 * 4)
+#define DG_INITIAL_JACOBIAN_SIZE			(1024 * 16)
+#define DG_INITIAL_CONTACT_SIZE				(1024 * 32)
 
 
 /*
@@ -256,7 +257,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	m_useParallelSolver = 0;
 
 	//m_solverMode = 0;
-	m_solverMode = DG_SOLVER_ITERATION_COUNT;
+	m_solverMode = DG_DEFAULT_SOLVER_ITERATION_COUNT;
 	m_frictionMode = 0;
 	m_dynamicsLru = 0;
 		
