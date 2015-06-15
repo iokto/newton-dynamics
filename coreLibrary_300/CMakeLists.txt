@@ -1,4 +1,4 @@
-# Copyright (c) <2009> <Newton Game Dynamics>
+# Copyright (c) <2014> <Newton Game Dynamics>
 # 
 # This software is provided 'as-is', without any express or implied
 # warranty. In no event will the authors be held liable for any damages
@@ -84,3 +84,6 @@ if (MSVC)
   set_target_properties(NewtonStatic PROPERTIES COMPILE_FLAGS "/YudgStdafx.h /YuNewtonStdAfx.h /YudgPhysicsStdafx.h")
   set_target_properties (NewtonStatic PROPERTIES COMPILE_DEFINITIONS "_NEWTON_STATIC_LIB;_WIN_32_VER;PTW32_BUILD;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS")
 
+  set_target_properties(Newton PROPERTIES COMPILE_FLAGS "/YudgStdafx.h /YuNewtonStdAfx.h /YudgPhysicsStdafx.h")
+  set_target_properties (Newton PROPERTIES COMPILE_DEFINITIONS "_NEWTON_BUILD_DLL;_WIN_32_VER;PTW32_BUILD;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS")
+endif(MSVC)
