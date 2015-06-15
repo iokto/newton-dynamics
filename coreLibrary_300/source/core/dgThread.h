@@ -78,8 +78,8 @@ class dgThread
 	void SetPriority(int priority);
 
 	protected:
-	void Init (int stacksize = 0);
-	void Init (const char* const name, dgInt32 id, int stacksize);
+	void Init (dgInt32 stacksize = 0);
+	void Init (const char* const name, dgInt32 id, dgInt32 stacksize);
 	void Close ();
 
 	static void* dgThreadSystemCallback(void* threadData);
