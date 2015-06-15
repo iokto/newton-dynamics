@@ -76,7 +76,7 @@ dgThread::~dgThread ()
 {
 }
 
-void dgThread::Init (int stacksize)
+void dgThread::Init (dgInt32  stacksize)
 {
 }
 
@@ -166,7 +166,7 @@ dgThread::~dgThread ()
 {
 }
 
-void dgThread::Init (int stacksize)
+void dgThread::Init (dgInt32  stacksize)
 {
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);

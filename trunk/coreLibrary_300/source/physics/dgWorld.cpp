@@ -59,6 +59,7 @@
 #define DG_INITIAL_BODIES_SIZE		(1024 * 4)
 #define DG_INITIAL_JOINTS_SIZE		(1024 * 4)
 #define DG_INITIAL_JACOBIAN_SIZE	(1024 * 16)
+#define DG_ENGINE_STACK_SIZE        (1024 * 1024)
 
 
 /*
@@ -216,7 +217,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgDeformableBodiesUpdate(allocator)
 	,dgActiveContacts(allocator) 
 	,dgWorldDynamicUpdate()
-	,dgMutexThread("dgMutexThread", DG_MUTEX_THREAD_ID)
+	,dgMutexThread("dgMutexThread", DG_MUTEX_THREAD_ID, DG_ENGINE_STACK_SIZE)
 	,dgAsyncThread("dgAsyncThread", DG_ASYNC_THREAD_ID)
 	,dgWorldThreadPool(allocator)
 	,m_broadPhase(NULL)

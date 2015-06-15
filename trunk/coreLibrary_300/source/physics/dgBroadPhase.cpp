@@ -213,7 +213,7 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 	dgFloat32 timestep = descriptor->m_timestep;
 
 	const dgInt32 threadCount = descriptor->m_world->GetThreadCount();
-	while (node) {
+	while (node && (node->GetInfo().GetBody()->GetExtForceAndTorqueCallback() != NULL)) {
 		dgBody* const body = node->GetInfo().GetBody();
 
 		if (body->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
@@ -234,8 +234,7 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 
 			dynamicBody->m_prevExternalForce = dynamicBody->m_accel;
 			dynamicBody->m_prevExternalTorque = dynamicBody->m_alpha;
-		}
-		else {
+		} else {
 			dgAssert(body->IsRTTIType(dgBody::m_kinematicBodyRTTI | dgBody::m_deformableBodyRTTI));
 
 			if (body->IsRTTIType(dgBody::m_deformableBodyRTTI)) {
@@ -246,8 +245,7 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 			if (body->IsCollidable()) {
 				body->m_sleeping = false;
 				body->m_autoSleep = false;
-			}
-			else {
+			} else {
 				body->m_sleeping = true;
 				body->m_autoSleep = true;
 			}
@@ -258,7 +256,7 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 		}
 
 		for (dgInt32 i = 0; i < threadCount; i++) {
-			node = node ? node->GetNext() : NULL;
+			node = node ? node->GetPrev() : NULL;
 		}
 	}
 }
@@ -325,8 +323,7 @@ void dgBroadPhase::ConvexRayCast(const dgBroadPhaseNode** stackPool, dgFloat32* 
 						maxParam = param;
 					}
 				}
-			}
-			else {
+			} else {
 				const dgBroadPhaseNode* const left = me->m_left;
 				dgAssert(left);
 				dgVector minBox(left->m_minBox - boxP1);
@@ -503,8 +500,7 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 						break;
 					}
 				}
-			}
-			else {
+			} else {
 				const dgBroadPhaseNode* const left = me->m_left;
 				dgAssert(left);
 				dgFloat32 dist = ray.BoxIntersect(left->m_minBox, left->m_maxBox);
@@ -1294,10 +1290,10 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	const dgBodyMasterList* const masterList = m_world;
 	dgBroadphaseSyncDescriptor syncPoints(timestep, m_world);
 
-	dgBodyMasterList::dgListNode* node = masterList->GetFirst()->GetNext();
+	dgBodyMasterList::dgListNode* node = masterList->GetLast();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(ForceAndToqueKernel, &syncPoints, node);
-		node = node ? node->GetNext() : NULL;
+		node = node ? node->GetPrev() : NULL;
 	}
 	m_world->SynchronizationBarrier();
 
