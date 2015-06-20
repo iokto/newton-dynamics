@@ -1868,7 +1868,7 @@ void dgWorldDynamicUpdate::CalculateReactionsForces(const dgIsland* const island
 //		ApplyExternalForcesAndAcceleration (island, rowStart, threadIndex, timestep, maxAccNorm * dgFloat32 (0.001f));
 	} else {
 		dgWorld* const world = (dgWorld*) this;
-		if (world->m_solverMode && !island->m_hasExactSolverJoints) {
+		if (world->m_solverMode) {
 			CalculateForcesGameMode (island, threadIndex, timestep, maxAccNorm);
 		} else {
 			dgAssert (timestep > dgFloat32 (0.0f));
