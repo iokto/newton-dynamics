@@ -55,6 +55,7 @@ class dgUpVectorConstraint;
 class dgUniversalConstraint;
 class dgCorkscrewConstraint;
 class dgCollisionDeformableMesh;
+class dgAcyclicArticulationContainerConstraint;
 
 
 class dgBodyCollisionList: public dgTree<const dgCollision*, dgUnsigned32>
@@ -312,6 +313,7 @@ class dgWorld
 	dgCorkscrewConstraint* CreateCorkscrewConstraint (const dgVector& pivot, const dgVector& pin, dgBody* const body0, dgBody *refBody = NULL);
 	dgUniversalConstraint* CreateUniversalConstraint (const dgVector& pivot, const dgVector& pin0, const dgVector& pin1, dgBody* const body0, dgBody *body1 = NULL);
 
+	dgAcyclicArticulationContainerConstraint* CreateNewtonAcyclicArticulation (dgBody* const rootBone);
 
 	void DestroyConstraint (dgConstraint* constraint);
 	dgUnsigned32 CreateBodyGroupID();

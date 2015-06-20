@@ -61,6 +61,7 @@ static RAGDOLL_BONE_DEFINITION skeletonRagDoll[] =
 	{"Bip01_Pelvis",	 "capsule", 0.0f, 0.0f, -90.0f, 0.0f, 0.0f, 0.01f, 0.07f, 0.16f, 30.0f,     0.0f,  -0.0f,   0.0f,		0.0f,  0.0f,  0.0f,		0.0f,  0.0f,  0.0f}, 
 
 	{"Bip01_Spine",		 "capsule", 0.0f, 0.0f, -90.0f, 0.0f, 0.0f, 0.06f, 0.07f, 0.14f,  20.0f,    30.0f,  -30.0f,  30.0f,		0.0f, -90.0f, 0.0f,	   0.0f, -90.0f, 0.0f}, 
+/*
 	{"Bip01_Spine1",	 "capsule", 0.0f, 0.0f, -90.0f, 0.0f, 0.0f, 0.06f, 0.07f, 0.12f,  20.0f,    30.0f,  -30.0f,  30.0f,		0.0f, -90.0f, 0.0f,	   0.0f, -90.0f, 0.0f}, 
 	{"Bip01_Spine2",	 "capsule", 0.0f, 0.0f, -90.0f, 0.0f, 0.0f, 0.06f, 0.07f, 0.08f,  20.0f,    30.0f,  -30.0f,  30.0f,		0.0f, -90.0f, 0.0f,	   0.0f, -90.0f, 0.0f}, 
 
@@ -82,9 +83,8 @@ static RAGDOLL_BONE_DEFINITION skeletonRagDoll[] =
 	{"Bip01_R_UpperArm", "capsule", 0.0f, 90.0f,  0.0f, 0.0f, 0.0f, 0.12f, 0.03f, 0.23f, 10.0f,		  80.0f, 30.0f,  30.0f,		0.0f, -90.0f,   0.0f,  90.0f, -30.0f, -90.0f}, 
 	{"Bip01_R_Forearm",  "capsule", 0.0f, 90.0f,  0.0f, 0.0f, 0.0f, 0.12f, 0.03f, 0.23f,  7.0f,		  0.0f, -150.0f,  0.0f,		0.0f,   0.0f, -90.0f,   0.0f,   0.0f, -90.0f}, 
 	{"Bip01_R_Hand",  "convexhull", 0.0f, 00.0f,  0.0f, 0.0f, 0.0f, 0.00f, 0.00f, 0.00f,  2.0f,		  0.0f,  -45.0f, 45.0f,		0.0f,   0.0f, -90.0f,   0.0f,   0.0f, -90.0f}, 
-	
+*/	
 };
-
 
 
 class RagDollManager: public CustomArticulaledTransformManager
@@ -104,6 +104,8 @@ class RagDollManager: public CustomArticulaledTransformManager
 
 	static int OnBoneAABBOverlap (const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int threadIndex)
 	{
+		dAssert (0);
+/*
 		NewtonCollision* const collision0 = NewtonBodyGetCollision(body0);
 		NewtonCollision* const collision1 = NewtonBodyGetCollision(body1);
 		CustomArticulatedTransformController::dSkeletonBone* const bone0 = (CustomArticulatedTransformController::dSkeletonBone*)NewtonCollisionGetUserData (collision0);
@@ -114,7 +116,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 		if (bone0->m_myController && bone1->m_myController) {
 			return bone0->m_myController->SelfCollisionTest (bone0, bone1) ? 1 : 0;
 		}
-
+*/
 		return 1;
 	}
 
@@ -183,7 +185,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 		return NULL;
 	}
 
-	
+/*	
 	virtual void OnUpdateTransform (const CustomArticulatedTransformController::dSkeletonBone* const bone, const dMatrix& localMatrix) const
 	{
 		DemoEntity* const ent = (DemoEntity*) NewtonBodyGetUserData(bone->m_body);
@@ -192,7 +194,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 		dQuaternion rot (localMatrix);
 		ent->SetMatrix (*scene, rot, localMatrix.m_posit);
 	}
-
+*/
 	NewtonCollision* MakeConvexHull(DemoEntity* const bodyPart) const
 	{
 		dVector points[1024 * 16];
@@ -279,58 +281,62 @@ class RagDollManager: public CustomArticulaledTransformManager
 		DemoEntity* const ragDollEntity = (DemoEntity*) model->CreateClone();
 		scene->Append(ragDollEntity);
 
-		// build the ragdoll with rigid bodies connected by joints
-		// create a transform controller
-		CustomArticulatedTransformController* const controller = CreateTransformController (ragDollEntity, false);
 
-		// add the root bone
-		DemoEntity* const rootEntity = (DemoEntity*) ragDollEntity->Find (definition[0].m_boneName);
-		NewtonBody* const rootBone = CreateRagDollBodyPart (rootEntity, definition[0]);
+		// first create the root node of the skeleton
+		DemoEntity* const rootEntity = (DemoEntity*)ragDollEntity->Find(definition[0].m_boneName);
+		NewtonBody* const rootBone = CreateRagDollBodyPart(rootEntity, definition[0]);
+
 		// for debugging
-		//NewtonBodySetMassMatrix(rootBone, 0.0f, 0.0f, 0.0f, 0.0f);
+		NewtonBodySetMassMatrix(rootBone, 0.0f, 0.0f, 0.0f, 0.0f);
 
-		CustomArticulatedTransformController::dSkeletonBone* const bone = controller->AddBone (rootBone, dGetIdentityMatrix());
+		// now create a controller for the children of this root node.
+		CustomArticulatedTransformController* const controller = CreateTransformController (ragDollEntity, rootBone);
+
+		//CustomArticulatedTransformController::dSkeletonBone* const bone = controller->AddBone (rootBone, dGetIdentityMatrix());
 		// save the controller as the collision user data, for collision culling
-		NewtonCollisionSetUserData (NewtonBodyGetCollision(rootBone), bone);
+		//NewtonCollisionSetUserData (NewtonBodyGetCollision(rootBone), bone);
+
 
 		int stackIndex = 0;
-		DemoEntity* childEntities[32];
-		CustomArticulatedTransformController::dSkeletonBone* parentBones[32];
+		DemoEntity* childEntity[32];
+		NewtonBody* parentBone[32];
+//		CustomArticulatedTransformController::dSkeletonBone* parentBones[32];
 		for (DemoEntity* child = rootEntity->GetChild(); child; child = child->GetSibling()) {
-			parentBones[stackIndex] = bone;
-			childEntities[stackIndex] = child;
+			parentBone[stackIndex] = rootBone;
+			childEntity[stackIndex] = child;
 			stackIndex ++;
 		}
 
 		// walk model hierarchic adding all children designed as rigid body bones. 
 		while (stackIndex) {
 			stackIndex --;
-			DemoEntity* const entity = childEntities[stackIndex];
-			CustomArticulatedTransformController::dSkeletonBone* parentBone = parentBones[stackIndex];
+			DemoEntity* const entity = childEntity[stackIndex];
+			NewtonBody* parent = parentBone[stackIndex];
 
 			const char* const name = entity->GetName().GetStr();
 			for (int i = 0; i < defintionCount; i ++) {
 				if (!strcmp (definition[i].m_boneName, name)) {
 					NewtonBody* const bone = CreateRagDollBodyPart (entity, definition[i]);
 
-					// connect this body part to its parent with a ragdoll joint
-					ConnectBodyParts (bone, parentBone->m_body, definition[i]);
+					// connect this body part to its parent with a rag doll joint
+					ConnectBodyParts (bone, parent, definition[i]);
 
-					dMatrix bindMatrix (entity->GetParent()->CalculateGlobalMatrix ((DemoEntity*)NewtonBodyGetUserData (parentBone->m_body)).Inverse());
-					parentBone = controller->AddBone (bone, bindMatrix, parentBone);
+					dMatrix bindMatrix (entity->GetParent()->CalculateGlobalMatrix ((DemoEntity*)NewtonBodyGetUserData (parent)).Inverse());
+					//parentBone = controller->AddBone (bone, bindMatrix, parentBone);
 					// save the controller as the collision user data, for collision culling
-					NewtonCollisionSetUserData (NewtonBodyGetCollision(bone), parentBone);
-					break;
+					//NewtonCollisionSetUserData (NewtonBodyGetCollision(bone), parentBone);
+					//break;
 				}
 			}
 
 			for (DemoEntity* child = entity->GetChild(); child; child = child->GetSibling()) {
-				parentBones[stackIndex] = parentBone;
-				childEntities[stackIndex] = child;
+				parentBone[stackIndex] = parent;
+				childEntity[stackIndex] = child;
 				stackIndex ++;
 			}
 		}
 
+/*
 		// set the collision mask
 		// note this container work best with a material call back for setting bit field 
 		controller->SetDefaultSelfCollisionMask ();
@@ -338,6 +344,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 		// transform the entire contraction to its location
 		dMatrix worldMatrix (rootEntity->GetCurrentMatrix() * location);
 		NewtonBodySetMatrixRecursive (rootBone, &worldMatrix[0][0]);
+*/
 	}
 
 	int m_material;
@@ -365,7 +372,7 @@ void DescreteRagDoll (DemoEntityManager* const scene)
 //	dVector origin (-10.0f, 1.0f, 0.0f, 1.0f);
 	dVector origin (FindFloor (world, dVector (-10.0f, 50.0f, 0.0f, 1.0f), 2.0f * 50.0f));
 
-	int count = 3;
+	int count = 1;
 	for (int x = 0; x < count; x ++) {
 		for (int z = 0; z < count; z ++) {
 			dVector p (origin + dVector ((x - count / 2) * 3.0f - count / 2, 0.0f, (z - count / 2) * 3.0f, 0.0f));

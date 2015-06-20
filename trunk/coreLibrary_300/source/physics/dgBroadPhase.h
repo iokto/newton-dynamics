@@ -174,15 +174,15 @@ class dgBroadPhaseNode
 class dgBroadPhase
 {
 	protected:
-    class dgSpliteInfo;
+	class dgSpliteInfo;
 	class dgBroadphaseSyncDescriptor
 	{
 		public:
 		dgBroadphaseSyncDescriptor(dgFloat32 timestep, dgWorld* const world)
 			:m_world(world)
-			, m_newBodiesNodes(NULL)
-			, m_timestep(timestep)
-			, m_pairsAtomicCounter(0)
+			,m_newBodiesNodes(NULL)
+			,m_timestep(timestep)
+			,m_pairsAtomicCounter(0)
 		{
 		}
 
@@ -273,6 +273,7 @@ class dgBroadPhase
 	void CollisionChange (dgBody* const body, dgCollisionInstance* const collisionSrc);
 
 	protected:
+	bool DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const;
 	dgFloat64 CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNode** const root);
 	dgBroadPhaseNode* InsertNode (dgBroadPhaseNode* const root, dgBroadPhaseNode* const node);
 
