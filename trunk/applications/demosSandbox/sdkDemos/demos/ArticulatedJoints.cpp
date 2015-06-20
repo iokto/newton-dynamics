@@ -221,8 +221,6 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 
 	virtual void OnPreUpdate (CustomArticulatedTransformController* const controller, dFloat timestep, int threadIndex) const
 	{
-		dAssert (0);
-/*
 		ArticulatedEntityModel* const vehicleModel = (ArticulatedEntityModel*)controller->GetUserData();
 
 		// apply engine torque
@@ -322,13 +320,10 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 				vehicleModel->m_paletteJoints[i]->SetTargetPosit(openPosit);
 			}
 		}
-*/
 	}
 
 	static int OnBoneAABBOverlap (const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int threadIndex)
 	{
-		dAssert (0);
-/*
 		NewtonCollision* const collision0 = NewtonBodyGetCollision(body0);
 		NewtonCollision* const collision1 = NewtonBodyGetCollision(body1);
 		CustomArticulatedTransformController::dSkeletonBone* const bone0 = (CustomArticulatedTransformController::dSkeletonBone*)NewtonCollisionGetUserData (collision0);
@@ -337,15 +332,12 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 			dAssert (!bone0->m_myController->SelfCollisionTest (bone0, bone1));
 			return bone0->m_myController->SelfCollisionTest (bone0, bone1) ? 1 : 0;
 		}
-*/		
 		return 1;
 	}
 
 	
 	static void OnContactsProcess (const NewtonJoint* const contactJoint, dFloat timestep, int threadIndex)
 	{
-		dAssert (0);
-/*
 		NewtonBody* const body0 = NewtonJointGetBody0(contactJoint);
 		NewtonBody* const body1 = NewtonJointGetBody1(contactJoint);
 
@@ -383,10 +375,9 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 				NewtonMaterialSetContactFrictionCoef (material, 1.0f, 1.0f, 1);
 			}
 		}
-*/
 	}
 	
-/*
+
 	virtual void OnUpdateTransform (const CustomArticulatedTransformController::dSkeletonBone* const bone, const dMatrix& localMatrix) const
 	{
 		DemoEntity* const ent = (DemoEntity*) NewtonBodyGetUserData(bone->m_body);
@@ -395,7 +386,6 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 		dQuaternion rot (localMatrix);
 		ent->SetMatrix (*scene, rot, localMatrix.m_posit);
 	}
-*/
 
 	NewtonCollision* MakeTireShape (DemoEntity* const bodyPart) const
 	{
@@ -543,8 +533,6 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 
 	CustomArticulatedTransformController* CreateForklift (const dMatrix& location, const DemoEntity* const model, int bodyPartsCount, ARTICULATED_VEHICLE_DEFINITION* const definition)
 	{
-		dAssert (0);
-/*
 		NewtonWorld* const world = GetWorld(); 
 		DemoEntityManager* const scene = (DemoEntityManager*) NewtonWorldGetUserData(world);
 
@@ -623,8 +611,6 @@ class ArticulatedVehicleManagerManager: public CustomArticulaledTransformManager
 		controller->DisableAllSelfCollision();
 
 		return controller;
-*/
-		return NULL;
 	}
 };
 
@@ -668,9 +654,8 @@ class AriculatedJointInputManager: public CustomInputManager
 			mainWindow->GetKeyState ('Z') ||
 			mainWindow->GetKeyState ('X')) 
 		{
-			dAssert (0);
-			//NewtonBody* const body = m_player->GetBoneBody(0);
-			//NewtonBodySetSleepState(body, false);
+			NewtonBody* const body = m_player->GetBoneBody(0);
+			NewtonBodySetSleepState(body, false);
 		}
 
 //NewtonBody* const body = m_player->GetBoneBody(0);
