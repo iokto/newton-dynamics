@@ -286,7 +286,7 @@ void dgWorldDynamicUpdate::SpanningTree (dgDynamicBody* const body, dgDynamicBod
 
 							world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
 
-							acyclicCount += (constraint->m_orderIndex != -1);
+							acyclicCount += (constraint->m_priority != 0);
 							
 							dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 							constraintArray[jointIndex].m_joint = constraint;
@@ -309,7 +309,7 @@ void dgWorldDynamicUpdate::SpanningTree (dgDynamicBody* const body, dgDynamicBod
 						dgInt32 jointIndex = m_joints + jointCount; 
 						world->m_jointsMemory.ExpandCapacityIfNeessesary(jointIndex, sizeof (dgJointInfo));
 
-						acyclicCount += (constraint->m_orderIndex != -1);
+						acyclicCount += (constraint->m_priority != 0);
 						
 						dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 						constraintArray[jointIndex].m_joint = constraint;
@@ -458,7 +458,7 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 						dgInt32 rows = (constraint->m_maxDOF + vectorStride - 1) & (-vectorStride);
  						constraintArray[jointIndex].m_pairCount = dgInt16 (rows);
 						jointCount ++;
-						acyclicCount += (constraint->m_orderIndex >= 0);
+						acyclicCount += (constraint->m_priority != 0);
 
 						dgAssert (constraint->m_body0);
 						dgAssert (constraint->m_body1);
@@ -555,28 +555,19 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 		m_islandMemory[m_islands].m_rowsCount = rowsCount;
 		m_islandMemory[m_islands].m_isContinueCollision = isContinueCollisionIsland;
 
-		dgAssert (0);
-/*
-		if (hasExactSolverJoints) {
-			dgInt32 contactJointCount = 0;
-			for (dgInt32 i = 0; i < jointCount; i ++) {
-				dgConstraint* const joint = constraintArray[i].m_joint;
-				contactJointCount += (joint->GetId() == dgConstraint::m_contactConstraint); 
-			}
-
-			for (dgInt32 i = 0; i < jointCount; i ++) {
-				dgConstraint* const joint = constraintArray[i].m_joint;
-				if (joint->m_useExactSolver) {
-					dgAssert (joint->IsBilateral());
-					dgBilateralConstraint* const bilateralJoint = (dgBilateralConstraint*) joint;
-					if (bilateralJoint->m_useExactSolver && (bilateralJoint->m_useExactSolverContactLimit < contactJointCount)) {
-						m_islandMemory[m_islands].m_hasExactSolverJoints = 0;
-						break;
-					}
+		
+		if (acyclicCount) {
+			for (dgInt32 i = 1; i < jointCount; i++) {
+				dgInt32 j = i;
+				dgJointInfo info (constraintArray[i]);
+				dgInt32 key = info.m_joint->m_priority;
+				for (; (j > 0) && constraintArray[j - 1].m_joint->m_priority > key; j--) {
+					constraintArray[j] = constraintArray[j -1];
 				}
+				constraintArray[j] = info;
 			}
 		}
-*/
+
 		m_islands ++;
 		m_bodies += bodyCount;
 		m_joints += jointCount;

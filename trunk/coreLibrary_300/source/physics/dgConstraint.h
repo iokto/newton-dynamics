@@ -219,7 +219,7 @@ class dgConstraint
 	ConstraintsForceFeeback m_updaFeedbackCallback;
 	dgUnsigned32 m_dynamicsLru;
 	dgUnsigned32 m_index;
-	dgInt32 m_orderIndex;
+	dgInt32 m_priority;
 	
 	dgUnsigned32 m_maxDOF				: 6;
 	dgUnsigned32 m_constId				: 6;		
@@ -248,7 +248,7 @@ inline dgConstraint::dgConstraint()
 	,m_updaFeedbackCallback(NULL)
 	,m_dynamicsLru(0)
 	,m_index(0)
-	,m_orderIndex(-1)
+	,m_priority(0)
 	,m_maxDOF(6)
 	,m_constId(m_unknownConstraint)
 	,m_enableCollision(false)

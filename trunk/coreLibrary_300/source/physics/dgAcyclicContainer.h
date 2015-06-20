@@ -22,6 +22,8 @@
 #ifndef _DG_ACYCLIC_ARTCULATED_CONTAINER_CONSTRAINT_H__
 #define _DG_ACYCLIC_ARTCULATED_CONTAINER_CONSTRAINT_H__
 
+#define DG_ACYCLIC_BIT_SHIFT_KEY	16
+
 #include "dgConstraint.h"
 
 class dgDynamicBody;
@@ -56,12 +58,14 @@ class dgAcyclicContainer
 	dgInt32 GetId () const {return m_id;}
 	void AddChild (dgBody* const parent, dgBody* const child);
 	void AddChild (dgDynamicBody* const parent, dgDynamicBody* const child);
-
+	dgInt32 GetJointCount () const {return m_jointCount;}
 	void Finalize ();
 	
+	void CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
+
 	protected:
-	
 	dgInt32 NodeCount () const;
+	
 	dgAcyclicGraph* FindNode (dgDynamicBody* const node) const;
 	void SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* const parent, const dgInt32 count, dgInt32& index);
 	virtual void SetDestructorCallback(OnConstraintDestroy destructor) {dgAssert (0);}
@@ -74,6 +78,7 @@ class dgAcyclicContainer
 	dgAcyclicJointBodyPair* m_upDownOrder;
 	dgAcyclicJointBodyPair* m_downUpOrder;
 	dgInt32 m_id;
+	dgInt32 m_jointCount;
 	static dgInt32 m_uniqueID;
 };
 
