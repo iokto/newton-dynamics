@@ -50,6 +50,6 @@
 #include "dgCollisionConvexPolygon.h"
 #include "dgCollisionDeformableMesh.h"
 #include "dgCollisionCompoundFractured.h"
-
+#include "dgAcyclicArticulationContainerConstraint.h"
 #endif 
 

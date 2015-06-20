@@ -166,6 +166,9 @@
     <ClCompile Include="..\..\..\source\physics\dgBroadPhaseDefault.cpp">
       <Filter>systems</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\physics\dgAcyclicArticulationContainerConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\physics\dgBilateralConstraint.h">
@@ -314,6 +317,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\source\physics\dgBroadPhaseDefault.h">
       <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\physics\dgAcyclicArticulationContainerConstraint.h">
+      <Filter>constraints</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
