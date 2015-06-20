@@ -18,7 +18,7 @@
 #include <CustomJointLibraryStdAfx.h>
 #include <CustomControllerManager.h>
 
-#define D_HIERACHICAL_CONTROLLER_MAX_BONES	32
+#define D_HIERACHICAL_CONTROLLER_MAX_BONES	64
 
 #define HIERACHICAL_ARTICULATED_PLUGIN_NAME	"__articulatedTransformManager__"
 
@@ -26,7 +26,6 @@
 class CustomArticulatedTransformController: public CustomControllerBase
 {
 	public:
-/*
 	class dSelfCollisionBitmask
 	{
 		public: 
@@ -77,18 +76,15 @@ class CustomArticulatedTransformController: public CustomControllerBase
 	{
 		public: 
 		dMatrix m_bindMatrix;
+		NewtonBody* m_body;
 		dSkeletonBone* m_parent;
-		CustomArticulatedTransformController* m_controller;
-//		dSelfCollisionBitmask m_bitField;
+		CustomArticulatedTransformController* m_myController;
+		dSelfCollisionBitmask m_bitField;
 	};
-*/
 
 	CUSTOM_JOINTS_API CustomArticulatedTransformController();
 	CUSTOM_JOINTS_API ~CustomArticulatedTransformController();
 
-//	CUSTOM_JOINTS_API dSkeletonBone* AddBone (NewtonBody* const bone, const dMatrix& bindMatrix, dSkeletonBone* const parentBodne = NULL);
-
-/*
 	CUSTOM_JOINTS_API void SetErrorProjectionMode (bool mode);
 	CUSTOM_JOINTS_API bool GetErrorProjectionMode () const;
 
@@ -97,6 +93,7 @@ class CustomArticulatedTransformController: public CustomControllerBase
 	CUSTOM_JOINTS_API void SetSelfCollisionMask (dSkeletonBone* const bone0, dSkeletonBone* const bone1, bool mode);
 
 	CUSTOM_JOINTS_API bool SelfCollisionTest (const dSkeletonBone* const bone0, const dSkeletonBone* const bone1) const;
+	CUSTOM_JOINTS_API dSkeletonBone* AddBone (NewtonBody* const bone, const dMatrix& bindMatrix, dSkeletonBone* const parentBodne = NULL);
 
 	CUSTOM_JOINTS_API int GetBoneCount() const;
 	CUSTOM_JOINTS_API const dSkeletonBone* GetBone(int index) const;
@@ -105,16 +102,17 @@ class CustomArticulatedTransformController: public CustomControllerBase
 	CUSTOM_JOINTS_API NewtonBody* GetBoneBody (const dSkeletonBone* const bone) const;
 
 	CUSTOM_JOINTS_API const dSkeletonBone* GetParent(const dSkeletonBone* const bone) const;
-*/	
+	
 	protected:
-	CUSTOM_JOINTS_API void Init (void* const userData, NewtonBody* const rootBone);
+	CUSTOM_JOINTS_API void Init (void* const userData, bool errorCorrectionMode);
+
 	CUSTOM_JOINTS_API virtual void PreUpdate(dFloat timestep, int threadIndex);
 	CUSTOM_JOINTS_API virtual void PostUpdate(dFloat timestep, int threadIndex);
 	
 	private:
-	NewtonAcyclicArticulation* m_articulation; 
-//	dTree<int, NewtonBody*> m_boneMap;
-//	dSkeletonBone m_bones[D_HIERACHICAL_CONTROLLER_MAX_BONES];
+	dSkeletonBone m_bones[D_HIERACHICAL_CONTROLLER_MAX_BONES];
+	int m_boneCount;
+	bool m_errorProjectionMode;
 	friend class CustomArticulaledTransformManager;
 };
 
@@ -126,15 +124,16 @@ class CustomArticulaledTransformManager: public CustomControllerManager<CustomAr
 
 	CUSTOM_JOINTS_API virtual void Debug () const {}
 
-	CUSTOM_JOINTS_API virtual CustomArticulatedTransformController* CreateTransformController (void* const userData, NewtonBody* const rootBone);
+	CUSTOM_JOINTS_API virtual CustomArticulatedTransformController* CreateTransformController (void* const userData, bool errorCorrectionMode);
 	
-//	CUSTOM_JOINTS_API virtual void DisableAllSelfCollision (CustomArticulatedTransformController* const controller);
-//	CUSTOM_JOINTS_API virtual void SetDefaultSelfCollisionMask (CustomArticulatedTransformController* const controller);
-//	CUSTOM_JOINTS_API virtual void SetCollisionMask (CustomArticulatedTransformController::dSkeletonBone* const bone0, CustomArticulatedTransformController::dSkeletonBone* const bone1, bool mode);
-//	CUSTOM_JOINTS_API virtual bool SelfCollisionTest (const CustomArticulatedTransformController::dSkeletonBone* const bone0, const CustomArticulatedTransformController::dSkeletonBone* const bone1) const;
+	CUSTOM_JOINTS_API virtual void DisableAllSelfCollision (CustomArticulatedTransformController* const controller);
+	CUSTOM_JOINTS_API virtual void SetDefaultSelfCollisionMask (CustomArticulatedTransformController* const controller);
+	
+	CUSTOM_JOINTS_API virtual void SetCollisionMask (CustomArticulatedTransformController::dSkeletonBone* const bone0, CustomArticulatedTransformController::dSkeletonBone* const bone1, bool mode);
+	CUSTOM_JOINTS_API virtual bool SelfCollisionTest (const CustomArticulatedTransformController::dSkeletonBone* const bone0, const CustomArticulatedTransformController::dSkeletonBone* const bone1) const;
 
 	CUSTOM_JOINTS_API virtual void OnPreUpdate (CustomArticulatedTransformController* const constroller, dFloat timestep, int threadIndex) const = 0;
-//	CUSTOM_JOINTS_API virtual void OnUpdateTransform (const CustomArticulatedTransformController::dSkeletonBone* const bone, const dMatrix& localMatrix) const = 0;
+	CUSTOM_JOINTS_API virtual void OnUpdateTransform (const CustomArticulatedTransformController::dSkeletonBone* const bone, const dMatrix& localMatrix) const = 0;
 
 	private: 
 	bool m_applyLocalTransform;
