@@ -81,8 +81,8 @@ class dgIsland
 	dgInt32 m_jointStart;
 	dgInt32 m_rowsCount;
 	dgInt32 m_rowsStart;
+	dgUnsigned32 m_acyclicCount			: 16;
 	dgUnsigned32 m_isContinueCollision	: 1;
-	dgUnsigned32 m_hasExactSolverJoints : 1;
 };
 
 

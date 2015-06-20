@@ -237,11 +237,6 @@ int CustomJoint::GetBodiesCollisionState () const
 	return NewtonJointGetCollisionState (m_joint);
 }
 
-void CustomJoint::JointSetSolverMode (bool mode, int maxContactJoints) const
-{
-	NewtonUserJointSetSolver (m_joint, mode, maxContactJoints);
-}
-
 
 void CustomJoint::SubmitConstraints (dFloat timestep, int threadIndex)
 {

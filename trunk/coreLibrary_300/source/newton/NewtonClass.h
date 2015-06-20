@@ -98,8 +98,6 @@ class NewtonUserJoint: public dgUserConstraint
 	void GetInfo (dgConstraintInfo* const info) const;
 
 	void SetUpdateFeedbackFunction (NewtonUserBilateralCallback getFeedback);
-		
-	void SetMaxContactsForExactSolver (bool mode, dgInt32 MaxCount);
 
 	private:
 	NewtonUserBilateralCallback m_jacobianFnt;

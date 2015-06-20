@@ -224,7 +224,6 @@ class dgConstraint
 	dgUnsigned32 m_maxDOF				: 6;
 	dgUnsigned32 m_constId				: 6;		
 	dgUnsigned32 m_enableCollision		: 1;
-	dgUnsigned32 m_useExactSolver		: 1;
 	dgUnsigned32 m_solverActive			: 1;
 	dgUnsigned32 m_contactActive		: 1;
 	
@@ -253,7 +252,6 @@ inline dgConstraint::dgConstraint()
 	,m_maxDOF(6)
 	,m_constId(m_unknownConstraint)
 	,m_enableCollision(false)
-	,m_useExactSolver(false)
 	,m_solverActive(false)
 	,m_contactActive(false)
 {

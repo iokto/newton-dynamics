@@ -158,9 +158,6 @@ class CustomJoint: public CustomAlloc
 	CUSTOM_JOINTS_API NewtonBody* GetBody1 () const;
 	CUSTOM_JOINTS_API NewtonJoint* GetJoint () const;
 
-	CUSTOM_JOINTS_API void JointSetSolverMode (bool mode, int maxContactJoints) const;
-
-
 	// the application needs to implement this function for serialization
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
 	CUSTOM_JOINTS_API virtual void ProjectError () const;
