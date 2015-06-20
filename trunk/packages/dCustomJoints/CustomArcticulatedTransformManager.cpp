@@ -25,15 +25,14 @@ CustomArticulaledTransformManager::~CustomArticulaledTransformManager()
 {
 }
 
-
-CustomArticulatedTransformController* CustomArticulaledTransformManager::CreateTransformController (void* const userData, NewtonBody* const rootBone)
+CustomArticulatedTransformController* CustomArticulaledTransformManager::CreateTransformController (void* const userData, bool errorCorrectionMode)
 {
 	CustomArticulatedTransformController* const controller = (CustomArticulatedTransformController*) CreateController();
-	controller->Init (userData, rootBone);
+	controller->Init (userData, errorCorrectionMode);
 	return controller;
 }
 
-/*
+
 void CustomArticulaledTransformManager::SetCollisionMask (CustomArticulatedTransformController::dSkeletonBone* const bone0, CustomArticulatedTransformController::dSkeletonBone* const bone1, bool mode)
 {
 	dAssert (bone0->m_myController);
@@ -58,11 +57,9 @@ bool CustomArticulaledTransformManager::SelfCollisionTest (const CustomArticulat
 	CustomArticulatedTransformController* const controller1 = bone1->m_myController; 
 	return (controller0 == controller1) ? controller0->SelfCollisionTest (bone0, bone1) : false;
 }
-*/
+
 
 CustomArticulatedTransformController::CustomArticulatedTransformController()
-	:m_articulation(NULL)
-//	,m_boneMap()
 {
 }
 
@@ -72,15 +69,13 @@ CustomArticulatedTransformController::~CustomArticulatedTransformController()
 }
 
 
-void CustomArticulatedTransformController::Init (void* const userData, NewtonBody* const rootBone)
+void CustomArticulatedTransformController::Init (void* const userData, bool errorCorrection)
 {
+	m_boneCount = 0;
 	m_userData = userData;
-	//NewtonWorld* const world = ((CustomArticulaledTransformManager*)GetManager())->GetWorld();
-	m_articulation = NewtonAcyclicArticulationCreate (rootBone);
-//	AddBone (rootBone, dGetIdentityMatrix());
+	SetErrorProjectionMode (errorCorrection);
 }
 
-/*
 void CustomArticulatedTransformController::SetErrorProjectionMode (bool mode)
 {
 	m_errorProjectionMode = mode;
@@ -90,7 +85,7 @@ bool CustomArticulatedTransformController::GetErrorProjectionMode () const
 {
 	return m_errorProjectionMode;
 }
-*/
+
 
 void CustomArticulatedTransformController::PreUpdate(dFloat timestep, int threadIndex)
 {
@@ -101,7 +96,6 @@ void CustomArticulatedTransformController::PreUpdate(dFloat timestep, int thread
 
 void CustomArticulatedTransformController::PostUpdate(dFloat timestep, int threadIndex)
 {
-/*
 	if (m_errorProjectionMode && m_boneCount && (NewtonBodyGetSleepState(m_bones[0].m_body) == 0)) {
 		for (int i = 1; i < m_boneCount; i ++) {
 			const dSkeletonBone* const bone = &m_bones[i];
@@ -132,25 +126,20 @@ void CustomArticulatedTransformController::PostUpdate(dFloat timestep, int threa
 			manager->OnUpdateTransform (&bone, matrix);
 		}
 	}
-*/
 }
 
-/*
 CustomArticulatedTransformController::dSkeletonBone* CustomArticulatedTransformController::AddBone (NewtonBody* const bone, const dMatrix& bindMatrix, dSkeletonBone* const parentBone)
 {
-	int boneCount = m_boneMap.GetCount();
-	m_boneMap.Insert (boneCount, bone);
+	m_bones[m_boneCount].m_body = bone;
+	m_bones[m_boneCount].m_myController = this;
+	m_bones[m_boneCount].m_parent = parentBone;
+	m_bones[m_boneCount].m_bindMatrix = bindMatrix;
 
-	m_bones[boneCount].m_controller = this;
-	m_bones[boneCount].m_parent = parentBone;
-	m_bones[boneCount].m_bindMatrix = bindMatrix;
-	if (boneCount > D_HIERACHICAL_CONTROLLER_MAX_BONES) {
-		dAssert (0);
-	}
-	return &m_bones[boneCount - 1];
+	m_boneCount ++;
+	dAssert (m_boneCount < D_HIERACHICAL_CONTROLLER_MAX_BONES);
+	return &m_bones[m_boneCount - 1];
 }
-*/
-/*
+
 int CustomArticulatedTransformController::GetBoneCount() const
 {
 	return m_boneCount;
@@ -234,4 +223,4 @@ bool CustomArticulatedTransformController::SelfCollisionTest (const dSkeletonBon
 	}
 	return state;
 }
-*/
+
