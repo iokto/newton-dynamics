@@ -25,6 +25,7 @@
 #include "dgConstraint.h"
 #include "dgDynamicBody.h"
 #include "dgDynamicBody.h"
+#include "dgAcyclicContainer.h"
 #include "dgCollisionInstance.h"
 #include "dgWorldDynamicUpdate.h"
 
@@ -955,6 +956,7 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 	dgWorld* const world = (dgWorld*) this;
 	const dgInt32 bodyCount = island->m_bodyCount;
 	const dgInt32 jointCount = island->m_jointCount;
+	const dgInt32 jointBaseCount = island->m_jointCount - island->m_acyclicCount;
 
 	dgJacobian* const internalForces = &m_solverMemory.m_internalForces[island->m_bodyStart];
 	dgBodyInfo* const bodyArrayPtr = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
@@ -997,6 +999,26 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 	joindDesc.m_invTimeStep = invTimestepRK;
 	joindDesc.m_firstPassCoefFlag = dgFloat32 (0.0f);
 
+	dgInt32 acyClicCount = 0;
+	dgAcyclicContainer* acyclicArray[DG_MAX_ACYCLIC_COUNT];
+	if (island->m_acyclicCount) {
+		dgAcyclicList* const acyclicList = world;
+		dgInt32 i = jointBaseCount;
+		do {
+			dgJointInfo* const jointInfo = &constraintArray[i];
+			dgConstraint* const constraint = jointInfo->m_joint;
+			dgAssert (constraint->m_priority > 0);
+			dgAssert (acyclicList->Find(constraint->m_priority>>DG_ACYCLIC_BIT_SHIFT_KEY));
+			dgAcyclicContainer* const container = acyclicList->Find(constraint->m_priority>>DG_ACYCLIC_BIT_SHIFT_KEY)->GetInfo();
+			acyclicArray[acyClicCount] = container;
+			acyClicCount ++;
+			dgAssert (acyClicCount < dgInt32 (sizeof (acyclicArray) / sizeof (acyclicArray[0])));
+			i += container->GetJointCount ();
+		} while (i < jointCount);
+
+	}
+	
+
 	const dgInt32 passes = world->m_solverMode;
 	for (dgInt32 step = 0; step < maxPasses; step ++) {
 		if (joindDesc.m_firstPassCoefFlag == dgFloat32 (0.0f)) {
@@ -1031,10 +1053,16 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 		dgFloat32 accNorm (maxAccNorm * dgFloat32 (2.0f));
 		for (dgInt32 k = 0; (k < passes) && (accNorm > maxAccNorm); k ++) {
 			accNorm = dgFloat32 (0.0f);
-			for (dgInt32 curJoint = 0; curJoint < jointCount; curJoint ++) {
-				dgJointInfo* const jointInfo = &constraintArray[curJoint];
+			for (dgInt32 i = 0; i < jointBaseCount; i ++) {
+				dgJointInfo* const jointInfo = &constraintArray[i];
 				dgFloat32 accel = CalculateJointForce (jointInfo, bodyArray, internalForces, matrixRow);
 				accNorm = (accel > accNorm) ? accel : accNorm;
+			}
+
+			for (dgInt32 i = 0; i < acyClicCount;) {
+				dgAcyclicContainer* const container = acyclicArray[i];
+				container->CalculateJointForce (constraintArray, bodyArray, internalForces, matrixRow);
+				i += container->GetJointCount();
 			}
 		}
 

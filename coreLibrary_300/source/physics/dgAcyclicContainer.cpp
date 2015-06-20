@@ -29,7 +29,8 @@
 #include "dgBilateralConstraint.h"
 
 
-#define DG_ACYCLIC_STACK_SIZE	512
+#define DG_ACYCLIC_STACK_SIZE		512
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -64,6 +65,7 @@ dgAcyclicContainer::dgAcyclicContainer (dgDynamicBody* const rootBody)
 	,m_upDownOrder(NULL)
 	,m_downUpOrder(NULL)
 	,m_id(m_uniqueID)
+	,m_jointCount(0)
 {
 	m_uniqueID ++;
 }
@@ -148,7 +150,7 @@ void dgAcyclicContainer::SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* 
 	dgBilateralConstraint* const joint = parent ? world->FindBilateralJoint (root->m_body, parent->m_body) : NULL;
 
 	if (joint) {
-		joint->m_orderIndex = index;
+		joint->m_priority = (m_id << DG_ACYCLIC_BIT_SHIFT_KEY) + index;
 	}
 
 	dgAssert ((count - index - 1) >= 0);
@@ -164,6 +166,8 @@ void dgAcyclicContainer::SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* 
 void dgAcyclicContainer::Finalize ()
 {
 	dgInt32 count = NodeCount ();
+	dgAssert (count >= 2);
+	m_jointCount = count / 2; 
 
 	dgMemoryAllocator* const allocator = m_skeleton.m_body->GetWorld()->GetAllocator();
 	m_upDownOrder = (dgAcyclicJointBodyPair*) allocator->Malloc(count * sizeof (dgAcyclicJointBodyPair));
@@ -171,4 +175,9 @@ void dgAcyclicContainer::Finalize ()
 
 	dgInt32 index = 0;
 	SortGraph (&m_skeleton, NULL, count, index);
+}
+
+void dgAcyclicContainer::CalculateJointForce (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
+{
+
 }

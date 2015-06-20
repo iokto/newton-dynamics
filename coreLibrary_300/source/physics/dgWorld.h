@@ -76,11 +76,11 @@ class dgBodyMaterialList: public dgTree<dgContactMaterial, dgUnsigned32>
 	}
 };
 
-class dgAcyclicList: public dgTree<const dgAcyclicContainer*, dgInt32>
+class dgAcyclicList: public dgTree<dgAcyclicContainer*, dgInt32>
 {
 	public:
 	dgAcyclicList(dgMemoryAllocator* const allocator)
-		:dgTree<const dgAcyclicContainer*, dgInt32>(allocator)
+		:dgTree<dgAcyclicContainer*, dgInt32>(allocator)
 	{
 	}
 };
