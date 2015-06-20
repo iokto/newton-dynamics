@@ -151,6 +151,7 @@ class dgConstraint
 		m_upVectorConstraint,
 		m_universalConstraint,
 		m_corkScrewConstraint,
+		m_acyclicConstraint,
 		m_unknownConstraint
 	};
 
@@ -167,7 +168,7 @@ class dgConstraint
 
 	bool IsActive() const;
 	bool IsCollidable () const;
-	
+		
 	virtual void ResetMaxDOF();
 	dgInt32 GetMaxDOF() const;
 	
@@ -218,13 +219,14 @@ class dgConstraint
 	ConstraintsForceFeeback m_updaFeedbackCallback;
 	dgUnsigned32 m_dynamicsLru;
 	dgUnsigned32 m_index;
+	dgInt32 m_orderIndex;
 	
-	dgUnsigned32 m_maxDOF			:  6;
-	dgUnsigned32 m_constId			:  6;		
-	dgUnsigned32 m_enableCollision	:  1;
-	dgUnsigned32 m_useExactSolver	:  1;
-	dgUnsigned32 m_solverActive		:  1;
-	dgUnsigned32 m_contactActive	:  1;
+	dgUnsigned32 m_maxDOF				: 6;
+	dgUnsigned32 m_constId				: 6;		
+	dgUnsigned32 m_enableCollision		: 1;
+	dgUnsigned32 m_useExactSolver		: 1;
+	dgUnsigned32 m_solverActive			: 1;
+	dgUnsigned32 m_contactActive		: 1;
 	
 	friend class dgWorld;
 	friend class dgAmpInstance;
@@ -234,6 +236,7 @@ class dgConstraint
 	friend class dgParallelSolverJointAcceleration;
 	friend class dgParallelSolverInitFeedbackUpdate;
 	friend class dgParallelSolverBuildJacobianMatrix;
+	friend class dgAcyclicContainer;
 	friend class dgBroadPhaseMaterialCallbackWorkerThread;
 } DG_GCC_VECTOR_ALIGMENT;
 
@@ -246,6 +249,7 @@ inline dgConstraint::dgConstraint()
 	,m_updaFeedbackCallback(NULL)
 	,m_dynamicsLru(0)
 	,m_index(0)
+	,m_orderIndex(-1)
 	,m_maxDOF(6)
 	,m_constId(m_unknownConstraint)
 	,m_enableCollision(false)
@@ -336,5 +340,6 @@ inline bool dgConstraint::IsActive() const
 	return m_contactActive ? true : false;
 }
 
-#endif // !defined(AFX_DGCONSTRAINT_H__F9EC24E0_6E0F_4CD5_909E_A5F5E1AC7C0B_H)
+
+#endif 
 

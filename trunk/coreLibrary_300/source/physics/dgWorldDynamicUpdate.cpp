@@ -457,12 +457,8 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 						
 						dgJointInfo* const constraintArray = (dgJointInfo*) &world->m_jointsMemory[0];
 						constraintArray[jointIndex].m_joint = constraint;
-
-						//dgInt32 rows = dgInt32 ((constraint->m_maxDOF & (dgInt32 (sizeof (dgVector) / sizeof (dgFloat32)) - 1)) ? ((constraint->m_maxDOF & (-dgInt32 (sizeof (dgVector) / sizeof (dgFloat32)))) + dgInt32 (sizeof (dgVector) / sizeof (dgFloat32))) : constraint->m_maxDOF);
 						dgInt32 rows = (constraint->m_maxDOF + vectorStride - 1) & (-vectorStride);
-						//rowsCount += (rows + (ccdMode ? DG_CCD_EXTRA_CONTACT_COUNT : 0));
  						constraintArray[jointIndex].m_pairCount = dgInt16 (rows);
-
 						jointCount ++;
 
 						dgAssert (constraint->m_body0);

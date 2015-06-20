@@ -48,7 +48,7 @@
 #include "dgUpVectorConstraint.h"
 #include "dgUniversalConstraint.h"
 #include "dgCorkscrewConstraint.h"
-#include "dgAcyclicArticulationContainerConstraint.h"
+#include "dgAcyclicContainer.h"
 
 #ifdef _NEWTON_AMP
 #include "dgAmpInstance.h"
@@ -215,6 +215,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgBodyMaterialList(allocator)
 	,dgBodyCollisionList(allocator)
 	,dgDeformableBodiesUpdate(allocator)
+	,dgAcyclicList(allocator)
 	,dgActiveContacts(allocator) 
 	,dgWorldDynamicUpdate()
 	,dgMutexThread("dgMutexThread", DG_MUTEX_THREAD_ID, DG_ENGINE_STACK_SIZE)
@@ -324,6 +325,10 @@ dgWorld::~dgWorld()
 		delete m_amp;
 	}
 	#endif
+	dgAcyclicList::Iterator iter (*this);
+	for (iter.Begin(); iter; iter ++) {
+		delete iter.GetNode()->GetInfo();
+	}
 
 	m_preListener.RemoveAll();
 	m_postListener.RemoveAll();
@@ -1342,10 +1347,13 @@ void dgWorld::SetBroadPhaseType(dgInt32 type)
 }
 
 
-dgAcyclicArticulationContainerConstraint* dgWorld::CreateNewtonAcyclicArticulation (dgBody* const rootBone)
+dgAcyclicContainer* dgWorld::CreateNewtonAcyclicContainer (dgBody* const rootBone)
 {
-	dgAssert (rootBone->GetType() == dgBody::m_dynamicBody);
-	dgAcyclicArticulationContainerConstraint* const constraint = new (m_allocator) dgAcyclicArticulationContainerConstraint((dgDynamicBody*)rootBone);
-	AttachConstraint (constraint, rootBone, NULL);
-	return constraint;
+	dgBody* const body = rootBone ? rootBone : GetSentinelBody();
+	dgAssert (body->GetType() == dgBody::m_dynamicBody);
+	dgAcyclicContainer* const container = new (m_allocator) dgAcyclicContainer((dgDynamicBody*)body);
+
+	dgAcyclicList* const list = this;
+	list->Insert (container, container->GetId());
+	return container;
 }

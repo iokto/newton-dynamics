@@ -110,7 +110,7 @@ extern "C" {
 	class NewtonJoint;
 	class NewtonMaterial;
 	class NewtonCollision;
-	class NewtonAcyclicArticulation;
+	class NewtonAcyclicContainer;
 	class NewtonDeformableMeshSegment;
 	class NewtonFracturedCompoundMeshPart;
 #else
@@ -120,7 +120,7 @@ extern "C" {
 	typedef struct NewtonJoint{} NewtonJoint;
 	typedef struct NewtonMaterial{} NewtonMaterial;
 	typedef struct NewtonCollision{} NewtonCollision;
-	typedef struct NewtonAcyclicArticulation{} NewtonAcyclicArticulation;
+	typedef struct NewtonAcyclicContainer{} NewtonAcyclicContainer;
 	typedef struct NewtonDeformableMeshSegment{} NewtonDeformableMeshSegment;
 	typedef struct NewtonFracturedCompoundMeshPart{} NewtonFracturedCompoundMeshPart;
 #endif
@@ -1156,11 +1156,11 @@ extern "C" {
 	//	simple robotic contractions with not internal loops, Vehicles, Ropes, etc. That will all interact seamlessly and naturally with the physics world.
 	//	
 	// ************************************************************************************************************************
-	NEWTON_API NewtonAcyclicArticulation* NewtonAcyclicArticulationCreate (NewtonBody* const rootBone);
-	NEWTON_API void NewtonAcyclicArticulationDelete (NewtonAcyclicArticulation* const articulation);
-	NEWTON_API void* NewtonAcyclicArticulationAttachBone (NewtonAcyclicArticulation* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone);
-	NEWTON_API void NewtonAcyclicArticulationDetachBone (NewtonAcyclicArticulation* const articulation, void* const bone);
-	NEWTON_API void NewtonAcyclicArticulationFinalize (NewtonAcyclicArticulation* const articulation);
+	NEWTON_API NewtonAcyclicContainer* NewtonAcyclicContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone);
+	NEWTON_API void NewtonAcyclicContainerDelete (NewtonAcyclicContainer* const articulation);
+	NEWTON_API void* NewtonAcyclicContainerAttachBone (NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone);
+	NEWTON_API void NewtonAcyclicContainernDetachBone (NewtonAcyclicContainer* const articulation, void* const bone);
+	NEWTON_API void NewtonAcyclicContainerFinalize (NewtonAcyclicContainer* const articulation);
 
 
 	// **********************************************************************************************
