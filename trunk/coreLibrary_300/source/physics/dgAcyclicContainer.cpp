@@ -177,7 +177,12 @@ void dgAcyclicContainer::Finalize ()
 	SortGraph (&m_skeleton, NULL, count, index);
 }
 
-void dgAcyclicContainer::CalculateJointForce (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
+dgFloat32 dgAcyclicContainer::CalculateJointForce (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
 {
 
+	for (dgInt32 i = 0; i < m_jointCount; i ++) {
+
+	}
+
+	return dgFloat32 (0.0f);
 }
