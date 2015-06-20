@@ -61,7 +61,7 @@ class dgAcyclicContainer
 	dgInt32 GetJointCount () const {return m_jointCount;}
 	void Finalize ();
 	
-	void CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
+	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	protected:
 	dgInt32 NodeCount () const;

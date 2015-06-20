@@ -1061,8 +1061,9 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 
 			for (dgInt32 i = 0; i < acyClicCount;) {
 				dgAcyclicContainer* const container = acyclicArray[i];
-				container->CalculateJointForce (constraintArray, bodyArray, internalForces, matrixRow);
+				dgFloat32 accel = container->CalculateJointForce (&constraintArray[i], bodyArray, internalForces, matrixRow);
 				i += container->GetJointCount();
+				accNorm = (accel > accNorm) ? accel : accNorm;
 			}
 		}
 
