@@ -55,7 +55,7 @@ class dgUpVectorConstraint;
 class dgUniversalConstraint;
 class dgCorkscrewConstraint;
 class dgCollisionDeformableMesh;
-class dgAcyclicArticulationContainerConstraint;
+class dgAcyclicContainer;
 
 
 class dgBodyCollisionList: public dgTree<const dgCollision*, dgUnsigned32>
@@ -76,6 +76,14 @@ class dgBodyMaterialList: public dgTree<dgContactMaterial, dgUnsigned32>
 	}
 };
 
+class dgAcyclicList: public dgTree<const dgAcyclicContainer*, dgInt32>
+{
+	public:
+	dgAcyclicList(dgMemoryAllocator* const allocator)
+		:dgTree<const dgAcyclicContainer*, dgInt32>(allocator)
+	{
+	}
+};
 
 
 class dgWorld;
@@ -110,6 +118,7 @@ class dgWorld
 	,public dgBodyMaterialList
 	,public dgBodyCollisionList
 	,public dgDeformableBodiesUpdate
+	,public dgAcyclicList
 	,public dgActiveContacts 
 	,public dgWorldDynamicUpdate
 	,public dgMutexThread
@@ -313,7 +322,7 @@ class dgWorld
 	dgCorkscrewConstraint* CreateCorkscrewConstraint (const dgVector& pivot, const dgVector& pin, dgBody* const body0, dgBody *refBody = NULL);
 	dgUniversalConstraint* CreateUniversalConstraint (const dgVector& pivot, const dgVector& pin0, const dgVector& pin1, dgBody* const body0, dgBody *body1 = NULL);
 
-	dgAcyclicArticulationContainerConstraint* CreateNewtonAcyclicArticulation (dgBody* const rootBone);
+	dgAcyclicContainer* CreateNewtonAcyclicContainer (dgBody* const rootBone);
 
 	void DestroyConstraint (dgConstraint* constraint);
 	dgUnsigned32 CreateBodyGroupID();

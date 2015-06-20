@@ -8663,40 +8663,40 @@ const int* NewtonDeformableMeshSegmentGetIndexList (const NewtonCollision* const
 
 
 
-NewtonAcyclicArticulation* NewtonAcyclicArticulationCreate(NewtonBody* const rootBone)
+NewtonAcyclicContainer* NewtonAcyclicContainerCreate(NewtonWorld* const worldPtr, NewtonBody* const rootBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)rootBone;
-	dgWorld* const world = body->GetWorld();
-	return (NewtonAcyclicArticulation*)world->CreateNewtonAcyclicArticulation (body);
+	dgWorld* const world = (dgWorld*) worldPtr;
+	return (NewtonAcyclicContainer*)world->CreateNewtonAcyclicContainer (body);
 }
 
-void* NewtonAcyclicArticulationAttachBone(NewtonAcyclicArticulation* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone)
+void* NewtonAcyclicContainerAttachBone(NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 
-	dgAcyclicArticulationContainerConstraint* const articulationJoint = (dgAcyclicArticulationContainerConstraint*) articulation;
+	dgAcyclicContainer* const articulationJoint = (dgAcyclicContainer*) articulation;
 	articulationJoint->AddChild((dgBody*) parentBone, (dgBody*) childBone);
 	return NULL;
 }
 
 
-void NewtonAcyclicArticulationDelete(NewtonAcyclicArticulation* const articulation)
+void NewtonAcyclicContainerDelete(NewtonAcyclicContainer* const articulation)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgAssert(0);
 }
 
 
-void NewtonAcyclicArticulationDetachBone(NewtonAcyclicArticulation* const articulation, void* const bone)
+void NewtonAcyclicContainernDetachBone(NewtonAcyclicContainer* const articulation, void* const bone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgAssert (0);
 }
 
-void NewtonAcyclicArticulationFinalize (NewtonAcyclicArticulation* const articulation)
+void NewtonAcyclicContainerFinalize (NewtonAcyclicContainer* const articulation)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgAcyclicArticulationContainerConstraint* const articulationJoint = (dgAcyclicArticulationContainerConstraint*)articulation;
+	dgAcyclicContainer* const articulationJoint = (dgAcyclicContainer*)articulation;
 	articulationJoint->Finalize();
 }

@@ -358,10 +358,12 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 
 
 	// optionally we can now make this int an acyclic joint 
-	NewtonAcyclicArticulation* const skeleton = NewtonAcyclicArticulationCreate (box0);
-	NewtonAcyclicArticulationAttachBone (skeleton, box0, box1);
-	NewtonAcyclicArticulationAttachBone (skeleton, box1, box2);
-	NewtonAcyclicArticulationFinalize (skeleton);
+	NewtonAcyclicContainer* const skeleton = NewtonAcyclicContainerCreate (scene->GetNewton(), NULL);
+//	NewtonAcyclicArticulation* const skeleton = NewtonAcyclicArticulationCreate (box0);
+	NewtonAcyclicContainerAttachBone (skeleton, NULL, box0);
+//	NewtonAcyclicArticulationAttachBone (skeleton, box0, box1);
+//	NewtonAcyclicArticulationAttachBone (skeleton, box1, box2);
+	NewtonAcyclicContainerFinalize (skeleton);
 }
 
 static void AddSlider (DemoEntityManager* const scene, const dVector& origin)
