@@ -1159,7 +1159,7 @@ extern "C" {
 	// ************************************************************************************************************************
 	NEWTON_API NewtonAcyclicContainer* NewtonAcyclicContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone);
 	NEWTON_API void NewtonAcyclicContainerDelete (NewtonAcyclicContainer* const articulation);
-	NEWTON_API void* NewtonAcyclicContainerAttachBone (NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone);
+	NEWTON_API void NewtonAcyclicContainerAttachBone (NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone);
 	NEWTON_API void NewtonAcyclicContainernDetachBone (NewtonAcyclicContainer* const articulation, void* const bone);
 	NEWTON_API void NewtonAcyclicContainerFinalize (NewtonAcyclicContainer* const articulation);
 

@@ -8657,13 +8657,11 @@ NewtonAcyclicContainer* NewtonAcyclicContainerCreate(NewtonWorld* const worldPtr
 	return (NewtonAcyclicContainer*)world->CreateNewtonAcyclicContainer (body);
 }
 
-void* NewtonAcyclicContainerAttachBone(NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone)
+void NewtonAcyclicContainerAttachBone(NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-
 	dgAcyclicContainer* const articulationJoint = (dgAcyclicContainer*) articulation;
 	articulationJoint->AddChild((dgBody*) parentBone, (dgBody*) childBone);
-	return NULL;
 }
 
 

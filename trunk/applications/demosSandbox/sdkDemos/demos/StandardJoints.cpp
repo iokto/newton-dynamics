@@ -390,7 +390,7 @@ new CustomHinge(matrix, box2, box1);
 NewtonBodyGetMatrix(box3, &matrix[0][0]);
 matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, 0.0f);
 matrix = localPin * matrix;
-new CustomHinge(matrix, box3, box2);
+new CustomHinge(matrix, box3, box1);
 
 /*
 NewtonBodyGetMatrix(box4, &matrix[0][0]);
@@ -412,7 +412,7 @@ new CustomHinge(matrix, box6, box5);
 
 NewtonAcyclicContainer* const skeleton = NewtonAcyclicContainerCreate(scene->GetNewton(), box1);
 NewtonAcyclicContainerAttachBone(skeleton, box1, box2);
-NewtonAcyclicContainerAttachBone(skeleton, box2, box3);
+NewtonAcyclicContainerAttachBone(skeleton, box1, box3);
 //NewtonAcyclicContainerAttachBone(skeleton, box2, box4);
 //NewtonAcyclicContainerAttachBone(skeleton, box1, box5);
 //NewtonAcyclicContainerAttachBone(skeleton, box5, box6);
