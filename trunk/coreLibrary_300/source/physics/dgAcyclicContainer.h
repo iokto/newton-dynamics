@@ -41,14 +41,9 @@ class dgAcyclicContainer
 
 		dgDynamicBody* m_body;
 		dgDynamicBody* m_parent;
-		dgList<dgAcyclicGraph*> m_children;
-	};
-
-	class dgAcyclicJointBodyPair
-	{
-		public:
-		dgDynamicBody* m_Body;
 		dgBilateralConstraint* m_joint;
+		dgInt32 m_index;
+		dgList<dgAcyclicGraph*> m_children;
 	};
 
 	DG_CLASS_ALLOCATOR(allocator)
@@ -75,8 +70,8 @@ class dgAcyclicContainer
 	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
 	dgAcyclicGraph m_skeleton;
-	dgAcyclicJointBodyPair* m_upDownOrder;
-	dgAcyclicJointBodyPair* m_downUpOrder;
+	dgAcyclicGraph** m_topDownOrder;
+	dgAcyclicGraph** m_downTopOrder;
 	dgInt32 m_id;
 	dgInt32 m_jointCount;
 	static dgInt32 m_uniqueID;
