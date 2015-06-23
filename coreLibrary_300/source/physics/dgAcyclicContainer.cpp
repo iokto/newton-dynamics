@@ -62,8 +62,8 @@ dgAcyclicContainer::dgAcyclicGraph::~dgAcyclicGraph()
 
 dgAcyclicContainer::dgAcyclicContainer (dgDynamicBody* const rootBody)
 	:m_skeleton(rootBody->GetWorld()->GetAllocator(), rootBody, NULL)
-	,m_upDownOrder(NULL)
-	,m_downUpOrder(NULL)
+	,m_topDownOrder(NULL)
+	,m_downTopOrder(NULL)
 	,m_id(m_uniqueID)
 	,m_jointCount(0)
 {
@@ -73,9 +73,9 @@ dgAcyclicContainer::dgAcyclicContainer (dgDynamicBody* const rootBody)
 dgAcyclicContainer::~dgAcyclicContainer ()
 {
 	dgMemoryAllocator* const allocator = m_skeleton.m_body->GetWorld()->GetAllocator();
-	if (m_upDownOrder) {
-		allocator->Free(m_upDownOrder);
-		allocator->Free(m_downUpOrder);
+	if (m_topDownOrder) {
+		allocator->Free(m_topDownOrder);
+		allocator->Free(m_downTopOrder);
 	}
 }
 
@@ -153,12 +153,10 @@ void dgAcyclicContainer::SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* 
 		joint->m_priority = (m_id << DG_ACYCLIC_BIT_SHIFT_KEY) + index;
 	}
 
+	root->m_joint = joint;
 	dgAssert ((count - index - 1) >= 0);
-	m_upDownOrder[count - index - 1].m_Body = root->m_body;
-	m_upDownOrder[count - index - 1].m_joint = joint;
-
-	m_downUpOrder[index].m_Body = root->m_body;
-	m_downUpOrder[index].m_joint = joint;
+	m_downTopOrder[index] = root;
+	m_topDownOrder[count - index - 1] = root;
 	index ++;
 	dgAssert (index <= count);
 }
@@ -170,17 +168,90 @@ void dgAcyclicContainer::Finalize ()
 	m_jointCount = count / 2; 
 
 	dgMemoryAllocator* const allocator = m_skeleton.m_body->GetWorld()->GetAllocator();
-	m_upDownOrder = (dgAcyclicJointBodyPair*) allocator->Malloc(count * sizeof (dgAcyclicJointBodyPair));
-	m_downUpOrder = (dgAcyclicJointBodyPair*) allocator->Malloc(count * sizeof (dgAcyclicJointBodyPair));
+	m_topDownOrder = (dgAcyclicGraph**) allocator->Malloc(count * sizeof (dgAcyclicGraph*));
+	m_downTopOrder = (dgAcyclicGraph**) allocator->Malloc(count * sizeof (dgAcyclicGraph*));
 
 	dgInt32 index = 0;
 	SortGraph (&m_skeleton, NULL, count, index);
+
+	dgInt32 stack = 1;
+	dgAcyclicGraph* stackPool[DG_ACYCLIC_STACK_SIZE];
+
+	index = 0;
+	stackPool[0] = (dgAcyclicGraph*)&m_skeleton;
+	while (stack) {
+		stack--;
+		dgAcyclicGraph* const node = stackPool[stack];
+		node->m_index = index;
+		index ++;
+		for (dgList<dgAcyclicGraph*>::dgListNode* ptr = node->m_children.GetLast(); ptr; ptr = ptr->GetPrev()) {
+			stackPool[stack] = ptr->GetInfo();
+			stack++;
+			dgAssert(stack < dgInt32(sizeof (stackPool) / sizeof (stackPool[0])));
+		}
+	}
 }
+
+class dgAcyclicMatrix
+{
+	public:
+	dgJacobian m[6];
+};
+
+class dgAcyclicElement
+{
+	public:
+	dgAcyclicMatrix m_d;
+	dgAcyclicMatrix m_dInv;
+	dgAcyclicMatrix m_j;
+	dgJacobian m_x;
+	dgInt32 m_index;
+	bool m_type;
+};
+
 
 dgFloat32 dgAcyclicContainer::CalculateJointForce (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
 {
+	dgAcyclicElement array[30];
+
 
 	for (dgInt32 i = 0; i < m_jointCount; i ++) {
+		dgAcyclicGraph* const node = m_topDownOrder[i];
+
+		dgInt32 index = node->m_index;
+		dgAcyclicElement& elemBody = array[index * 2];
+		dgBody* const body = node->m_body;
+		dgVector mass (body->GetMass());
+		dgMatrix inertia (body->CalculateInertiaMatrix());
+		elemBody.m_d.m[0].m_linear = mass & dgVector::m_xMask;
+		elemBody.m_d.m[0].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[1].m_linear = mass & dgVector::m_yMask;
+		elemBody.m_d.m[1].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[2].m_linear = mass & dgVector::m_zMask;
+		elemBody.m_d.m[2].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[3].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[3].m_angular = inertia[0];
+		elemBody.m_d.m[4].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[4].m_angular = inertia[1];
+		elemBody.m_d.m[5].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[5].m_angular = inertia[2];
+
+
+		dgAcyclicElement& elemJoint = array[index * 2 + 1];
+		//dgAcyclicGraph* const node1 = m_downTopOrder___[i];
+
+		elemBody.m_d.m[0].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[0].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[1].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[1].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[2].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[2].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[3].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[3].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[4].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[4].m_angular = dgVector::m_zero;
+		elemBody.m_d.m[5].m_linear = dgVector::m_zero;
+		elemBody.m_d.m[5].m_angular = dgVector::m_zero;
 
 	}
 
