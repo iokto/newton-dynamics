@@ -555,7 +555,6 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 		m_islandMemory[m_islands].m_rowsCount = rowsCount;
 		m_islandMemory[m_islands].m_isContinueCollision = isContinueCollisionIsland;
 
-		
 		if (acyclicCount) {
 			for (dgInt32 i = 1; i < jointCount; i++) {
 				dgInt32 j = i;

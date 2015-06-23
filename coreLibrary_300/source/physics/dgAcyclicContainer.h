@@ -31,20 +31,11 @@ class dgDynamicBody;
 class dgAcyclicContainer
 {
 	public:
-	class dgAcyclicGraph
-	{
-		public: 
-		DG_CLASS_ALLOCATOR(allocator)
-		dgAcyclicGraph ();
-		dgAcyclicGraph (dgMemoryAllocator* const allocator, dgDynamicBody* const body, dgDynamicBody* const parent);
-		~dgAcyclicGraph();
-
-		dgDynamicBody* m_body;
-		dgDynamicBody* m_parent;
-		dgBilateralConstraint* m_joint;
-		dgInt32 m_index;
-		dgList<dgAcyclicGraph*> m_children;
-	};
+	class dgAcyclicGraph;
+	class dgAcyclicMatrix;
+	class dgAcyclicNodeInfo;
+	class dgAcyclicGraphMassNode;
+	class dgAcyclicGraphJointNode;
 
 	DG_CLASS_ALLOCATOR(allocator)
 	dgAcyclicContainer(dgDynamicBody* const rootBody);
@@ -53,27 +44,28 @@ class dgAcyclicContainer
 	dgInt32 GetId () const {return m_id;}
 	void AddChild (dgBody* const parent, dgBody* const child);
 	void AddChild (dgDynamicBody* const parent, dgDynamicBody* const child);
-	dgInt32 GetJointCount () const {return m_jointCount;}
-	void Finalize ();
 	
+	void Finalize ();
+	dgInt32 GetBufferSize () const;
+	dgInt32 GetJointCount () const {return (m_nodeCount - 1) / 2;}
+
+	void InitMassMatrix (void* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow);
 	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	protected:
-	dgInt32 NodeCount () const;
-	
 	dgAcyclicGraph* FindNode (dgDynamicBody* const node) const;
-	void SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* const parent, const dgInt32 count, dgInt32& index);
+	void SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* const parent, dgInt32& index);
 	virtual void SetDestructorCallback(OnConstraintDestroy destructor) {dgAssert (0);}
 
 	virtual dgUnsigned32 JacobianDerivative(dgContraintDescritor& params) {return 0;}
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) {}
 	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
-	dgAcyclicGraph m_skeleton;
+	dgAcyclicGraphMassNode* m_skeleton;
 	dgAcyclicGraph** m_topDownOrder;
 	dgAcyclicGraph** m_downTopOrder;
 	dgInt32 m_id;
-	dgInt32 m_jointCount;
+	dgInt32 m_nodeCount;
 	static dgInt32 m_uniqueID;
 };
 
