@@ -262,7 +262,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\meshUtil\dgMeshEffect6.cpp" />
-    <ClCompile Include="..\..\..\source\physics\dgAcyclicContainer.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgBallConstraint.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgBilateralConstraint.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgBroadPhaseDefault.cpp" />
@@ -274,6 +273,7 @@
     <ClCompile Include="..\..\..\source\physics\dgDeformableBodiesUpdate.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgDeformableContact.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgHingeConstraint.cpp" />
+    <ClCompile Include="..\..\..\source\physics\dgSkeletonContainer.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgSlidingConstraint.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgUniversalConstraint.cpp" />
     <ClCompile Include="..\..\..\source\physics\dgUpVectorConstraint.cpp" />
@@ -326,7 +326,6 @@
     <ClCompile Include="..\..\..\source\physics\dgKinematicBody.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\source\physics\dgAcyclicContainer.h" />
     <ClInclude Include="..\..\..\source\physics\dgBallConstraint.h" />
     <ClInclude Include="..\..\..\source\physics\dgBilateralConstraint.h" />
     <ClInclude Include="..\..\..\source\physics\dgBroadPhaseDefault.h" />
@@ -338,6 +337,7 @@
     <ClInclude Include="..\..\..\source\physics\dgDeformableBodiesUpdate.h" />
     <ClInclude Include="..\..\..\source\physics\dgDeformableContact.h" />
     <ClInclude Include="..\..\..\source\physics\dgHingeConstraint.h" />
+    <ClInclude Include="..\..\..\source\physics\dgSkeletonContainer.h" />
     <ClInclude Include="..\..\..\source\physics\dgSlidingConstraint.h" />
     <ClInclude Include="..\..\..\source\physics\dgUniversalConstraint.h" />
     <ClInclude Include="..\..\..\source\physics\dgUpVectorConstraint.h" />

@@ -183,7 +183,7 @@
     <ClCompile Include="..\..\..\source\physics\dgBroadPhasePersistent.cpp">
       <Filter>systems</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\physics\dgAcyclicContainer.cpp">
+    <ClCompile Include="..\..\..\source\physics\dgSkeletonContainer.cpp">
       <Filter>systems</Filter>
     </ClCompile>
   </ItemGroup>
@@ -335,7 +335,7 @@
     <ClInclude Include="..\..\..\source\physics\dgBroadPhasePersistent.h">
       <Filter>systems</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\physics\dgAcyclicContainer.h">
+    <ClInclude Include="..\..\..\source\physics\dgSkeletonContainer.h">
       <Filter>systems</Filter>
     </ClInclude>
   </ItemGroup>
