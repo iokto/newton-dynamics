@@ -110,7 +110,7 @@ extern "C" {
 	class NewtonJoint;
 	class NewtonMaterial;
 	class NewtonCollision;
-	class NewtonAcyclicContainer;
+	class NewtonSkeletonContainer;
 	class NewtonDeformableMeshSegment;
 	class NewtonFracturedCompoundMeshPart;
 #else
@@ -120,7 +120,7 @@ extern "C" {
 	typedef struct NewtonJoint{} NewtonJoint;
 	typedef struct NewtonMaterial{} NewtonMaterial;
 	typedef struct NewtonCollision{} NewtonCollision;
-	typedef struct NewtonAcyclicContainer{} NewtonAcyclicContainer;
+	typedef struct NewtonSkeletonContainer{} NewtonSkeletonContainer;
 	typedef struct NewtonDeformableMeshSegment{} NewtonDeformableMeshSegment;
 	typedef struct NewtonFracturedCompoundMeshPart{} NewtonFracturedCompoundMeshPart;
 #endif
@@ -1152,16 +1152,16 @@ extern "C" {
 
 	// ************************************************************************************************************************
 	// 
-	//	Acyclic articulation offer the same level of accuracy that Feather stone reduced coordinate link chains algorithm  
+	//	Acyclic skeleton offer the same level of accuracy that Feather stone reduced coordinate link chains algorithm  
 	//	these are good to make near perfect Rag dolls, physically based and inversed dynamics animated bodies, 
 	//	simple robotic contractions with not internal loops, Vehicles, Ropes, etc. That will all interact seamlessly and naturally with the physics world.
 	//	
 	// ************************************************************************************************************************
-	NEWTON_API NewtonAcyclicContainer* NewtonAcyclicContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone);
-	NEWTON_API void NewtonAcyclicContainerDelete (NewtonAcyclicContainer* const articulation);
-	NEWTON_API void NewtonAcyclicContainerAttachBone (NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone);
-	NEWTON_API void NewtonAcyclicContainernDetachBone (NewtonAcyclicContainer* const articulation, void* const bone);
-	NEWTON_API void NewtonAcyclicContainerFinalize (NewtonAcyclicContainer* const articulation);
+	NEWTON_API NewtonSkeletonContainer* NewtonSkeletonContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone);
+	NEWTON_API void NewtonSkeletonContainerDelete (NewtonSkeletonContainer* const skeleton);
+	NEWTON_API void NewtonSkeletonContainerAttachBone (NewtonSkeletonContainer* const skeleton, NewtonBody* const parentBone, NewtonBody* const childBone);
+	NEWTON_API void NewtonSkeletonContainernDetachBone (NewtonSkeletonContainer* const skeleton, void* const bone);
+	NEWTON_API void NewtonSkeletonContainerFinalize (NewtonSkeletonContainer* const skeleton);
 
 
 	// **********************************************************************************************

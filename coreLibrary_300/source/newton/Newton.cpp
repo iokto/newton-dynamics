@@ -8649,38 +8649,38 @@ const int* NewtonDeformableMeshSegmentGetIndexList (const NewtonCollision* const
 
 
 
-NewtonAcyclicContainer* NewtonAcyclicContainerCreate(NewtonWorld* const worldPtr, NewtonBody* const rootBone)
+NewtonSkeletonContainer* NewtonSkeletonContainerCreate(NewtonWorld* const worldPtr, NewtonBody* const rootBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)rootBone;
 	dgWorld* const world = (dgWorld*) worldPtr;
-	return (NewtonAcyclicContainer*)world->CreateNewtonAcyclicContainer (body);
+	return (NewtonSkeletonContainer*)world->CreateNewtonSkeletonContainer (body);
 }
 
-void NewtonAcyclicContainerAttachBone(NewtonAcyclicContainer* const articulation, NewtonBody* const parentBone, NewtonBody* const childBone)
+void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, NewtonBody* const parentBone, NewtonBody* const childBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgAcyclicContainer* const articulationJoint = (dgAcyclicContainer*) articulation;
-	articulationJoint->AddChild((dgBody*) parentBone, (dgBody*) childBone);
+	dgSkeletonContainer* const skeleton = (dgSkeletonContainer*) skeleton;
+	skeleton->AddChild((dgBody*) parentBone, (dgBody*) childBone);
 }
 
 
-void NewtonAcyclicContainerDelete(NewtonAcyclicContainer* const articulation)
+void NewtonSkeletonContainerDelete(NewtonSkeletonContainer* const skeleton)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgAssert(0);
 }
 
 
-void NewtonAcyclicContainernDetachBone(NewtonAcyclicContainer* const articulation, void* const bone)
+void NewtonSkeletonContainernDetachBone(NewtonSkeletonContainer* const skeleton, void* const bone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgAssert (0);
 }
 
-void NewtonAcyclicContainerFinalize (NewtonAcyclicContainer* const articulation)
+void NewtonSkeletonContainerFinalize (NewtonSkeletonContainer* const skeleton)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgAcyclicContainer* const articulationJoint = (dgAcyclicContainer*)articulation;
-	articulationJoint->Finalize();
+	dgSkeletonContainer* const skeleton = (dgSkeletonContainer*)skeleton;
+	skeleton->Finalize();
 }
