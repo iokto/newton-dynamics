@@ -318,7 +318,7 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 {
     dVector size (1.5f, 4.0f, 0.125f);
-/*
+
     NewtonBody* const box0 = CreateBox (scene, origin + dVector (0.0f, 4.0f, 0.0f, 0.0f), size);
     NewtonBody* const box1 = CreateBox (scene, origin + dVector (1.5f, 4.0f, 0.0f, 0.0f), size);
     NewtonBody* const box2 = CreateBox (scene, origin + dVector (3.0f, 4.0f, 0.0f, 0.0f), size);
@@ -357,68 +357,13 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
     hinge2->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
     //hinge2->SetFriction (20.0f);
 
-
 	// optionally we can now make this int an acyclic joint 
-	NewtonAcyclicContainer* const skeleton = NewtonAcyclicContainerCreate (scene->GetNewton(), NULL);
-//	NewtonAcyclicArticulation* const skeleton = NewtonAcyclicArticulationCreate (box0);
-	NewtonAcyclicContainerAttachBone (skeleton, NULL, box0);
-//	NewtonAcyclicArticulationAttachBone (skeleton, box0, box1);
-//	NewtonAcyclicArticulationAttachBone (skeleton, box1, box2);
-	NewtonAcyclicContainerFinalize (skeleton);
-*/
-
-NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
-NewtonBody* const box2 = CreateBox(scene, origin + dVector(1.5f, 4.0f, -1.0f, 0.0f), size);
-NewtonBody* const box3 = CreateBox(scene, origin + dVector(1.5f, 4.0f,  1.0f, 0.0f), size);
-//NewtonBody* const box4 = CreateBox(scene, origin + dVector(4.5f, 4.0f, 0.0f, 0.0f), size);
-//NewtonBody* const box5 = CreateBox(scene, origin + dVector(6.0f, 4.0f, 0.0f, 0.0f), size);
-//NewtonBody* const box6 = CreateBox(scene, origin + dVector(6.5f, 4.0f, 0.0f, 0.0f), size);
-
-dMatrix localPin (dRollMatrix(90.0f * 3.141592f / 180.0f));
-dMatrix matrix;
-
-NewtonBodyGetMatrix(box1, &matrix[0][0]);
-matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, 0.0f);
-matrix = localPin * matrix;
-new CustomHinge(matrix, box1, NULL);
-
-NewtonBodyGetMatrix(box2, &matrix[0][0]);
-matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, 0.0f);
-matrix = localPin * matrix;
-new CustomHinge(matrix, box2, box1);
-
-NewtonBodyGetMatrix(box3, &matrix[0][0]);
-matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, 0.0f);
-matrix = localPin * matrix;
-new CustomHinge(matrix, box3, box1);
-
-/*
-NewtonBodyGetMatrix(box4, &matrix[0][0]);
-matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, -size.m_x * 0.5f);
-matrix = localPin * matrix;
-new CustomHinge(matrix, box4, box2);
-
-
-NewtonBodyGetMatrix(box5, &matrix[0][0]);
-matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, -size.m_x * 0.5f);
-matrix = localPin * matrix;
-new CustomHinge(matrix, box5, box1);
-
-NewtonBodyGetMatrix(box6, &matrix[0][0]);
-matrix.m_posit += dVector(-size.m_x * 0.5f, 0.0f, 0.0f);
-matrix = localPin * matrix;
-new CustomHinge(matrix, box6, box5);
-*/
-
-NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box1);
-NewtonSkeletonContainerAttachBone(skeleton, box1, box2);
-NewtonSkeletonContainerAttachBone(skeleton, box1, box3);
-//NewtonAcyclicContainerAttachBone(skeleton, box2, box4);
-//NewtonAcyclicContainerAttachBone(skeleton, box1, box5);
-//NewtonAcyclicContainerAttachBone(skeleton, box5, box6);
-NewtonSkeletonContainerFinalize(skeleton);
-
-
+//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0);
+//	NewtonSkeletonContainerAttachBone (skeleton, NULL, box0);
+	NewtonSkeletonContainerAttachBone (skeleton, box0, box1);
+//	NewtonSkeletonContainerAttachBone (skeleton, box1, box2);
+	NewtonSkeletonContainerFinalize (skeleton);
 }
 
 static void AddSlider (DemoEntityManager* const scene, const dVector& origin)
