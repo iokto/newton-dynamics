@@ -360,9 +360,8 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 	// optionally we can now make this int an acyclic joint 
 //	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0);
-//	NewtonSkeletonContainerAttachBone (skeleton, NULL, box0);
 	NewtonSkeletonContainerAttachBone (skeleton, box0, box1);
-//	NewtonSkeletonContainerAttachBone (skeleton, box1, box2);
+	NewtonSkeletonContainerAttachBone (skeleton, box1, box2);
 	NewtonSkeletonContainerFinalize (skeleton);
 }
 
