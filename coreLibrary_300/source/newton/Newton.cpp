@@ -8660,8 +8660,8 @@ NewtonSkeletonContainer* NewtonSkeletonContainerCreate(NewtonWorld* const worldP
 void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, NewtonBody* const parentBone, NewtonBody* const childBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgSkeletonContainer* const skeleton = (dgSkeletonContainer*) skeleton;
-	skeleton->AddChild((dgBody*) parentBone, (dgBody*) childBone);
+	dgSkeletonContainer* const skeletonContainer = (dgSkeletonContainer*) skeleton;
+	skeletonContainer->AddChild((dgBody*) parentBone, (dgBody*) childBone);
 }
 
 
@@ -8681,6 +8681,6 @@ void NewtonSkeletonContainernDetachBone(NewtonSkeletonContainer* const skeleton,
 void NewtonSkeletonContainerFinalize (NewtonSkeletonContainer* const skeleton)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgSkeletonContainer* const skeleton = (dgSkeletonContainer*)skeleton;
-	skeleton->Finalize();
+	dgSkeletonContainer* const skeletonContainer = (dgSkeletonContainer*)skeleton;
+	skeletonContainer->Finalize();
 }
