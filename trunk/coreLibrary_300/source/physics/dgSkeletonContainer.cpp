@@ -24,45 +24,45 @@
 #include "dgWorld.h"
 #include "dgConstraint.h"
 #include "dgDynamicBody.h"
-#include "dgAcyclicContainer.h"
+#include "dgSkeletonContainer.h"
 #include "dgWorldDynamicUpdate.h"
 #include "dgBilateralConstraint.h"
 
 
-#define DG_ACYCLIC_STACK_SIZE		512
+#define DG_SKELETON_STACK_SIZE		512
 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////// 
-dgInt32 dgAcyclicContainer::m_uniqueID = 10;
+dgInt32 dgSkeletonContainer::m_uniqueID = 10;
 
 
 
-class dgAcyclicContainer::dgAcyclicMatrix
+class dgSkeletonContainer::dgSkeletonMatrix
 {
 	public:
 	dgMatrix m_d[2][2];
 };
 
 
-class dgAcyclicContainer::dgAcyclicNodeInfo
+class dgSkeletonContainer::dgSkeletonNodeInfo
 {
 	public:
-	dgAcyclicMatrix m_matrix;
+	dgSkeletonMatrix m_matrix;
 	//dgAcyclicMatrix m_invMatrix;
-	dgAcyclicMatrix m_jacobian;
+	dgSkeletonMatrix m_jacobian;
 	dgJacobian m_vector;
 };
 
 
-class dgAcyclicContainer::dgAcyclicGraph
+class dgSkeletonContainer::dgSkeletonGraph
 {
 	public:
 	DG_CLASS_ALLOCATOR(allocator)
 
-	dgAcyclicGraph(dgMemoryAllocator* const allocator, dgAcyclicGraph* const parent)
+	dgSkeletonGraph(dgMemoryAllocator* const allocator, dgSkeletonGraph* const parent)
 		:m_parent(parent)
 		,m_block(NULL)
 		,m_children(allocator)
@@ -70,14 +70,14 @@ class dgAcyclicContainer::dgAcyclicGraph
 	{
 	}
 
-	virtual ~dgAcyclicGraph()
+	virtual ~dgSkeletonGraph()
 	{
-		for (dgList<dgAcyclicGraph*>::dgListNode* ptr = m_children.GetFirst(); ptr; ptr = ptr->GetNext()) {
+		for (dgList<dgSkeletonGraph*>::dgListNode* ptr = m_children.GetFirst(); ptr; ptr = ptr->GetNext()) {
 			delete ptr->GetInfo();
 		}
 	}
 
-	void AddChild(dgAcyclicGraph* const child)
+	void AddChild(dgSkeletonGraph* const child)
 	{
 		m_children.Append(child);
 	}
@@ -97,12 +97,12 @@ class dgAcyclicContainer::dgAcyclicGraph
 	}
 
 
-	virtual void Init(dgAcyclicNodeInfo* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow) 
+	virtual void Init(dgSkeletonNodeInfo* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow) 
 	{
 		m_block = buffer;
 	}
 
-	void AccumulateMatrix()
+	void AccumulateMatrix(dgSkeletonGraph* const child)
 	{
 		dgAssert (0);
 	}
@@ -117,17 +117,17 @@ class dgAcyclicContainer::dgAcyclicGraph
 		dgAssert (0);
 	}
 
-	dgAcyclicGraph* m_parent;
-	dgAcyclicNodeInfo* m_block;
-	dgList<dgAcyclicGraph*> m_children;
+	dgSkeletonGraph* m_parent;
+	dgSkeletonNodeInfo* m_block;
+	dgList<dgSkeletonGraph*> m_children;
 	dgInt32 m_index;
 };
 
-class dgAcyclicContainer::dgAcyclicGraphMassNode: public dgAcyclicGraph
+class dgSkeletonContainer::dgSkeletonGraphMassNode: public dgSkeletonGraph
 {
 	public:
-	dgAcyclicGraphMassNode(dgMemoryAllocator* const allocator, dgDynamicBody* const body, dgAcyclicGraph* const parent)
-		:dgAcyclicGraph (allocator, parent)
+	dgSkeletonGraphMassNode(dgMemoryAllocator* const allocator, dgDynamicBody* const body, dgSkeletonGraph* const parent)
+		:dgSkeletonGraph (allocator, parent)
 		,m_body(body)
 	{
 		if (parent) {
@@ -140,9 +140,9 @@ class dgAcyclicContainer::dgAcyclicGraphMassNode: public dgAcyclicGraph
 		return m_body;
 	}
 
-	virtual void Init(dgAcyclicNodeInfo* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
+	virtual void Init(dgSkeletonNodeInfo* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
 	{
-		dgAcyclicGraph::Init(buffer, jointInfoArray, matrixRow);
+		dgSkeletonGraph::Init(buffer, jointInfoArray, matrixRow);
 		dgVector mass = m_body->GetMass();
 		m_block->m_matrix.m_d[0][0][0] = mass & dgVector::m_xMask;
 		m_block->m_matrix.m_d[0][0][1] = mass & dgVector::m_xMask;
@@ -184,11 +184,11 @@ class dgAcyclicContainer::dgAcyclicGraphMassNode: public dgAcyclicGraph
 	dgDynamicBody* m_body;
 };
 
-class dgAcyclicContainer::dgAcyclicGraphJointNode: public dgAcyclicGraph
+class dgSkeletonContainer::dgSkeletonGraphJointNode: public dgSkeletonGraph
 {
 	public:
-	dgAcyclicGraphJointNode(dgMemoryAllocator* const allocator, dgBilateralConstraint* const Joint, dgAcyclicGraph* const parent)
-		:dgAcyclicGraph(allocator, parent)
+	dgSkeletonGraphJointNode(dgMemoryAllocator* const allocator, dgBilateralConstraint* const Joint, dgSkeletonGraph* const parent)
+		:dgSkeletonGraph(allocator, parent)
 		,m_joint(Joint)
 	{
 		parent->AddChild (this);
@@ -204,9 +204,9 @@ class dgAcyclicContainer::dgAcyclicGraphJointNode: public dgAcyclicGraph
 		m_joint->m_priority = priority;
 	}
 
-	virtual void Init(dgAcyclicNodeInfo* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow) 
+	virtual void Init(dgSkeletonNodeInfo* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow) 
 	{
-		dgAcyclicGraph::Init(buffer, jointInfoArray, matrixRow);
+		dgSkeletonGraph::Init(buffer, jointInfoArray, matrixRow);
 
 		dgJointInfo* const jointInfo = &jointInfoArray[m_joint->m_index];
 		dgAssert (jointInfo->m_joint == m_joint);
@@ -241,8 +241,8 @@ class dgAcyclicContainer::dgAcyclicGraphJointNode: public dgAcyclicGraph
 
 
 
-dgAcyclicContainer::dgAcyclicContainer (dgDynamicBody* const rootBody)
-	:m_skeleton(new (rootBody->GetWorld()->GetAllocator()) dgAcyclicGraphMassNode (rootBody->GetWorld()->GetAllocator(), rootBody, NULL))
+dgSkeletonContainer::dgSkeletonContainer (dgDynamicBody* const rootBody)
+	:m_skeleton(new (rootBody->GetWorld()->GetAllocator()) dgSkeletonGraphMassNode (rootBody->GetWorld()->GetAllocator(), rootBody, NULL))
 	,m_topDownOrder(NULL)
 	,m_downTopOrder(NULL)
 	,m_id(m_uniqueID)
@@ -251,7 +251,7 @@ dgAcyclicContainer::dgAcyclicContainer (dgDynamicBody* const rootBody)
 	m_uniqueID ++;
 }
 
-dgAcyclicContainer::~dgAcyclicContainer ()
+dgSkeletonContainer::~dgSkeletonContainer ()
 {
 	dgMemoryAllocator* const allocator = m_skeleton->m_body->GetWorld()->GetAllocator();
 	if (m_topDownOrder) {
@@ -262,20 +262,20 @@ dgAcyclicContainer::~dgAcyclicContainer ()
 }
 
 
-dgAcyclicContainer::dgAcyclicGraph* dgAcyclicContainer::FindNode (dgDynamicBody* const body) const
+dgSkeletonContainer::dgSkeletonGraph* dgSkeletonContainer::FindNode (dgDynamicBody* const body) const
 {
 	dgInt32 stack = 1;
-	dgAcyclicGraph* stackPool[DG_ACYCLIC_STACK_SIZE];
+	dgSkeletonGraph* stackPool[DG_SKELETON_STACK_SIZE];
 
 	stackPool[0] = m_skeleton;
 	while (stack) {
 		stack --;
-		dgAcyclicGraph* const node = stackPool[stack];
+		dgSkeletonGraph* const node = stackPool[stack];
 		if (node->GetBody() == body) {
 			return node;
 		}
 
-		for (dgList<dgAcyclicGraph*>::dgListNode* ptr = node->m_children.GetFirst(); ptr; ptr = ptr->GetNext()) {
+		for (dgList<dgSkeletonGraph*>::dgListNode* ptr = node->m_children.GetFirst(); ptr; ptr = ptr->GetNext()) {
 			stackPool[stack] = ptr->GetInfo();
 			stack ++;
 			dgAssert (stack < dgInt32 (sizeof (stackPool) / sizeof (stackPool[0])));
@@ -284,7 +284,7 @@ dgAcyclicContainer::dgAcyclicGraph* dgAcyclicContainer::FindNode (dgDynamicBody*
 	return NULL;
 }
 
-void dgAcyclicContainer::AddChild (dgBody* const parent, dgBody* const child)
+void dgSkeletonContainer::AddChild (dgBody* const parent, dgBody* const child)
 {
 	dgAssert (child);
 	dgBody* const parent1 = parent ? parent : m_skeleton->m_body;
@@ -293,34 +293,34 @@ void dgAcyclicContainer::AddChild (dgBody* const parent, dgBody* const child)
 	AddChild ((dgDynamicBody*) parent1, (dgDynamicBody*) child);
 }
 
-void dgAcyclicContainer::AddChild (dgDynamicBody* const parent, dgDynamicBody* const child)
+void dgSkeletonContainer::AddChild (dgDynamicBody* const parent, dgDynamicBody* const child)
 {
-	dgAcyclicGraph* const parentNode = FindNode (parent);
+	dgSkeletonGraph* const parentNode = FindNode (parent);
 	dgAssert (parentNode);
 
 	dgWorld* const world = m_skeleton->m_body->GetWorld();
 	dgMemoryAllocator* const allocator = world->GetAllocator();
 	dgBilateralConstraint* const joint = world->FindBilateralJoint (parent, child);
 	dgAssert (joint);
-	dgAcyclicGraph* const massParent = new (allocator) dgAcyclicGraphJointNode (allocator, joint, parentNode);
-	new (allocator) dgAcyclicGraphMassNode (allocator, child, massParent);
+	dgSkeletonGraph* const massParent = new (allocator) dgSkeletonGraphJointNode (allocator, joint, parentNode);
+	new (allocator) dgSkeletonGraphMassNode (allocator, child, massParent);
 	m_nodeCount += 2;
 }
 
 
-dgInt32 dgAcyclicContainer::GetBufferSize () const
+dgInt32 dgSkeletonContainer::GetBufferSize () const
 {
-	dgInt32 blocksize = sizeof (dgAcyclicNodeInfo);
+	dgInt32 blocksize = sizeof (dgSkeletonNodeInfo);
 	return m_nodeCount * blocksize;
 }
 
-void dgAcyclicContainer::SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* const parent, dgInt32& index)
+void dgSkeletonContainer::SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index)
 {
-	for (dgList<dgAcyclicGraph*>::dgListNode* node = root->m_children.GetFirst(); node; node = node->GetNext()) {
+	for (dgList<dgSkeletonGraph*>::dgListNode* node = root->m_children.GetFirst(); node; node = node->GetNext()) {
 		SortGraph (node->GetInfo(), root, index);
 	}
 
-	root->SetPriority((m_id << DG_ACYCLIC_BIT_SHIFT_KEY) + index);
+	root->SetPriority((m_id << DG_SKELETON_BIT_SHIFT_KEY) + index);
 	dgAssert ((m_nodeCount - index - 1) >= 0);
 	m_downTopOrder[index] = root;
 	m_topDownOrder[m_nodeCount - index - 1] = root;
@@ -329,42 +329,24 @@ void dgAcyclicContainer::SortGraph (dgAcyclicGraph* const root, dgAcyclicGraph* 
 	dgAssert (index <= m_nodeCount);
 }
 
-void dgAcyclicContainer::Finalize ()
+void dgSkeletonContainer::Finalize ()
 {
 	dgAssert (m_nodeCount >= 1);
 	dgMemoryAllocator* const allocator = m_skeleton->m_body->GetWorld()->GetAllocator();
-	m_topDownOrder = (dgAcyclicGraph**) allocator->Malloc(m_nodeCount * sizeof (dgAcyclicGraph*));
-	m_downTopOrder = (dgAcyclicGraph**) allocator->Malloc(m_nodeCount * sizeof (dgAcyclicGraph*));
+	m_topDownOrder = (dgSkeletonGraph**) allocator->Malloc(m_nodeCount * sizeof (dgSkeletonGraph*));
+	m_downTopOrder = (dgSkeletonGraph**) allocator->Malloc(m_nodeCount * sizeof (dgSkeletonGraph*));
 
 	dgInt32 index = 0;
 	SortGraph (m_skeleton, NULL, index);
-
-/*
-	dgInt32 stack = 1;
-	dgAcyclicGraph* stackPool[DG_ACYCLIC_STACK_SIZE];
-	index = 0;
-	stackPool[0] = m_skeleton;
-	while (stack) {
-		stack--;
-		dgAcyclicGraph* const node = stackPool[stack];
-		node->m_index = index;
-		index ++;
-		for (dgList<dgAcyclicGraph*>::dgListNode* ptr = node->m_children.GetLast(); ptr; ptr = ptr->GetPrev()) {
-			stackPool[stack] = ptr->GetInfo();
-			stack++;
-			dgAssert(stack < dgInt32(sizeof (stackPool) / sizeof (stackPool[0])));
-		}
-	}
-*/
 }
 
 
-dgFloat32 dgAcyclicContainer::CalculateJointForce (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
+dgFloat32 dgSkeletonContainer::CalculateJointForce (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
 {
 dgAssert (0);
 /*
 	for (dgInt32 i = 0; i < m_jointCount; i ++) {
-		dgAcyclicGraph* const node = m_topDownOrder[i];
+		dgSkeletonGraph* const node = m_topDownOrder[i];
 
 		dgInt32 index = node->m_index;
 		dgAcyclicElement& elemBody = array[index * 2];
@@ -386,7 +368,7 @@ dgAssert (0);
 
 
 		dgAcyclicElement& elemJoint = array[index * 2 + 1];
-		//dgAcyclicGraph* const node1 = m_downTopOrder___[i];
+		//dgSkeletonGraph* const node1 = m_downTopOrder___[i];
 
 		elemBody.m_d.m[0].m_linear = dgVector::m_zero;
 		elemBody.m_d.m[0].m_angular = dgVector::m_zero;
@@ -406,19 +388,19 @@ dgAssert (0);
 }
 
 
-void dgAcyclicContainer::InitMassMatrix (void* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
+void dgSkeletonContainer::InitMassMatrix (void* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
 {
-	dgAcyclicNodeInfo* const block = (dgAcyclicNodeInfo*) buffer;
+	dgSkeletonNodeInfo* const block = (dgSkeletonNodeInfo*) buffer;
 
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgAcyclicGraph* const node = m_topDownOrder[i];
+		dgSkeletonGraph* const node = m_topDownOrder[i];
 		node->Init(block + i, jointInfoArray, matrixRow);
 	}
 
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgAcyclicGraph* const node = m_topDownOrder[i];
-		for (dgList<dgAcyclicGraph*>::dgListNode* child = node->m_children.GetFirst(); child; child = child->GetNext()) {
-			node->AccumulateMatrix();
+		dgSkeletonGraph* const node = m_topDownOrder[i];
+		for (dgList<dgSkeletonGraph*>::dgListNode* child = node->m_children.GetFirst(); child; child = child->GetNext()) {
+			node->AccumulateMatrix(child->GetInfo());
 		}
 		node->CalculateInverse();
 		if (node->m_parent) {

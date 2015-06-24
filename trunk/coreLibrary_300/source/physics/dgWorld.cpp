@@ -46,9 +46,10 @@
 #include "dgHingeConstraint.h"
 #include "dgSlidingConstraint.h"
 #include "dgUpVectorConstraint.h"
+#include "dgSkeletonContainer.h"
 #include "dgUniversalConstraint.h"
 #include "dgCorkscrewConstraint.h"
-#include "dgAcyclicContainer.h"
+
 
 #ifdef _NEWTON_AMP
 #include "dgAmpInstance.h"
@@ -1347,11 +1348,11 @@ void dgWorld::SetBroadPhaseType(dgInt32 type)
 }
 
 
-dgAcyclicContainer* dgWorld::CreateNewtonAcyclicContainer (dgBody* const rootBone)
+dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootBone)
 {
 	dgBody* const body = rootBone ? rootBone : GetSentinelBody();
 	dgAssert (body->GetType() == dgBody::m_dynamicBody);
-	dgAcyclicContainer* const container = new (m_allocator) dgAcyclicContainer((dgDynamicBody*)body);
+	dgSkeletonContainer* const container = new (m_allocator) dgSkeletonContainer((dgDynamicBody*)body);
 
 	dgAcyclicList* const list = this;
 	list->Insert (container, container->GetId());

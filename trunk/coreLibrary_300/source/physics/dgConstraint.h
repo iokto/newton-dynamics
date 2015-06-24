@@ -235,7 +235,7 @@ class dgConstraint
 	friend class dgParallelSolverJointAcceleration;
 	friend class dgParallelSolverInitFeedbackUpdate;
 	friend class dgParallelSolverBuildJacobianMatrix;
-	friend class dgAcyclicContainer;
+	friend class dgSkeletonContainer;
 	friend class dgBroadPhaseMaterialCallbackWorkerThread;
 } DG_GCC_VECTOR_ALIGMENT;
 

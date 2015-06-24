@@ -410,13 +410,13 @@ matrix = localPin * matrix;
 new CustomHinge(matrix, box6, box5);
 */
 
-NewtonAcyclicContainer* const skeleton = NewtonAcyclicContainerCreate(scene->GetNewton(), box1);
-NewtonAcyclicContainerAttachBone(skeleton, box1, box2);
-NewtonAcyclicContainerAttachBone(skeleton, box1, box3);
+NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box1);
+NewtonSkeletonContainerAttachBone(skeleton, box1, box2);
+NewtonSkeletonContainerAttachBone(skeleton, box1, box3);
 //NewtonAcyclicContainerAttachBone(skeleton, box2, box4);
 //NewtonAcyclicContainerAttachBone(skeleton, box1, box5);
 //NewtonAcyclicContainerAttachBone(skeleton, box5, box6);
-NewtonAcyclicContainerFinalize(skeleton);
+NewtonSkeletonContainerFinalize(skeleton);
 
 
 }
