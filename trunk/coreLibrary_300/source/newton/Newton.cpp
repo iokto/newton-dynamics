@@ -8657,11 +8657,11 @@ NewtonSkeletonContainer* NewtonSkeletonContainerCreate(NewtonWorld* const worldP
 	return (NewtonSkeletonContainer*)world->CreateNewtonSkeletonContainer (body);
 }
 
-void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, NewtonBody* const parentBone, NewtonBody* const childBone)
+void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, NewtonBody* const childBone, NewtonBody* const parentBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgSkeletonContainer* const skeletonContainer = (dgSkeletonContainer*) skeleton;
-	skeletonContainer->AddChild((dgBody*) parentBone, (dgBody*) childBone);
+	skeletonContainer->AddChild((dgBody*) childBone, (dgBody*) parentBone);
 }
 
 

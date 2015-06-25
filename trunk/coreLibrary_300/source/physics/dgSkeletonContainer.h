@@ -42,8 +42,7 @@ class dgSkeletonContainer
 	~dgSkeletonContainer();
 
 	dgInt32 GetId () const {return m_id;}
-	void AddChild (dgBody* const parent, dgBody* const child);
-	void AddChild (dgDynamicBody* const parent, dgDynamicBody* const child);
+	void AddChild (dgBody* const child, dgBody* const parent);
 	
 	void Finalize ();
 	dgInt32 GetBufferSize () const;
@@ -54,6 +53,7 @@ class dgSkeletonContainer
 
 	protected:
 	dgSkeletonGraph* FindNode (dgDynamicBody* const node) const;
+	void AddChild (dgDynamicBody* const child, dgDynamicBody* const parent);
 	void SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index);
 	virtual void SetDestructorCallback(OnConstraintDestroy destructor) {dgAssert (0);}
 
@@ -62,8 +62,8 @@ class dgSkeletonContainer
 	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
 	dgSkeletonGraphMassNode* m_skeleton;
-	dgSkeletonGraph** m_topDownOrder;
-	dgSkeletonGraph** m_downTopOrder;
+	dgSkeletonGraph** m_bottomTopOrder;
+	dgSkeletonGraph** m_topBottomOrder;
 	dgInt32 m_id;
 	dgInt32 m_nodeCount;
 	static dgInt32 m_uniqueID;

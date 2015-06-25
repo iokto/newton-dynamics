@@ -335,33 +335,37 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 
     // add hinge with limit and friction
     CustomHinge* const hinge0 = new CustomHinge (matrix, box0, NULL);
-    hinge0->EnableLimits (true);
-    hinge0->SetLimis(-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
-    hinge0->SetFriction (20.0f);
+//    hinge0->EnableLimits (true);
+//    hinge0->SetLimis(-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
+//    hinge0->SetFriction (20.0f);
 
     // link the two boxes
     NewtonBodyGetMatrix (box1, &matrix[0][0]);
     matrix.m_posit += dVector (-size.m_x * 0.5f, 0.0f, 0.0f);
     matrix = localPin * matrix;
-    CustomHinge* const hinge1 = new CustomHinge (matrix, box0, box1);
-    hinge1->EnableLimits (true);
-    hinge1->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
-    hinge1->SetFriction (20.0f);
+    CustomHinge* const hinge1 = new CustomHinge (matrix, box1, box0);
+	hinge1->EnableLimits (true);
+//  hinge1->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
+//  hinge1->SetFriction (20.0f);
 
     // link the two boxes
     NewtonBodyGetMatrix (box2, &matrix[0][0]);
     matrix.m_posit += dVector (-size.m_x * 0.5f, 0.0f, 0.0f);
     matrix = localPin * matrix;
-    CustomHinge* const hinge2 = new CustomHinge (matrix, box1, box2);
-    hinge2->EnableLimits (true);
-    hinge2->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
-    //hinge2->SetFriction (20.0f);
+    CustomHinge* const hinge2 = new CustomHinge (matrix, box2, box1);
+//    hinge2->EnableLimits (true);
+//    hinge2->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
+//	hinge2->SetFriction (20.0f);
 
 	// optionally we can now make this int an acyclic joint 
 //	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0);
-	NewtonSkeletonContainerAttachBone (skeleton, box0, box1);
-	NewtonSkeletonContainerAttachBone (skeleton, box1, box2);
+
+	dAssert ((hinge1->GetBody0() == box1) && (hinge1->GetBody1() == box0));
+	NewtonSkeletonContainerAttachBone (skeleton, box1, box0);
+
+	dAssert ((hinge2->GetBody0() == box2) && (hinge2->GetBody1() == box1));
+	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize (skeleton);
 }
 
