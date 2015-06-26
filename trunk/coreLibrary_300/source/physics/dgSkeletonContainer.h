@@ -32,8 +32,6 @@ class dgSkeletonContainer
 {
 	public:
 	class dgSkeletonGraph;
-	class dgSkeletonMatrix;
-	class dgSkeletonNodeInfo;
 	class dgSkeletonGraphMassNode;
 	class dgSkeletonGraphJointNode;
 
@@ -48,7 +46,7 @@ class dgSkeletonContainer
 	dgInt32 GetBufferSize () const;
 	dgInt32 GetJointCount () const {return (m_nodeCount - 1) / 2;}
 
-	void InitMassMatrix (void* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow);
+	void InitMassMatrix (char* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow);
 	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	protected:
