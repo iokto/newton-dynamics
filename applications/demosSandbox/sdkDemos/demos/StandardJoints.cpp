@@ -365,7 +365,7 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 	NewtonSkeletonContainerAttachBone (skeleton, box1, box0);
 
 	dAssert ((hinge2->GetBody0() == box2) && (hinge2->GetBody1() == box1));
-	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+//	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize (skeleton);
 }
 
