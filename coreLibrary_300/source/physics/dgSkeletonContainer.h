@@ -32,8 +32,6 @@ class dgSkeletonContainer
 {
 	public:
 	class dgSkeletonGraph;
-	class dgSkeletonGraphMassNode;
-	class dgSkeletonGraphJointNode;
 
 	DG_CLASS_ALLOCATOR(allocator)
 	dgSkeletonContainer(dgDynamicBody* const rootBody);
@@ -59,7 +57,7 @@ class dgSkeletonContainer
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) {}
 	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
-	dgSkeletonGraphMassNode* m_skeleton;
+	dgSkeletonGraph* m_skeleton;
 	dgSkeletonGraph** m_bottomTopOrder;
 	dgSkeletonGraph** m_topBottomOrder;
 	dgInt32 m_id;
