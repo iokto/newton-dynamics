@@ -297,7 +297,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 			}
 			m_data->m_offDiagonal.SetZero(m_jacobialDof);
 			for (dgInt32 i = 0; i < m_jacobialDof; i ++) {
-				dgFloat32* line = &m_data->m_invDiagonal.m_rows[i].m_linear.m_x; 
+				const dgFloat32* const line = &m_data->m_invDiagonal.m_rows[i].m_linear.m_x; 
 				const dgSpacialVector& jacovian = copy.m_rows[i];
 				for (dgInt32 j = 0; j < m_jacobialDof; j ++) {
 					dgVector val (line[i]);
@@ -315,22 +315,27 @@ class dgSkeletonContainer::dgSkeletonGraph
 		const dgSpacialMatrix& jacobianTransposed = child->m_data->m_offDiagonal;
 		if (m_body) {
 			dgSpacialMatrix copy;
-			for (dgInt32 i = 0; i < m_jacobialDof; i++) {
-				copy.m_rows[i] = childDiagonal.m_rows[i];
-			}
-			//m_data->m_offDiagonal.SetZero(m_jacobialDof);
-/*
-			for (dgInt32 i = 0; i < m_jacobialDof; i++) {
-				dgFloat32* line = &m_data->m_invDiagonal.m_rows[i].m_linear.m_x;
-				const dgSpacialVector& jacovian = copy.m_rows[i];
+			copy.SetZero(child->m_jacobialDof);
+
+			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
+				const dgFloat32* const line = &childDiagonal.m_rows[i].m_linear.m_x;
+				const dgSpacialVector& jacovian = jacobianTransposed.m_rows[i];
 				for (dgInt32 j = 0; j < m_jacobialDof; j++) {
 					dgVector val(line[i]);
-					m_data->m_offDiagonal.m_rows[j].m_linear += jacovian.m_linear.CompProduct4(val);
-					m_data->m_offDiagonal.m_rows[j].m_angular += jacovian.m_angular.CompProduct4(val);
+					copy.m_rows[j].m_linear += jacovian.m_linear.CompProduct4(val);
+					copy.m_rows[j].m_angular += jacovian.m_angular.CompProduct4(val);
+				}
+			}
+			
+			dgAssert (m_diaginalDof == 6);
+/*
+			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
+				dgFloat32 a = (jacobianTransposed.m_rows[i].m_linear.DotProduct4(copy.m_rows[i].m_linear) + jacobianTransposed.m_rows[i].m_angular.DotProduct4(copy.m_rows[i].m_angular)).GetScalar();
+
+				for (dgInt32 j = 0; j < i; j++) {
 				}
 			}
 */
-			
 		} else {
 			dgAssert (child->m_body);
 			for (dgInt32 i = 0; i < m_jacobialDof; i++) {
