@@ -160,6 +160,29 @@ class dgSkeletonContainer::dgSkeletonGraph
 			}
 		}
 
+		void SubstractCovariance (const dgSpacialVector& jt, const dgSpacialVector& j)
+		{
+			for (dgInt32 i = 0; i < 3; i ++) {
+				dgVector l (jt.m_linear[i]);
+				m_rows[i].m_linear -= j.m_linear.CompProduct4(l);
+				m_rows[i].m_angular -= j.m_angular.CompProduct4(l);
+
+				dgVector a(jt.m_angular[i]);
+				m_rows[i + 3].m_linear -= j.m_linear.CompProduct4(a);
+				m_rows[i + 3].m_angular -= j.m_angular.CompProduct4(a);
+			}
+
+			#ifdef _DEBUG
+			for (dgInt32 i = 0; i < 6; i ++) {
+				for (dgInt32 j = 0; j < 6; j ++) {
+					dgFloat32 a = (j <= 3) ? m_rows[i].m_linear[j] : m_rows[i].m_angular[j - 3];
+					dgFloat32 b = (i <= 3) ? m_rows[j].m_linear[i] : m_rows[j].m_angular[i - 3];
+					dgAssert (dgAbsf(a - b) < dgFloat32 (1.0e-4f));
+				}
+			}
+			#endif
+		}
+
 		dgSpacialVector m_rows[6];
 	};
 
@@ -317,25 +340,28 @@ class dgSkeletonContainer::dgSkeletonGraph
 			dgSpacialMatrix copy;
 			copy.SetZero(child->m_jacobialDof);
 
+			dgAssert (child->m_jacobialDof  <= 3);
 			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
-				const dgFloat32* const line = &childDiagonal.m_rows[i].m_linear.m_x;
+				const dgFloat32* const row = &childDiagonal.m_rows[i].m_linear.m_x;
+				dgAssert (row[3] == dgFloat32 (0.0f));
+				dgAssert (row[7] == dgFloat32 (0.0f));
 				const dgSpacialVector& jacovian = jacobianTransposed.m_rows[i];
-				for (dgInt32 j = 0; j < m_jacobialDof; j++) {
-					dgVector val(line[i]);
-					copy.m_rows[j].m_linear += jacovian.m_linear.CompProduct4(val);
-					copy.m_rows[j].m_angular += jacovian.m_angular.CompProduct4(val);
+				for (dgInt32 j = 0; j < child->m_jacobialDof; j++) {
+					dgVector val0(row[i]);
+					copy.m_rows[j].m_linear += jacovian.m_linear.CompProduct4(val0);
+					copy.m_rows[j].m_angular += jacovian.m_angular.CompProduct4(val0);
 				}
 			}
 			
 			dgAssert (m_diaginalDof == 6);
-/*
+			dgSpacialMatrix& diagonal = m_data->m_diagonal;
 			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
-				dgFloat32 a = (jacobianTransposed.m_rows[i].m_linear.DotProduct4(copy.m_rows[i].m_linear) + jacobianTransposed.m_rows[i].m_angular.DotProduct4(copy.m_rows[i].m_angular)).GetScalar();
-
-				for (dgInt32 j = 0; j < i; j++) {
+				const dgSpacialVector& jt = jacobianTransposed.m_rows[i];
+				for (dgInt32 j = 0; j < child->m_jacobialDof; j ++) {
+					diagonal.SubstractCovariance (jt, copy.m_rows[j]);
 				}
 			}
-*/
+
 		} else {
 			dgAssert (child->m_body);
 			for (dgInt32 i = 0; i < m_jacobialDof; i++) {
