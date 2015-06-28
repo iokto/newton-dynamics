@@ -57,6 +57,8 @@ class dgSkeletonContainer
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) {}
 	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
+	static void ResetUniqueId(dgInt32 id);
+
 	bool Sanity () const;
 
 	dgSkeletonGraph* m_skeleton;
@@ -65,6 +67,8 @@ class dgSkeletonContainer
 	dgInt32 m_id;
 	dgInt32 m_nodeCount;
 	static dgInt32 m_uniqueID;
+
+	friend class dgWorld;
 };
 
 #endif

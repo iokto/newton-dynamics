@@ -14,8 +14,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifndef D_NEWTON_CUSTOM_JOINT_H_
-#define D_NEWTON_CUSTOM_JOINT_H_
+#ifndef __D_NEWTON_CUSTOM_JOINT_H__
+#define __D_NEWTON_CUSTOM_JOINT_H__
 
 #include "CustomJointLibraryStdAfx.h"
 #include "dMathDefines.h"
@@ -160,7 +160,6 @@ class CustomJoint: public CustomAlloc
 
 	// the application needs to implement this function for serialization
 	CUSTOM_JOINTS_API virtual void GetInfo (NewtonJointRecord* const info) const;
-	CUSTOM_JOINTS_API virtual void ProjectError () const;
 
 	// these member function are only used by the C interface or for hooking callback to customize a particular 
 	// joint without deriving a new one
