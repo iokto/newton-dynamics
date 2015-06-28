@@ -64,6 +64,23 @@ class dgSkeletonContainer::dgSkeletonGraph
 			const dgFloat32* const ptr = &m_v[0].m_x;
 			return ptr[i];
 		}
+
+		DG_INLINE dgFloat32 DotProduct (const dgSpacialVector& v) const
+		{
+			return (m_v[0].DotProduct4(v.m_v[0]) + m_v[1].DotProduct4(v.m_v[1])).GetScalar();
+		}
+
+		DG_INLINE void Scale (const dgVector& s, dgSpacialVector& dst) const
+		{
+			dst.m_v[0] = m_v[0].CompProduct4(s);
+			dst.m_v[1] = m_v[1].CompProduct4(s);
+		}
+
+		DG_INLINE void ScaleAdd (const dgVector& s, const dgSpacialVector& b, dgSpacialVector& dst) const
+		{
+			dst.m_v[0] += b.m_v[0].CompProduct4(s);
+			dst.m_v[1] += b.m_v[1].CompProduct4(s);
+		}
 	};
 
 	class dgSpacialMatrix
@@ -83,142 +100,71 @@ class dgSkeletonContainer::dgSkeletonGraph
 			return m_rows[i];
 		}
 
-		void SetZero ()
+		DG_INLINE void SetZero ()
 		{
 			memset (m_rows, 0, sizeof(m_rows));
 		}
 
-		void SetIdentity (dgInt32 rows)
+		DG_INLINE void SetIdentity (dgInt32 rows)
 		{
-			dgAssert (0);
-/*
-			if (rows <= 3) {
-				for (dgInt32 i = 0; i < rows; i ++) {
-					m_rows[i].m_linear = dgVector::m_zero;
-					m_rows[i].m_angular = dgVector::m_zero;
-					m_rows[i].m_linear[i] = dgFloat32 (1.0f);
-				}
-			} else {
-				for (dgInt32 i = 0; i < 3; i ++) {
-					m_rows[i].m_linear = dgVector::m_zero;
-					m_rows[i].m_angular = dgVector::m_zero;
-					m_rows[i].m_linear[i] = dgFloat32 (1.0f);
-				}
-
-				for (dgInt32 i = 3; i < rows; i ++) {
-					m_rows[i].m_linear = dgVector::m_zero;
-					m_rows[i].m_angular = dgVector::m_zero;
-					m_rows[i].m_angular[i - 3] = dgFloat32 (1.0f);
-				}
+			for (dgInt32 i = 0; i < rows; i ++) {
+				m_rows[i].m_v[0] = dgVector::m_zero;
+				m_rows[i].m_v[1] = dgVector::m_zero;
+				m_rows[i][i] = dgFloat32 (1.0f);
 			}
-*/
 		}
 
-		void Inverse (const dgSpacialMatrix& src, dgInt32 rows)
+		DG_INLINE void Inverse (const dgSpacialMatrix& src, dgInt32 rows)
 		{
-			dgAssert (0);
-/*
 			dgSpacialMatrix copy;
 			for (dgInt32 i = 0; i < rows; i ++) {
 				copy.m_rows[i] = src.m_rows[i];
 			}
 			SetIdentity(rows);
-			if (rows < 3) {
-				for (dgInt32 i = 0; i < rows; i++) {
-					dgFloat32 val = copy.m_rows[i].m_linear[i];
-					dgAssert(dgAbsf(val) > dgFloat32(1.0e-4f));
-					dgVector den(dgFloat32(1.0f) / val);
-					copy.m_rows[i].m_linear = copy.m_rows[i].m_linear.CompProduct4(den);
-					m_rows[i].m_linear = m_rows[i].m_linear.CompProduct4(den);
 
-					for (dgInt32 j = 0; j < rows; j++) {
-						if (j != i) {
-							dgVector pivot(copy.m_rows[j].m_linear[i]);
-							copy.m_rows[j].m_linear -= copy.m_rows[i].m_linear.CompProduct4(pivot);
-							m_rows[j].m_linear -= m_rows[i].m_linear.CompProduct4(pivot);
-						}
-					}
-				}
+			for (dgInt32 i = 0; i < rows; i++) {
+				dgFloat32 val = copy.m_rows[i][i];
+				dgAssert(dgAbsf(val) > dgFloat32(1.0e-4f));
+				dgVector den(dgFloat32(1.0f) / val);
 
-			} else {
-				for (dgInt32 i = 0; i < 3; i++) {
-					dgFloat32 val = copy.m_rows[i].m_linear[i];
-					dgAssert (dgAbsf (val) > dgFloat32 (1.0e-4f));
-					dgVector den (dgFloat32(1.0f) / val);
-					copy.m_rows[i].m_linear = copy.m_rows[i].m_linear.CompProduct4(den);
-					copy.m_rows[i].m_angular = copy.m_rows[i].m_angular.CompProduct4(den);
-					m_rows[i].m_linear = m_rows[i].m_linear.CompProduct4(den);
-					m_rows[i].m_angular = m_rows[i].m_angular.CompProduct4(den);
+				m_rows[i].Scale(den, m_rows[i]);
+				copy.m_rows[i].Scale (den, copy.m_rows[i]);
 
-					for (dgInt32 j = 0; j < rows; j++) {
-						if (j != i) {
-							dgVector pivot(copy.m_rows[j].m_linear[i]);
-							copy.m_rows[j].m_linear -= copy.m_rows[i].m_linear.CompProduct4(pivot);
-							copy.m_rows[j].m_angular -= copy.m_rows[i].m_angular.CompProduct4(pivot);
-							m_rows[j].m_linear -= m_rows[i].m_linear.CompProduct4(pivot);
-							m_rows[j].m_angular -= m_rows[i].m_angular.CompProduct4(pivot);
-						}
-					}
-				}
-
-				for (dgInt32 i = 3; i < rows; i++) {
-					dgFloat32 val = copy.m_rows[i].m_angular[i - 3];
-					dgAssert(dgAbsf(val) > dgFloat32(1.0e-4f));
-					dgVector den(dgFloat32(1.0f) / val);
-					copy.m_rows[i].m_linear = copy.m_rows[i].m_linear.CompProduct4(den);
-					copy.m_rows[i].m_angular = copy.m_rows[i].m_angular.CompProduct4(den);
-					m_rows[i].m_linear = m_rows[i].m_linear.CompProduct4(den);
-					m_rows[i].m_angular = m_rows[i].m_angular.CompProduct4(den);
-
-					for (dgInt32 j = 0; j < rows; j++) {
-						if (j != i) {
-							dgVector pivot(copy.m_rows[j].m_angular[i - 3]);
-							copy.m_rows[j].m_linear -= copy.m_rows[i].m_linear.CompProduct4(pivot);
-							copy.m_rows[j].m_angular -= copy.m_rows[i].m_angular.CompProduct4(pivot);
-							m_rows[j].m_linear -= m_rows[i].m_linear.CompProduct4(pivot);
-							m_rows[j].m_angular -= m_rows[i].m_angular.CompProduct4(pivot);
-						}
+				for (dgInt32 j = 0; j < rows; j++) {
+					if (j != i) {
+						dgVector pivot(-copy.m_rows[j][i]);
+						copy.m_rows[j].ScaleAdd (pivot, copy.m_rows[i], copy.m_rows[j]);
+						m_rows[j].ScaleAdd (pivot, m_rows[i], m_rows[j]);
 					}
 				}
 			}
-*/
 		}
 
-		void MultiplyMatrix6x6TimeJacobianTransposed (dgSpacialVector& jacobian) const
+		DG_INLINE void MultiplyMatrix6x6TimeJacobianTransposed (dgSpacialVector& jacobian) const
 		{
-/*
 			dgSpacialVector tmp (jacobian);
-			for (dgInt32 i = 0; i < 3; i ++) {
-				jacobian.m_linear[i] = (m_rows[i].m_linear.DotProduct4(tmp.m_linear) + m_rows[i].m_angular.DotProduct4(tmp.m_angular)).GetScalar();
-				jacobian.m_angular[i] = (m_rows[i + 3].m_linear.DotProduct4(tmp.m_linear) + m_rows[i + 3].m_angular.DotProduct4(tmp.m_angular)).GetScalar();
+			dgAssert (tmp[6] == dgFloat32 (0.0f));
+			dgAssert (tmp[7] == dgFloat32 (0.0f));
+			for (dgInt32 i = 0; i < 6; i ++) {
+				jacobian[i] = m_rows[i].DotProduct(tmp);
 			}
-*/
 		}
 
-		void SubstractCovariance (const dgSpacialVector& jt, const dgSpacialVector& j)
+		DG_INLINE void SubstractCovariance (const dgSpacialVector& jt, const dgSpacialVector& j)
 		{
-			dgAssert (0);
-/*
-			for (dgInt32 i = 0; i < 3; i ++) {
-				dgVector l (jt.m_linear[i]);
-				m_rows[i].m_linear -= j.m_linear.CompProduct4(l);
-				m_rows[i].m_angular -= j.m_angular.CompProduct4(l);
-
-				dgVector a(jt.m_angular[i]);
-				m_rows[i + 3].m_linear -= j.m_linear.CompProduct4(a);
-				m_rows[i + 3].m_angular -= j.m_angular.CompProduct4(a);
+			for (dgInt32 i = 0; i < 6; i ++) {
+				dgVector s (-jt[i]);
+				m_rows[i].ScaleAdd(s, j, m_rows[i]);
 			}
 
 			#ifdef _DEBUG
+			const dgSpacialMatrix& me = *this;
 			for (dgInt32 i = 0; i < 6; i ++) {
 				for (dgInt32 j = 0; j < 6; j ++) {
-					dgFloat32 a = (j <= 3) ? m_rows[i].m_linear[j] : m_rows[i].m_angular[j - 3];
-					dgFloat32 b = (i <= 3) ? m_rows[j].m_linear[i] : m_rows[j].m_angular[i - 3];
-					dgAssert (dgAbsf(a - b) < dgFloat32 (1.0e-4f));
+					dgAssert (dgAbsf(me[i][j] - me[j][i]) < dgFloat32 (1.0e-5f));
 				}
 			}
 			#endif
-*/			
 		}
 
 		dgSpacialVector m_rows[6];
@@ -301,11 +247,11 @@ class dgSkeletonContainer::dgSkeletonGraph
 		m_data = buffer;
 
 		m_data->m_diagonal.SetZero();
+		m_data->m_offDiagonal.SetZero();
 		if (m_body) {
 			m_diaginalDof = 6;
 			dgFloat32 mass = m_body->GetMass().m_w;
 			dgMatrix inertia (m_body->CalculateInertiaMatrix());
-
 			
 			for (dgInt32 i = 0; i < 3; i++) {
 				m_data->m_diagonal[i][i] = mass;
@@ -352,8 +298,6 @@ class dgSkeletonContainer::dgSkeletonGraph
 
 	void CalculateOffDiagonalBlock ()
 	{
-		dgAssert (0);
-/*
 		if (m_body) {
 			for (dgInt32 i = 0; i < m_jacobialDof; i ++) {
 				m_data->m_invDiagonal.MultiplyMatrix6x6TimeJacobianTransposed (m_data->m_offDiagonal.m_rows[i]);
@@ -363,44 +307,34 @@ class dgSkeletonContainer::dgSkeletonGraph
 			for (dgInt32 i = 0; i < m_jacobialDof; i ++) {
 				copy.m_rows[i] = m_data->m_offDiagonal.m_rows[i];
 			}
-			m_data->m_offDiagonal.SetZero(m_jacobialDof);
+			m_data->m_offDiagonal.SetZero();
 			for (dgInt32 i = 0; i < m_jacobialDof; i ++) {
-				const dgFloat32* const line = &m_data->m_invDiagonal.m_rows[i].m_linear.m_x; 
 				const dgSpacialVector& jacovian = copy.m_rows[i];
 				for (dgInt32 j = 0; j < m_jacobialDof; j ++) {
-					dgVector val (line[i]);
-					m_data->m_offDiagonal.m_rows[j].m_linear += jacovian.m_linear.CompProduct4(val);
-					m_data->m_offDiagonal.m_rows[j].m_angular += jacovian.m_angular.CompProduct4(val);
+					dgVector val (m_data->m_invDiagonal.m_rows[i][j]);
+					m_data->m_offDiagonal.m_rows[j].ScaleAdd(val, jacovian, m_data->m_offDiagonal.m_rows[j]);
 				}
 			}
 		}
-*/
-	}
+}
 
 	virtual void CalculateDiagonal(dgSkeletonGraph* const child, dgJointInfo* const jointInfoArray)
 	{
-		dgAssert (0);
-/*
 		dgSpacialMatrix tmp;
 		const dgSpacialMatrix& childDiagonal = child->m_data->m_diagonal;
 		const dgSpacialMatrix& jacobianTransposed = child->m_data->m_offDiagonal;
 		if (m_body) {
 			dgSpacialMatrix copy;
-			copy.SetZero(child->m_jacobialDof);
+			copy.SetZero();
 
-			dgAssert (child->m_jacobialDof <= 3);
 			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
-				const dgFloat32* const row = &childDiagonal.m_rows[i].m_linear.m_x;
-				dgAssert (row[3] == dgFloat32 (0.0f));
-				dgAssert (row[7] == dgFloat32 (0.0f));
 				const dgSpacialVector& jacovian = jacobianTransposed.m_rows[i];
 				for (dgInt32 j = 0; j < child->m_jacobialDof; j++) {
-					dgVector val0(row[i]);
-					copy.m_rows[j].m_linear += jacovian.m_linear.CompProduct4(val0);
-					copy.m_rows[j].m_angular += jacovian.m_angular.CompProduct4(val0);
+					dgVector val(childDiagonal[i][j]);
+					copy.m_rows[j].ScaleAdd(val, jacovian, copy.m_rows[j]);
 				}
 			}
-			
+
 			dgAssert (m_diaginalDof == 6);
 			dgSpacialMatrix& diagonal = m_data->m_diagonal;
 			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
@@ -418,42 +352,16 @@ class dgSkeletonContainer::dgSkeletonGraph
 			}
 
 			dgSpacialMatrix& diagonal = m_data->m_diagonal;
-			if (m_jacobialDof <= 3) {
-				for (dgInt32 i = 0; i < m_jacobialDof; i++) {
-					dgFloat32 a = (jacobianTransposed.m_rows[i].m_linear.DotProduct4(tmp.m_rows[i].m_linear) + jacobianTransposed.m_rows[i].m_angular.DotProduct4(tmp.m_rows[i].m_angular)).GetScalar();
-					diagonal.m_rows[i].m_linear[i] -= a;
-					for (dgInt32 j = 0; j < i; j ++) {
-						dgFloat32 a = (jacobianTransposed.m_rows[i].m_linear.DotProduct4(tmp.m_rows[j].m_linear) + jacobianTransposed.m_rows[i].m_angular.DotProduct4(tmp.m_rows[j].m_angular)).GetScalar();
-						dgAssert (dgAbsf ((jacobianTransposed.m_rows[j].m_linear.DotProduct4(tmp.m_rows[i].m_linear) + jacobianTransposed.m_rows[j].m_angular.DotProduct4(tmp.m_rows[i].m_angular)).GetScalar() - a) < dgFloat32 (1.0e-5f));
-						diagonal.m_rows[i].m_linear[j] -= a;
-						diagonal.m_rows[j].m_linear[i] -= a;
-					}
-				}
-			} else {
-				for (dgInt32 i = 0; i < m_jacobialDof; i++) {
-					dgInt32 i0 = (i <= 3) ? i : i - 3;
-					dgFloat32 a = (jacobianTransposed.m_rows[i].m_linear.DotProduct4(tmp.m_rows[i0].m_linear) + jacobianTransposed.m_rows[i].m_angular.DotProduct4(tmp.m_rows[i0].m_angular)).GetScalar();
-					if (i <= 3) { 
-						diagonal.m_rows[i].m_linear[i0] -= a;
-					} else {
-						diagonal.m_rows[i].m_angular[i0] -= a;
-					}
-					for (dgInt32 j = 0; j < i; j++) {
-						dgInt32 j0 = (j <= 3) ? j : j - 3;
-						dgFloat32 a = (jacobianTransposed.m_rows[i].m_linear.DotProduct4(tmp.m_rows[j0].m_linear) + jacobianTransposed.m_rows[i].m_angular.DotProduct4(tmp.m_rows[j0].m_angular)).GetScalar();
-						dgAssert(dgAbsf((jacobianTransposed.m_rows[j].m_linear.DotProduct4(tmp.m_rows[i0].m_linear) + jacobianTransposed.m_rows[j].m_angular.DotProduct4(tmp.m_rows[i0].m_angular)).GetScalar() - a) < dgFloat32(1.0e-5f));
-						if (j <= 3) {
-							diagonal.m_rows[i].m_linear[j0] -= a;
-							diagonal.m_rows[j].m_linear[i0] -= a;
-						} else {
-							diagonal.m_rows[i].m_linear[j0] -= a;
-							diagonal.m_rows[j].m_linear[i0] -= a;
-						}
-					}
+			for (dgInt32 i = 0; i < m_jacobialDof; i++) {
+				diagonal.m_rows[i][i] -= jacobianTransposed[i].DotProduct(tmp.m_rows[i]);
+				for (dgInt32 j = 0; j < i; j ++) {
+					dgFloat32 a = jacobianTransposed[i].DotProduct(tmp.m_rows[j]);
+					dgAssert (dgAbsf (jacobianTransposed[j].DotProduct(tmp.m_rows[i]) - a) < dgFloat32 (1.0e-5f));
+					diagonal[i][j] -= a;
+					diagonal[j][i] -= a;
 				}
 			}
 		}
-*/
 	}
 
 	virtual void CalculateDiagonalInverse ()
