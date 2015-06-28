@@ -57,6 +57,8 @@ class dgSkeletonContainer
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) {}
 	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
+	bool Sanity () const;
+
 	dgSkeletonGraph* m_skeleton;
 	dgSkeletonGraph** m_bottomTopOrder;
 	dgSkeletonGraph** m_topBottomOrder;

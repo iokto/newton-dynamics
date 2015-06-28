@@ -956,7 +956,7 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 	dgWorld* const world = (dgWorld*) this;
 	const dgInt32 bodyCount = island->m_bodyCount;
 	const dgInt32 jointCount = island->m_jointCount;
-	const dgInt32 jointBaseCount = island->m_jointCount - island->m_acyclicCount;
+	const dgInt32 jointBaseCount = island->m_jointCount - island->m_skeletonCount;
 
 	dgJacobian* const internalForces = &m_solverMemory.m_internalForces[island->m_bodyStart];
 	dgBodyInfo* const bodyArrayPtr = (dgBodyInfo*) &world->m_bodiesMemory[0]; 
@@ -1000,11 +1000,11 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 	joindDesc.m_firstPassCoefFlag = dgFloat32 (0.0f);
 
 	dgInt32 acyclicCount = 0;
-	dgSkeletonContainer* acyclicArray[DG_MAX_ACYCLIC_COUNT];
+	dgSkeletonContainer* acyclicArray[DG_MAX_SKELETON_JOINT_COUNT];
 
 	dgInt32 bufferSize = 0;
-	if (island->m_acyclicCount) {
-		dgAcyclicList* const acyclicList = world;
+	if (island->m_skeletonCount) {
+		dgSkeletonList* const acyclicList = world;
 		dgInt32 i = jointBaseCount;
 		do {
 			dgJointInfo* const jointInfo = &constraintArray[i];

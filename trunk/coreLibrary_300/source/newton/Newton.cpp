@@ -4829,11 +4829,23 @@ NewtonBodyDestructor NewtonBodyGetDestructorCallback (const NewtonBody* const bo
 // realistic physics behavior.
 //
 // See also: NewtonConvexCollisionCalculateInertialMatrix, NewtonBodyGetMassMatrix, NewtonBodyGetInvMass
-void NewtonBodySetMassMatrix(const NewtonBody* const bodyPtr, dFloat mass, dFloat Ixx, dFloat Iyy, dFloat Izz)
+void NewtonBodySetFullMassMatrix(const NewtonBody* const bodyPtr, dFloat mass, const dFloat* const inertiaMatrix)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
-	body->SetMassMatrix (mass, Ixx, Iyy, Izz);
+	dgMatrix inertia(inertiaMatrix);
+	body->SetMassMatrix (mass, inertia);
+}
+
+
+void NewtonBodySetMassMatrix(const NewtonBody* const bodyPtr, dFloat mass, dFloat Ixx, dFloat Iyy, dFloat Izz)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgMatrix inertia (dgGetIdentityMatrix());
+	inertia[0][0] = Ixx;
+	inertia[1][1] = Iyy;
+	inertia[2][2] = Izz;
+	NewtonBodySetFullMassMatrix(bodyPtr, mass, &inertia[0][0]);
 }
 
 
@@ -8663,7 +8675,6 @@ void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, 
 	dgSkeletonContainer* const skeletonContainer = (dgSkeletonContainer*) skeleton;
 	skeletonContainer->AddChild((dgBody*) childBone, (dgBody*) parentBone);
 }
-
 
 void NewtonSkeletonContainerDelete(NewtonSkeletonContainer* const skeleton)
 {
