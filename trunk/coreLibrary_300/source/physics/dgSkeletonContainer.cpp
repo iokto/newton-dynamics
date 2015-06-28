@@ -156,15 +156,6 @@ class dgSkeletonContainer::dgSkeletonGraph
 				dgVector s (-jt[i]);
 				m_rows[i].ScaleAdd(s, j, m_rows[i]);
 			}
-
-			#ifdef _DEBUG
-			const dgSpacialMatrix& me = *this;
-			for (dgInt32 i = 0; i < 6; i ++) {
-				for (dgInt32 j = 0; j < 6; j ++) {
-					dgAssert (dgAbsf(me[i][j] - me[j][i]) < dgFloat32 (1.0e-5f));
-				}
-			}
-			#endif
 		}
 
 		dgSpacialVector m_rows[6];
@@ -330,6 +321,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 			for (dgInt32 i = 0; i < child->m_jacobialDof; i++) {
 				const dgSpacialVector& jacovian = jacobianTransposed.m_rows[i];
 				for (dgInt32 j = 0; j < child->m_jacobialDof; j++) {
+					dgAssert (dgAbsf (childDiagonal[i][j] - childDiagonal[j][i]) < dgFloat32 (1.0e-5f));
 					dgVector val(childDiagonal[i][j]);
 					copy.m_rows[j].ScaleAdd(val, jacovian, copy.m_rows[j]);
 				}
@@ -343,6 +335,17 @@ class dgSkeletonContainer::dgSkeletonGraph
 					diagonal.SubstractCovariance (jt, copy.m_rows[j]);
 				}
 			}
+
+			#ifdef _DEBUG
+			for (dgInt32 i = 0; i < 6; i++) {
+				for (dgInt32 k = 0; k < 6; k++) {
+					dgFloat32 a = diagonal[i][k];
+					dgFloat32 b = diagonal[k][i];
+					dgAssert(dgAbsf(a - b) < dgFloat32(1.0e-5f));
+				}
+			}
+			#endif
+
 
 		} else {
 			dgAssert (child->m_body);
