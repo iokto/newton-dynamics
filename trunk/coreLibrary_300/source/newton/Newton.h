@@ -1147,10 +1147,6 @@ extern "C" {
 	NEWTON_API void NewtonUserJointSetRowStiffness (const NewtonJoint* const joint, dFloat stiffness);
 	NEWTON_API dFloat NewtonUserJointGetRowForce (const NewtonJoint* const joint, int row);
 
-	// function deprecated, use acyclic joints container below
-	//NEWTON_API void NewtonUserJointSetSolver (const NewtonJoint* const joint, int solver, int maxContactJoints);
-
-
 	// ************************************************************************************************************************
 	// 
 	//	Acyclic skeleton offer the same level of accuracy that Feather stone reduced coordinate link chains algorithm  

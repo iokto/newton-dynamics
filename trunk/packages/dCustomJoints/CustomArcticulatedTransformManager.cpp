@@ -96,22 +96,6 @@ void CustomArticulatedTransformController::PreUpdate(dFloat timestep, int thread
 
 void CustomArticulatedTransformController::PostUpdate(dFloat timestep, int threadIndex)
 {
-	if (m_errorProjectionMode && m_boneCount && (NewtonBodyGetSleepState(m_bones[0].m_body) == 0)) {
-		for (int i = 1; i < m_boneCount; i ++) {
-			const dSkeletonBone* const bone = &m_bones[i];
-			dAssert (bone->m_parent);
-			const NewtonBody* const child = bone->m_body;
-			const NewtonBody* const parent = bone->m_parent->m_body;
-			for (NewtonJoint* joint = NewtonBodyGetFirstJoint(child); joint; joint = NewtonBodyGetNextJoint(child, joint)) {
-				if ((NewtonJointGetBody0(joint) == parent) || (NewtonJointGetBody1(joint) == parent)) {
-					CustomJoint* const cJoint = (CustomJoint*) NewtonJointGetUserData(joint);
-					cJoint->ProjectError ();
-					break;
-				}
-			}
-		}
-	}
-
 	CustomArticulaledTransformManager* const manager = (CustomArticulaledTransformManager*) GetManager();
 	if (manager->m_applyLocalTransform) {
 		for (int i = 0; i < m_boneCount; i ++) {

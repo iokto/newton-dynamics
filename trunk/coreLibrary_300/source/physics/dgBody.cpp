@@ -704,3 +704,4 @@ void dgBody::ApplyImpulsesAtPoint (dgInt32 count, dgInt32 strideInBytes, const d
 	m_equilibrium = false;
 	Unfreeze ();
 }
+

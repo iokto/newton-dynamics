@@ -51,11 +51,11 @@ class dgHingeConstraint;
 class dgUserMeshCreation;
 class dgSlidingConstraint;
 class dgCollisionInstance;
+class dgSkeletonContainer;
 class dgUpVectorConstraint;
 class dgUniversalConstraint;
 class dgCorkscrewConstraint;
 class dgCollisionDeformableMesh;
-class dgSkeletonContainer;
 
 
 class dgBodyCollisionList: public dgTree<const dgCollision*, dgUnsigned32>

@@ -38,7 +38,6 @@
 ////////////////////////////////////////////////////////////////////// 
 dgInt32 dgSkeletonContainer::m_uniqueID = 10;
 
-
 class dgSkeletonContainer::dgSkeletonGraph
 {
 	public:
@@ -428,6 +427,10 @@ dgSkeletonContainer::~dgSkeletonContainer ()
 	delete m_skeleton;
 }
 
+void dgSkeletonContainer::ResetUniqueId(dgInt32 id)
+{
+	m_uniqueID = 10;
+}
 
 dgSkeletonContainer::dgSkeletonGraph* dgSkeletonContainer::FindNode (dgDynamicBody* const body) const
 {

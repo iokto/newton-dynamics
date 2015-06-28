@@ -230,11 +230,11 @@ class dgConstraint
 	friend class dgAmpInstance;
 	friend class dgJacobianMemory;
 	friend class dgBodyMasterList;
+	friend class dgSkeletonContainer;
 	friend class dgWorldDynamicUpdate;
 	friend class dgParallelSolverJointAcceleration;
 	friend class dgParallelSolverInitFeedbackUpdate;
 	friend class dgParallelSolverBuildJacobianMatrix;
-	friend class dgSkeletonContainer;
 	friend class dgBroadPhaseMaterialCallbackWorkerThread;
 } DG_GCC_VECTOR_ALIGMENT;
 

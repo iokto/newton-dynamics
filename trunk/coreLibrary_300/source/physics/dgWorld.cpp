@@ -44,9 +44,9 @@
 #include "dgUserConstraint.h"
 #include "dgBallConstraint.h"
 #include "dgHingeConstraint.h"
+#include "dgSkeletonContainer.h"
 #include "dgSlidingConstraint.h"
 #include "dgUpVectorConstraint.h"
-#include "dgSkeletonContainer.h"
 #include "dgUniversalConstraint.h"
 #include "dgCorkscrewConstraint.h"
 
@@ -1354,11 +1354,30 @@ void dgWorld::SetBroadPhaseType(dgInt32 type)
 
 dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootBone)
 {
+	dgSkeletonList* const list = this;
+	if (dgSkeletonContainer::m_uniqueID > 1014 * 16) {
+		dgList<dgSkeletonContainer*> saveList (GetAllocator());
+		dgSkeletonList::Iterator iter (*list);
+		for (iter.Begin(); iter; iter ++) {
+			saveList.Append(iter.GetNode()->GetInfo());
+		}
+		list->RemoveAll();
+
+		dgInt32 index = 10;
+		for (dgList<dgSkeletonContainer*>::dgListNode* ptr = saveList.GetFirst(); ptr; ptr ++) {
+			dgSkeletonContainer* const skeleton = ptr->GetInfo();
+			skeleton->m_id = index;
+			list->Insert (skeleton, skeleton->GetId());
+			index ++;
+		}
+		dgSkeletonContainer::ResetUniqueId(index);
+	}
+
 	dgBody* const body = rootBone ? rootBone : GetSentinelBody();
 	dgAssert (body->GetType() == dgBody::m_dynamicBody);
 	dgSkeletonContainer* const container = new (m_allocator) dgSkeletonContainer((dgDynamicBody*)body);
 
-	dgSkeletonList* const list = this;
+	
 	list->Insert (container, container->GetId());
 	return container;
 }
