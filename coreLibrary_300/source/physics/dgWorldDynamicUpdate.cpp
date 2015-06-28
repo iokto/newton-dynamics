@@ -489,7 +489,7 @@ void dgWorldDynamicUpdate::BuildIsland (dgQueue<dgDynamicBody*>& queue, dgFloat3
 		
 		m_islandMemory[m_islands].m_rowsStart = 0;
 
-		m_islandMemory[m_islands].m_acyclicCount = acyclicCount;
+		m_islandMemory[m_islands].m_skeletonCount = acyclicCount;
 		m_islandMemory[m_islands].m_isContinueCollision = false;
 
 		dgJointInfo* const constraintArrayPtr = (dgJointInfo*) &world->m_jointsMemory[0];

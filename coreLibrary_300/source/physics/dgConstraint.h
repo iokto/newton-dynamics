@@ -151,7 +151,6 @@ class dgConstraint
 		m_upVectorConstraint,
 		m_universalConstraint,
 		m_corkScrewConstraint,
-		m_acyclicConstraint,
 		m_unknownConstraint
 	};
 

@@ -216,7 +216,7 @@ dgWorld::dgWorld(dgMemoryAllocator* const allocator)
 	,dgBodyMaterialList(allocator)
 	,dgBodyCollisionList(allocator)
 	,dgDeformableBodiesUpdate(allocator)
-	,dgAcyclicList(allocator)
+	,dgSkeletonList(allocator)
 	,dgActiveContacts(allocator) 
 	,dgWorldDynamicUpdate()
 	,dgMutexThread("dgMutexThread", DG_MUTEX_THREAD_ID, DG_ENGINE_STACK_SIZE)
@@ -326,7 +326,7 @@ dgWorld::~dgWorld()
 		delete m_amp;
 	}
 	#endif
-	dgAcyclicList::Iterator iter (*this);
+	dgSkeletonList::Iterator iter (*this);
 	for (iter.Begin(); iter; iter ++) {
 		delete iter.GetNode()->GetInfo();
 	}
@@ -507,7 +507,11 @@ void dgWorld::InitBody (dgBody* const body, dgCollisionInstance* const collision
 	body->AttachCollision(collision);
 	body->m_bodyGroupId = dgInt32 (m_defualtBodyGroupID);
 
-	body->SetMassMatrix (DG_INFINITE_MASS * dgFloat32 (2.0f), DG_INFINITE_MASS, DG_INFINITE_MASS, DG_INFINITE_MASS);
+	dgMatrix inertia (dgGetIdentityMatrix());
+	inertia[0][0] = DG_INFINITE_MASS;
+	inertia[1][1] = DG_INFINITE_MASS;
+	inertia[2][2] = DG_INFINITE_MASS;
+	body->SetMassMatrix (DG_INFINITE_MASS * dgFloat32 (2.0f), inertia);
 	body->SetMatrix (matrix);
 	if (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI)) {
 		m_broadPhase->Add (body);
@@ -519,7 +523,7 @@ void dgWorld::BodyEnableSimulation (dgBody* const body)
 	if (!body->m_masterNode) {
 		m_disableBodies.Remove(body);
 		dgBodyMasterList::AddBody(body);
-		body->SetMassMatrix(body->m_mass.m_w, body->m_mass.m_x, body->m_mass.m_y, body->m_mass.m_z);
+		body->SetMassMatrix(body->m_mass.m_w, body->CalculateLocalInertiaMatrix());
 		m_broadPhase->Add (body);
 		dgAssert (body->m_masterNode);
 	}
@@ -1203,7 +1207,7 @@ void dgWorld::DeserializeBodyArray (dgTree<dgBody*, dgInt32>&bodyMap, OnBodyDese
 		m_broadPhase->Add (body);
 		if (body->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
 			dgDynamicBody* const dynBody = (dgDynamicBody*)body;
-			dynBody->SetMassMatrix (dynBody->m_mass.m_w, dynBody->m_mass.m_x, dynBody->m_mass.m_y, dynBody->m_mass.m_z);
+			dynBody->SetMassMatrix (dynBody->m_mass.m_w, dynBody->CalculateLocalInertiaMatrix());
 		}
 
 		// load user related data 
@@ -1354,7 +1358,7 @@ dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootB
 	dgAssert (body->GetType() == dgBody::m_dynamicBody);
 	dgSkeletonContainer* const container = new (m_allocator) dgSkeletonContainer((dgDynamicBody*)body);
 
-	dgAcyclicList* const list = this;
+	dgSkeletonList* const list = this;
 	list->Insert (container, container->GetId());
 	return container;
 }

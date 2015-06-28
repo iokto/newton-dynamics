@@ -33,7 +33,7 @@
 
 #define	DG_BODY_LRU_STEP				2	
 #define	DG_SMALL_ISLAND_COUNT			2
-#define	DG_MAX_ACYCLIC_COUNT			128
+#define	DG_MAX_SKELETON_JOINT_COUNT		256
 
 #define	DG_FREEZZING_VELOCITY_DRAG		dgFloat32 (0.9f)
 #define	DG_SOLVER_MAX_ERROR				(DG_FREEZE_MAG * dgFloat32 (0.5f))
@@ -82,7 +82,7 @@ class dgIsland
 	dgInt32 m_jointStart;
 	dgInt32 m_rowsCount;
 	dgInt32 m_rowsStart;
-	dgUnsigned32 m_acyclicCount			: 16;
+	dgUnsigned32 m_skeletonCount		: 16;
 	dgUnsigned32 m_isContinueCollision	: 1;
 };
 

@@ -76,10 +76,10 @@ class dgBodyMaterialList: public dgTree<dgContactMaterial, dgUnsigned32>
 	}
 };
 
-class dgAcyclicList: public dgTree<dgSkeletonContainer*, dgInt32>
+class dgSkeletonList: public dgTree<dgSkeletonContainer*, dgInt32>
 {
 	public:
-	dgAcyclicList(dgMemoryAllocator* const allocator)
+	dgSkeletonList(dgMemoryAllocator* const allocator)
 		:dgTree<dgSkeletonContainer*, dgInt32>(allocator)
 	{
 	}
@@ -118,7 +118,7 @@ class dgWorld
 	,public dgBodyMaterialList
 	,public dgBodyCollisionList
 	,public dgDeformableBodiesUpdate
-	,public dgAcyclicList
+	,public dgSkeletonList
 	,public dgActiveContacts 
 	,public dgWorldDynamicUpdate
 	,public dgMutexThread
