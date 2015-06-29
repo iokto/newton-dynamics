@@ -42,7 +42,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 {
 	public:
 	DG_CLASS_ALLOCATOR(allocator)
-
+/*
 	class dgSpacialVector
 	{
 		public:
@@ -186,13 +186,13 @@ class dgSkeletonContainer::dgSkeletonGraph
 		dgSpacialMatrix m_invDiagonal;
 		dgSpacialMatrix m_offDiagonal;
 	};
-
+*/
 
 	dgSkeletonGraph(dgMemoryAllocator* const allocator, dgDynamicBody* const root)
 		:m_parent(NULL)
 		,m_body(root)
 		,m_joint(NULL)
-		,m_data(NULL)
+		//,m_data(NULL)
 		,m_children(allocator)
 		,m_index(0)
 		,m_diaginalDof(0)
@@ -204,7 +204,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		:m_parent(parent)
 		,m_body(child)
 		,m_joint(NULL)
-		,m_data(NULL)
+		//,m_data(NULL)
 		,m_children(allocator)
 		,m_index(0)
 		, m_diaginalDof(0)
@@ -217,7 +217,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		:m_parent(parent)
 		,m_body(NULL)
 		,m_joint(Joint)
-		,m_data(NULL)
+		//,m_data(NULL)
 		,m_children(allocator)
 		,m_index(0)
 		, m_diaginalDof(0)
@@ -241,6 +241,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		}
 	}
 
+/*
 	void Init (dgData* const buffer, dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow) 
 	{
 		m_data = buffer;
@@ -385,11 +386,11 @@ class dgSkeletonContainer::dgSkeletonGraph
 	{
 		m_data->m_invDiagonal.Inverse (m_data->m_diagonal, m_diaginalDof);
 	}
-
+*/
 	dgSkeletonGraph* m_parent;
 	dgDynamicBody* m_body;
 	dgBilateralConstraint* m_joint;
-	dgData* m_data;
+	//dgData* m_data;
 	dgList<dgSkeletonGraph*> m_children;
 	dgInt32 m_index;
 	dgInt16 m_diaginalDof;
@@ -472,8 +473,10 @@ void dgSkeletonContainer::AddChild (dgDynamicBody* const child, dgDynamicBody* c
 
 dgInt32 dgSkeletonContainer::GetBufferSize () const
 {
-	dgInt32 blocksize = sizeof(dgSkeletonGraph::dgData);
-	return blocksize * m_nodeCount;
+	dgAssert (0);
+	return 0;
+//	dgInt32 blocksize = sizeof(dgSkeletonGraph::dgData);
+//	return blocksize * m_nodeCount;
 }
 
 void dgSkeletonContainer::SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index)
@@ -519,6 +522,7 @@ void dgSkeletonContainer::Finalize ()
 
 bool dgSkeletonContainer::Sanity() const
 {
+/*
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
 		dgSkeletonGraph* const node = m_bottomTopOrder[i];
 		dgInt32 n = node->m_diaginalDof;
@@ -548,7 +552,7 @@ bool dgSkeletonContainer::Sanity() const
 		}
 		dgTrace (("\n"));
 	}
-
+*/
 	return true;
 }
 
@@ -583,6 +587,8 @@ dgAssert (0);
 
 dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
 {
+	dgAssert (0);
+/*
 	dgInt32 jointCount = (m_nodeCount - 1) / 2;
 //	dgJointInfo* const constraintArrayPtr = (dgJointInfo*)&world->m_jointsMemory[0];
 //	dgJointInfo* const constraintArray = &constraintArrayPtr[island->m_jointStart];
@@ -724,9 +730,8 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 			dgAssert(0);
 		}
 	}
-
-
-
 	return maxAccel;
+*/
+	return 0;
 }
 
