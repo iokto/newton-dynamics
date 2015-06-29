@@ -1149,7 +1149,7 @@ extern "C" {
 
 	// ************************************************************************************************************************
 	// 
-	//	Acyclic skeleton offer the same level of accuracy that Feather stone reduced coordinate link chains algorithm  
+	//	Skeleton offer the same level of accuracy that Feather stone reduced coordinate link chains algorithm  
 	//	these are good to make near perfect Rag dolls, physically based and inversed dynamics animated bodies, 
 	//	simple robotic contractions with not internal loops, Vehicles, Ropes, etc. That will all interact seamlessly and naturally with the physics world.
 	//	

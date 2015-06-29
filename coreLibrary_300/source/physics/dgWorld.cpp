@@ -1376,7 +1376,6 @@ dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootB
 	dgBody* const body = rootBone ? rootBone : GetSentinelBody();
 	dgAssert (body->GetType() == dgBody::m_dynamicBody);
 	dgSkeletonContainer* const container = new (m_allocator) dgSkeletonContainer((dgDynamicBody*)body);
-
 	
 	list->Insert (container, container->GetId());
 	return container;

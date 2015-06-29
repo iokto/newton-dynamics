@@ -357,7 +357,7 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 //    hinge2->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
 //	hinge2->SetFriction (20.0f);
 
-	// optionally we can now make this int an acyclic joint 
+	// optionally we can now make this int an skaleton joint 
 //	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0);
 
@@ -365,7 +365,7 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 	NewtonSkeletonContainerAttachBone (skeleton, box1, box0);
 
 	dAssert ((hinge2->GetBody0() == box2) && (hinge2->GetBody1() == box1));
-//	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize (skeleton);
 }
 
