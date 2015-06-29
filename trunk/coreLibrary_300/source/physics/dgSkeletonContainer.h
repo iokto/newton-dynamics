@@ -58,6 +58,7 @@ class dgSkeletonContainer
 
 	dgSolverData* m_solverData;
 	dgSkeletonGraph* m_skeleton;
+	dgSkeletonGraph** m_bodyArray;
 	dgSkeletonGraph** m_jointArray;
 	dgSkeletonGraph** m_bottomTopOrder;
 //	dgSkeletonGraph** m_topBottomOrder;
