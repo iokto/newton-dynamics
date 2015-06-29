@@ -62,6 +62,7 @@ class dgSkeletonContainer
 	bool Sanity () const;
 
 	dgSkeletonGraph* m_skeleton;
+	dgSkeletonGraph** m_jointArray;
 	dgSkeletonGraph** m_bottomTopOrder;
 	dgSkeletonGraph** m_topBottomOrder;
 	dgInt32 m_id;
