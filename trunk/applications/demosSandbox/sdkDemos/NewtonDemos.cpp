@@ -54,9 +54,9 @@
 //#define DEFAULT_SCENE	25			// continuous collision
 //#define DEFAULT_SCENE	26			// paper wall continuous collision
 //#define DEFAULT_SCENE	27			// puck slide continuous collision
-//#define DEFAULT_SCENE	28          // standard joints
+#define DEFAULT_SCENE	28          // standard joints
 //#define DEFAULT_SCENE	29			// articulated joints
-#define DEFAULT_SCENE	30			// basic rag doll
+//#define DEFAULT_SCENE	30			// basic rag doll
 //#define DEFAULT_SCENE	31			// basic Car
 //#define DEFAULT_SCENE	32			// heavy vehicles
 //#define DEFAULT_SCENE	33			// super Car
@@ -309,7 +309,7 @@ NewtonDemos::NewtonDemos(const wxString& title, const wxPoint& pos, const wxSize
 	,m_timestepAcc(0)
 	,m_fps(0.0f)
 {
-//m_autoSleepState = false;
+m_autoSleepState = false;
 //m_microthreadIndex = 1;
 //m_useParallelSolver = true;
 //m_threadProfilerState = true;
