@@ -1021,15 +1021,17 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 				constraintArray[i + j].m_joint->m_index = i + j;
 			}
 			i += jointCount;
-			bufferSize += container->GetBufferSize();
+			bufferSize = dgMax (container->GetBufferSize(), bufferSize);
 		} while (i < jointCount);
 
-		char* const buffer = (char*) alloca (bufferSize);
+		char* const buffer = (char*) alloca (bufferSize + 256);
 		char* alignBuffer = (char*) ((dgUnsigned64 (buffer) + 16) & (dgUnsigned64)(-15));
+		dgInt32 j = jointBaseCount;
 		for (dgInt32 i = 0; i < skeletonCount; i ++) {
 			dgSkeletonContainer* const container = skaletonArray[i];
-			container->InitMassMatrix (alignBuffer, constraintArray, matrixRow);
-			alignBuffer += container->GetBufferSize();
+			container->InitMassMatrix (alignBuffer, &constraintArray[j], matrixRow);
+			j += container->GetJointCount();
+			//alignBuffer += container->GetBufferSize();
 		}
 	}
 
@@ -1074,10 +1076,11 @@ void dgWorldDynamicUpdate::CalculateForcesGameMode (const dgIsland* const island
 				accNorm = (accel > accNorm) ? accel : accNorm;
 			}
 
-			for (dgInt32 i = 0; i < skeletonCount;) {
+			dgInt32 j = jointBaseCount;
+			for (dgInt32 i = 0; i < skeletonCount; i ++) {
 				dgSkeletonContainer* const container = skaletonArray[i];
-				dgFloat32 accel = container->CalculateJointForce (&constraintArray[i], bodyArray, internalForces, matrixRow);
-				i += container->GetJointCount();
+				dgFloat32 accel = container->CalculateJointForce (&constraintArray[j], bodyArray, internalForces, matrixRow);
+				j += container->GetJointCount();
 				accNorm = (accel > accNorm) ? accel : accNorm;
 			}
 		}
