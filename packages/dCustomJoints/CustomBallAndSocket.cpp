@@ -473,9 +473,9 @@ void CustomControlledBallAndSocket::SubmitConstraints (dFloat timestep, int thre
 
 	// Restrict the movement on the pivot point along all tree orthonormal direction
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_front[0]);
+return;
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_up[0]);
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
-
 
 	dVector euler0;
 	dVector euler1;

@@ -317,6 +317,7 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 {
+/*
     dVector size (1.5f, 4.0f, 0.125f);
 
     NewtonBody* const box0 = CreateBox (scene, origin + dVector (0.0f, 4.0f, 0.0f, 0.0f), size);
@@ -368,6 +369,28 @@ hinge0;
 //	dAssert ((hinge2->GetBody0() == box2) && (hinge2->GetBody1() == box1));
 //	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize (skeleton);
+*/
+
+	dVector size(1.0f, 1.0f, 1.0f);
+	NewtonBody* const box0 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
+	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 5.0f, 0.0f, 0.0f), size);
+
+	dMatrix matrix(dGrammSchmidt(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
+	matrix.m_posit = origin + dVector(0.0f, 4.0f - 0.5f, 0.0f, 0.0f);
+	new CustomBallAndSocket(matrix, box0, NULL);
+
+	matrix.m_posit.m_y += 1.0f;
+	new CustomBallAndSocket(matrix, box1, box0);
+
+#if 1
+	// optionally we can now make this int an skeleton joint 
+	//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0);
+
+	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
+	//NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+	NewtonSkeletonContainerFinalize(skeleton);
+#endif
 }
 
 static void AddSlider (DemoEntityManager* const scene, const dVector& origin)
