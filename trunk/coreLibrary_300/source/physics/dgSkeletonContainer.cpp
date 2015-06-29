@@ -399,10 +399,11 @@ class dgSkeletonContainer::dgSkeletonGraph
 
 
 dgSkeletonContainer::dgSkeletonContainer (dgDynamicBody* const rootBody)
-	:m_skeleton(new (rootBody->GetWorld()->GetAllocator()) dgSkeletonGraph (rootBody->GetWorld()->GetAllocator(), rootBody))
+	:m_solverData(NULL)
+	,m_skeleton(new (rootBody->GetWorld()->GetAllocator()) dgSkeletonGraph (rootBody->GetWorld()->GetAllocator(), rootBody))
 	,m_jointArray(NULL)
 	,m_bottomTopOrder(NULL)
-	,m_topBottomOrder(NULL)
+//	,m_topBottomOrder(NULL)
 	,m_id(m_uniqueID)
 	,m_nodeCount(1)
 {
@@ -481,6 +482,8 @@ dgInt32 dgSkeletonContainer::GetBufferSize () const
 
 void dgSkeletonContainer::SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index)
 {
+	dgAssert (0);
+/*
 	for (dgList<dgSkeletonGraph*>::dgListNode* node = root->m_children.GetFirst(); node; node = node->GetNext()) {
 		SortGraph (node->GetInfo(), root, index);
 	}
@@ -492,6 +495,7 @@ void dgSkeletonContainer::SortGraph (dgSkeletonGraph* const root, dgSkeletonGrap
 	root->m_index = index;
 	index ++;
 	dgAssert (index <= m_nodeCount);
+*/
 }
 
 void dgSkeletonContainer::Finalize ()
@@ -502,7 +506,9 @@ void dgSkeletonContainer::Finalize ()
 	dgMemoryAllocator* const allocator = m_skeleton->m_body->GetWorld()->GetAllocator();
 	m_jointArray = (dgSkeletonGraph**) allocator->Malloc ((2 * m_nodeCount + jointCount) * sizeof (dgSkeletonGraph*));
 	m_bottomTopOrder = &m_jointArray[jointCount];
-	m_topBottomOrder = &m_bottomTopOrder[m_nodeCount];
+//	m_topBottomOrder = &m_bottomTopOrder[m_nodeCount];
+	
+	dgAssert (0);
 
 	dgInt32 index = 0;
 	SortGraph (m_skeleton, NULL, index);
@@ -510,7 +516,7 @@ void dgSkeletonContainer::Finalize ()
 	dgAssert (index == m_nodeCount);
 	index = 0;
 	for (dgInt32 i = 0; i < m_nodeCount; i ++) {
-		dgSkeletonGraph* const node = m_topBottomOrder[i];
+		dgSkeletonGraph* const node = m_bottomTopOrder[i];
 		if (node->m_joint) {
 			m_jointArray[index] = node;
 			index ++;

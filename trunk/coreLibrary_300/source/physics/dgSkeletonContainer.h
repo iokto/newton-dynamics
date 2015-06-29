@@ -31,6 +31,7 @@ class dgDynamicBody;
 class dgSkeletonContainer
 {
 	public:
+	class dgSolverData;
 	class dgSkeletonGraph;
 
 	DG_CLASS_ALLOCATOR(allocator)
@@ -48,23 +49,18 @@ class dgSkeletonContainer
 	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	protected:
+	bool Sanity () const;
 	dgSkeletonGraph* FindNode (dgDynamicBody* const node) const;
 	void AddChild (dgDynamicBody* const child, dgDynamicBody* const parent);
 	void SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index);
-	virtual void SetDestructorCallback(OnConstraintDestroy destructor) {dgAssert (0);}
-
-	virtual dgUnsigned32 JacobianDerivative(dgContraintDescritor& params) {return 0;}
-	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) {}
-	virtual void JointVelocityCorrection(dgJointAccelerationDecriptor* const params) {dgAssert (0);}
 
 	static void ResetUniqueId(dgInt32 id);
 
-	bool Sanity () const;
-
+	dgSolverData* m_solverData;
 	dgSkeletonGraph* m_skeleton;
 	dgSkeletonGraph** m_jointArray;
 	dgSkeletonGraph** m_bottomTopOrder;
-	dgSkeletonGraph** m_topBottomOrder;
+//	dgSkeletonGraph** m_topBottomOrder;
 	dgInt32 m_id;
 	dgInt32 m_nodeCount;
 	static dgInt32 m_uniqueID;
