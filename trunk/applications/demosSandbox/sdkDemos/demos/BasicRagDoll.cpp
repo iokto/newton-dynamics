@@ -339,7 +339,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 		dMatrix worldMatrix (rootEntity->GetCurrentMatrix() * location);
 		NewtonBodySetMatrixRecursive (rootBone, &worldMatrix[0][0]);
 
-		// warp the skeleton in a newton skeleton for exact accuracy
+		// wrap the skeleton in a newton skeleton for exact accuracy
 		AddToSkeleton (controller, rootBone);
 	}
 

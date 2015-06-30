@@ -313,6 +313,23 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 }
 
 
+static void xxxxxxxx(const NewtonBody* body, dFloat timestep, int threadIndex)
+{
+	PhysicsApplyGravityForce (body, timestep, threadIndex);
+
+static int xxx;
+xxx ++;
+if (xxx > 500) {
+	dFloat Ixx;
+	dFloat Iyy;
+	dFloat Izz;
+	dFloat mass;
+	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
+	dVector force(0.0f, mass * DEMO_GRAVITY * 100, 0.0f, 0.0f);
+	NewtonBodyAddForce(body, &force.m_x);
+}
+}
+
 
 
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
@@ -373,14 +390,20 @@ hinge0;
 
 	dVector size(1.0f, 1.0f, 1.0f);
 	NewtonBody* const box0 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 5.0f, 0.0f, 0.0f), size);
+	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 3.0f, 0.0f, 0.0f), size);
+	NewtonBody* const box2 = CreateBox(scene, origin + dVector(0.0f, 2.0f, 0.0f, 0.0f), size);
 
 	dMatrix matrix(dGrammSchmidt(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
-	matrix.m_posit = origin + dVector(0.0f, 4.0f - 0.5f, 0.0f, 0.0f);
+	matrix.m_posit = origin + dVector(0.0f, 4.0f + 0.5f, 0.0f, 0.0f);
 	new CustomBallAndSocket(matrix, box0, NULL);
 
-	matrix.m_posit.m_y += 1.0f;
+	matrix.m_posit.m_y -= 1.0f;
 	new CustomBallAndSocket(matrix, box1, box0);
+
+	matrix.m_posit.m_y -= 1.0f;
+	new CustomBallAndSocket(matrix, box2, box1);
+
+//	NewtonBodySetForceAndTorqueCallback (box1, xxxxxxxx);
 
 #if 1
 	// optionally we can now make this int an skeleton joint 
@@ -388,7 +411,7 @@ hinge0;
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0);
 
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
-	//NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
 }

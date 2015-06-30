@@ -19,8 +19,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef __NewotnClass_3HL6356GYL459020__
-#define __NewotnClass_3HL6356GYL459020__
+#ifndef __NewotnClass_H__
+#define __NewotnClass_H__
 
 #include "NewtonStdAfx.h"
 #include "Newton.h"

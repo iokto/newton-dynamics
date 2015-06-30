@@ -91,7 +91,7 @@ void CustomBallAndSocket::SubmitConstraints (dFloat timestep, int threadIndex)
 	dMatrix matrix0;
 	dMatrix matrix1;
 
-	// calculate the position of the pivot point and the jacobian direction vectors, in global space. 
+	// calculate the position of the pivot point and the Jacobian direction vectors, in global space. 
 	CalculateGlobalMatrix (matrix0, matrix1);
 
 	// Restrict the movement on the pivot point along all three orthonormal directions
@@ -328,6 +328,7 @@ void CustomLimitBallAndSocket::SubmitConstraints (dFloat timestep, int threadInd
 	}
 */
 
+return;
 	dMatrix localMatrix (matrix0 * matrix1.Inverse());
 	dFloat pitchAngle = -dAtan2(localMatrix[1][2], localMatrix[2][2]);
 
@@ -473,7 +474,6 @@ void CustomControlledBallAndSocket::SubmitConstraints (dFloat timestep, int thre
 
 	// Restrict the movement on the pivot point along all tree orthonormal direction
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_front[0]);
-return;
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_up[0]);
 	NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
 
