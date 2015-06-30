@@ -922,17 +922,3 @@ void dgJacobianMemory::Init(dgWorld* const world, dgInt32 rowsCount, dgInt32 bod
 }
 
 
-/*
-dgInt32 dgWorldDynamicUpdate::SortJointInfoByBatchIndex (const dgParallelJointMap* const indirectIndexA, const dgParallelJointMap* const indirectIndexB, void* const context)
-{
-	if (indirectIndexA->m_bashIndex < indirectIndexB->m_bashIndex) {
-		return -1;
-	}
-	if (indirectIndexA->m_bashIndex > indirectIndexB->m_bashIndex) {
-		return 1;
-	}
-	return 0;
-}
-*/
-
-

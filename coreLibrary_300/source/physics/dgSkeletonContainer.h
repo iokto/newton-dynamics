@@ -32,6 +32,7 @@ class dgSkeletonContainer
 {
 	public:
 	class dgSolverData;
+	class dgSolverJointData;
 	class dgSkeletonGraph;
 
 	DG_CLASS_ALLOCATOR(allocator)

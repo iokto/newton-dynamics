@@ -44,6 +44,19 @@ class dgSkeletonContainer::dgSolverData
 	dgJacobian m_intemidiateForce;
 };
 
+class dgSkeletonContainer::dgSolverJointData
+{
+	struct dgInfo
+	{
+		dgFloat32 m_force;
+		dgFloat32 m_deltaForce;
+		dgFloat32 m_accel;
+		dgFloat32 m_deltaAccel;
+	};
+	public: 
+	dgInfo m_data[6];
+};
+
 class dgSkeletonContainer::dgSkeletonGraph
 {
 	public:
@@ -198,7 +211,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		:m_parent(NULL)
 		,m_body(root)
 		,m_joint(NULL)
-		//,m_data(NULL)
+		,m_data(NULL)
 		,m_children(allocator)
 		,m_m0(0)
 		,m_index(0)
@@ -213,7 +226,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		:m_parent(parent)
 		,m_body(child)
 		,m_joint(NULL)
-		//,m_data(NULL)
+		,m_data(NULL)
 		,m_children(allocator)
 		,m_m0(0)
 		,m_index(0)
@@ -229,7 +242,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		:m_parent(parent)
 		,m_body(NULL)
 		,m_joint(Joint)
-		//,m_data(NULL)
+		,m_data(NULL)
 		,m_children(allocator)
 		,m_m0(0)
 		,m_index(0)
@@ -406,6 +419,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 	dgDynamicBody* m_body;
 	dgBilateralConstraint* m_joint;
 	//dgData* m_data;
+	dgSolverJointData* m_data;
 	dgList<dgSkeletonGraph*> m_children;
 	dgInt32 m_m0;
 	dgInt16 m_index;
@@ -495,8 +509,10 @@ dgInt32 dgSkeletonContainer::GetBufferSize () const
 //	dgInt32 blocksize = sizeof(dgSkeletonGraph::dgData);
 //	return blocksize * m_nodeCount;
 	dgInt32 bodyCount = (m_nodeCount + 1) / 2;
-	dgInt32 blocksize = sizeof(dgSolverData);
-	return blocksize * bodyCount;
+	dgInt32 jointCount = (m_nodeCount - 1) / 2;
+	dgInt32 bodysize = sizeof(dgSolverData);
+	dgInt32 jointsize = sizeof(dgSolverJointData);
+	return bodysize * bodyCount + jointCount * jointsize;
 }
 
 void dgSkeletonContainer::SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index)
@@ -621,6 +637,9 @@ void dgSkeletonContainer::InitMassMatrix (char* const buffer, dgJointInfo* const
 	dgAssert((dgUnsigned64(buffer) & 0x0f) == 0);
 	m_solverData = ptr;
 
+	const dgInt32 bodyCount = (m_nodeCount + 1) / 2;
+	dgSolverJointData* jointData = (dgSolverJointData*) (&m_solverData[bodyCount]);
+
 	dgInt32 index = 0;
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
 		dgSkeletonGraph* const node = m_bottomTopOrder[i];
@@ -635,9 +654,14 @@ void dgSkeletonContainer::InitMassMatrix (char* const buffer, dgJointInfo* const
 				jointNode->m_parent->m_m0 = jointInfo->m_m1;
 				index ++;
 			}
+		} else {
+			node->m_data = jointData;
+			jointData ++;
 		}
 	}
 }
+
+
 
 dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
 {
@@ -649,59 +673,48 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 	}
 
 	const dgInt32 jointCount = (m_nodeCount - 1) / 2;
+/*
 	for (dgInt32 i = 0; i < jointCount; i++) {
-		dgJacobian y0;
-		dgJacobian y1;
-		y0.m_linear = dgVector::m_zero;
-		y0.m_angular = dgVector::m_zero;
-		y1.m_linear = dgVector::m_zero;
-		y1.m_angular = dgVector::m_zero;
-
 		const dgJointInfo* const jointInfo = &jointInfoArray[i];
-		dgAssert (jointInfo->m_joint == m_jointArray[i]->m_joint);
+		dgSkeletonGraph* const jointNode = m_jointArray[i];
+		dgAssert(jointInfo->m_joint == jointNode->m_joint);
 		const dgInt32 first = jointInfo->m_pairStart;
 		const dgInt32 count = jointInfo->m_pairActiveCount;
-
 		for (dgInt32 j = 0; j < count; j++) {
-			dgJacobianMatrixElement* const row = &matrixRow[j + first];
-			dgVector val(row->m_force);
-			dgAssert(dgCheckFloat(row->m_force));
-			y0.m_linear += row->m_Jt.m_jacobianM0.m_linear.CompProduct4(val);
-			y0.m_angular += row->m_Jt.m_jacobianM0.m_angular.CompProduct4(val);
-			y1.m_linear += row->m_Jt.m_jacobianM1.m_linear.CompProduct4(val);
-			y1.m_angular += row->m_Jt.m_jacobianM1.m_angular.CompProduct4(val);
+			//dgJacobianMatrixElement* const row = &matrixRow[j + first];
+			//row->m_penetrationStiffness = dgFloat32(0.0f);
+			 jointNode->m_data->m_force[j] = dgFloat32(0.0f);
 		}
-		const dgSkeletonGraph* const skeletonNode = m_jointArray[i];
-		const dgInt32 m0 = skeletonNode->m_bodyM0;
-		const dgInt32 m1 = skeletonNode->m_bodyM1;
-		scratchData[m0].m_linear += y0.m_linear;
-		scratchData[m0].m_angular += y0.m_angular;
-		scratchData[m1].m_linear += y1.m_linear;
-		scratchData[m1].m_angular += y1.m_angular;
 	}
-
+*/
 	dgFloat32 accNorm = dgFloat32(0.0f);
-	dgFloat32 akNum = dgFloat32(0.0f);
+	dgFloat64 akNum = dgFloat32(0.0f);
 	for (dgInt32 i = 0; i < jointCount; i++) {
 		const dgJointInfo* const jointInfo = &jointInfoArray[i];
-		const dgSkeletonGraph* const skeletonNode = m_jointArray[i];
-		const dgInt32 first = jointInfo[i].m_pairStart;
-		const dgInt32 count = jointInfo[i].m_pairCount;
+		dgSkeletonGraph* const skeletonNode = m_jointArray[i];
+		dgAssert(jointInfo->m_joint == skeletonNode->m_joint);
+		const dgInt32 first = jointInfo->m_pairStart;
+		const dgInt32 count = jointInfo->m_pairCount;
 		const dgInt32 m0 = skeletonNode->m_bodyM0;
 		const dgInt32 m1 = skeletonNode->m_bodyM1;
 		const dgJacobian& y0 = scratchData[m0];
 		const dgJacobian& y1 = scratchData[m1];
+
+		dgSolverJointData* const data = skeletonNode->m_data;
 		for (dgInt32 j = 0; j < count; j++) {
 			dgJacobianMatrixElement* const row = &matrixRow[j + first];
-			dgVector acc (row->m_JMinv.m_jacobianM0.m_linear.CompProduct4(y0.m_linear) + row->m_JMinv.m_jacobianM0.m_angular.CompProduct4(y0.m_angular) +
-						  row->m_JMinv.m_jacobianM1.m_linear.CompProduct4(y1.m_linear) + row->m_JMinv.m_jacobianM1.m_angular.CompProduct4(y1.m_angular));
+			dgVector acc(row->m_JMinv.m_jacobianM0.m_linear.CompProduct4(y0.m_linear) + row->m_JMinv.m_jacobianM0.m_angular.CompProduct4(y0.m_angular) +
+						 row->m_JMinv.m_jacobianM1.m_linear.CompProduct4(y1.m_linear) + row->m_JMinv.m_jacobianM1.m_angular.CompProduct4(y1.m_angular));
 			acc = dgVector(row->m_coordenateAccel) - acc.AddHorizontal();
 
-			row->m_accel = acc.GetScalar();								// r0
-			row->m_deltaForce = row->m_accel * row->m_invDJMinvJt;		// p0
-			akNum += row->m_accel * row->m_deltaForce;
+			//row->m_accel = acc.GetScalar();
+			//row->m_deltaForce = row->m_accel * row->m_invDJMinvJt;
+			//akNum += row->m_accel * row->m_deltaForce;
+			data->m_data[j].m_force = dgFloat32(0.0f); 
+			data->m_data[j].m_accel = acc.GetScalar();
+			data->m_data[j].m_deltaForce = data->m_data[j].m_accel * row->m_invDJMinvJt;
+			akNum += data->m_data[j].m_accel * data->m_data[j].m_deltaForce;
 			accNorm += acc.Abs().GetScalar();
-			row->m_penetrationStiffness = dgFloat32 (0.0f);
 		}
 	}
 
@@ -709,12 +722,12 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 	const dgFloat32 maxAccel = DG_SOLVER_MAX_ERROR;
 	if (accNorm > maxAccel) {
 		const dgInt32 maxPasses = 16;
-		for (dgInt32 passes = 0; (passes < maxPasses) && (accNorm > maxAccel); passes ++) {
+		for (dgInt32 passes = 0; (passes < maxPasses) && (accNorm > maxAccel); passes++) {
 			for (dgInt32 i = 0; i < bodyCount; i++) {
 				scratchData[i].m_linear = dgVector::m_zero;
 				scratchData[i].m_angular = dgVector::m_zero;
 			}
-			
+
 			for (dgInt32 i = 0; i < jointCount; i++) {
 				dgJacobian y0;
 				dgJacobian y1;
@@ -724,19 +737,23 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 				y1.m_angular = dgVector::m_zero;
 
 				const dgJointInfo* const jointInfo = &jointInfoArray[i];
+				dgSkeletonGraph* const skeletonNode = m_jointArray[i];
 				const dgInt32 first = jointInfo->m_pairStart;
 				const dgInt32 count = jointInfo->m_pairActiveCount;
+				dgSolverJointData* const data = skeletonNode->m_data;
+
 				for (dgInt32 j = 0; j < count; j++) {
 					dgJacobianMatrixElement* const row = &matrixRow[j + first];
-					dgVector val(row->m_deltaForce);
-					dgAssert(dgCheckFloat(row->m_deltaForce));
+					//dgVector val(row->m_deltaForce);
+					//dgAssert(dgCheckFloat(row->m_deltaForce));
+					dgVector val(data->m_data[j].m_deltaForce);
+					dgAssert(dgCheckFloat(data->m_data[j].m_deltaForce));
 					y0.m_linear += row->m_Jt.m_jacobianM0.m_linear.CompProduct4(val);
 					y0.m_angular += row->m_Jt.m_jacobianM0.m_angular.CompProduct4(val);
 					y1.m_linear += row->m_Jt.m_jacobianM1.m_linear.CompProduct4(val);
 					y1.m_angular += row->m_Jt.m_jacobianM1.m_angular.CompProduct4(val);
 				}
 
-				const dgSkeletonGraph* const skeletonNode = m_jointArray[i];
 				const dgInt32 m0 = skeletonNode->m_bodyM0;
 				const dgInt32 m1 = skeletonNode->m_bodyM1;
 				scratchData[m0].m_linear += y0.m_linear;
@@ -745,69 +762,85 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 				scratchData[m1].m_angular += y1.m_angular;
 			}
 
-			dgFloat32 akDen = dgFloat32 (0.0f);
+			dgFloat64 akDen = dgFloat32(0.0f);
 			for (dgInt32 i = 0; i < jointCount; i++) {
 				const dgJointInfo* const jointInfo = &jointInfoArray[i];
-				const dgSkeletonGraph* const skeletonNode = m_jointArray[i];
-				const dgInt32 first = jointInfo[i].m_pairStart;
-				const dgInt32 count = jointInfo[i].m_pairCount;
+				dgSkeletonGraph* const skeletonNode = m_jointArray[i];
+				const dgInt32 first = jointInfo->m_pairStart;
+				const dgInt32 count = jointInfo->m_pairCount;
 				const dgInt32 m0 = skeletonNode->m_bodyM0;
 				const dgInt32 m1 = skeletonNode->m_bodyM1;
 
 				const dgJacobian& y0 = scratchData[m0];
 				const dgJacobian& y1 = scratchData[m1];
+				dgSolverJointData* const data = skeletonNode->m_data;
 				for (dgInt32 j = 0; j < count; j++) {
 					dgJacobianMatrixElement* const row = &matrixRow[j + first];
 					dgVector acc(row->m_JMinv.m_jacobianM0.m_linear.CompProduct4(y0.m_linear) + row->m_JMinv.m_jacobianM0.m_angular.CompProduct4(y0.m_angular) +
 								 row->m_JMinv.m_jacobianM1.m_linear.CompProduct4(y1.m_linear) + row->m_JMinv.m_jacobianM1.m_angular.CompProduct4(y1.m_angular));
 
-					row->m_deltaAccel = acc.AddHorizontal().GetScalar();
-					akDen += row->m_deltaAccel * row->m_deltaForce;
+					//row->m_deltaAccel = acc.AddHorizontal().GetScalar();
+					//akDen += row->m_deltaAccel * row->m_deltaForce;
+					data->m_data[j].m_deltaAccel = acc.AddHorizontal().GetScalar();
+					akDen += data->m_data[j].m_deltaAccel * data->m_data[j].m_deltaForce;
 				}
 			}
 
-			dgFloat32 ak = akNum / akDen;
-			dgVector accelMag (dgVector::m_zero);
+			dgFloat32 ak = dgFloat32(akNum / akDen);
+			dgVector accelMag(dgVector::m_zero);
 			for (dgInt32 i = 0; i < jointCount; i++) {
 				dgJointInfo* const jointInfo = &jointInfoArray[i];
-				const dgInt32 first = jointInfo[i].m_pairStart;
-				const dgInt32 count = jointInfo[i].m_pairCount;
+				dgSkeletonGraph* const skeletonNode = m_jointArray[i];
+				//const dgInt32 first = jointInfo->m_pairStart;
+				const dgInt32 count = jointInfo->m_pairCount;
+				dgSolverJointData* const data = skeletonNode->m_data;
 				for (dgInt32 j = 0; j < count; j++) {
-					dgJacobianMatrixElement* const row = &matrixRow[j + first];
-					//row->m_force += ak * row->m_deltaForce;
-					row->m_penetrationStiffness += ak * row->m_deltaForce;
-					row->m_accel -= ak * row->m_deltaAccel;
-					accelMag += dgVector(row->m_accel).Abs();  
+					//dgJacobianMatrixElement* const row = &matrixRow[j + first];
+					//row->m_penetrationStiffness += ak * row->m_deltaForce;
+					//row->m_accel -= ak * row->m_deltaAccel;
+					data->m_data[j].m_force += ak * data->m_data[j].m_deltaForce;
+					data->m_data[j].m_accel -= ak * data->m_data[j].m_deltaAccel;
+					accelMag += dgVector(data->m_data[j].m_accel).Abs();
 				}
 			}
 
 			accNorm = accelMag.GetScalar();
 			if (accNorm > maxAccel) {
 				akDen = akNum;
-				akNum = dgFloat32 (0.0f);
+				akNum = dgFloat32(0.0f);
 				for (dgInt32 i = 0; i < jointCount; i++) {
 					const dgJointInfo* const jointInfo = &jointInfoArray[i];
-					const dgInt32 first = jointInfo[i].m_pairStart;
-					const dgInt32 count = jointInfo[i].m_pairCount;
+					dgSkeletonGraph* const skeletonNode = m_jointArray[i];
+					const dgInt32 first = jointInfo->m_pairStart;
+					const dgInt32 count = jointInfo->m_pairCount;
+					dgSolverJointData* const data = skeletonNode->m_data;
 					for (dgInt32 j = 0; j < count; j++) {
 						dgJacobianMatrixElement* const row = &matrixRow[j + first];
-						row->m_deltaAccel = row->m_accel * row->m_invDJMinvJt;
-						akNum += row->m_accel * row->m_deltaAccel;
+						//row->m_deltaAccel = row->m_accel * row->m_invDJMinvJt;
+						//akNum += row->m_accel * row->m_deltaAccel;
+						data->m_data[j].m_deltaAccel = data->m_data[j].m_accel * row->m_invDJMinvJt;;
+						akNum += data->m_data[j].m_accel * data->m_data[j].m_deltaAccel;
 					}
 				}
 
-				ak = akNum / akDen;
+				ak = dgFloat32 (akNum / akDen);
 				for (dgInt32 i = 0; i < jointCount; i++) {
 					const dgJointInfo* const jointInfo = &jointInfoArray[i];
-					const dgInt32 first = jointInfo[i].m_pairStart;
-					const dgInt32 count = jointInfo[i].m_pairCount;
+					dgSkeletonGraph* const skeletonNode = m_jointArray[i];
+					//const dgInt32 first = jointInfo->m_pairStart;
+					const dgInt32 count = jointInfo->m_pairCount;
+					dgSolverJointData* const data = skeletonNode->m_data;
 					for (dgInt32 j = 0; j < count; j++) {
-						dgJacobianMatrixElement* const row = &matrixRow[j + first];
-						row->m_deltaForce = row->m_deltaAccel + ak * row->m_deltaForce;
+						//dgJacobianMatrixElement* const row = &matrixRow[j + first];
+						//row->m_deltaForce = row->m_deltaAccel + ak * row->m_deltaForce;
+						data->m_data[j].m_deltaForce = data->m_data[j].m_deltaAccel + ak * data->m_data[j].m_deltaForce;
 					}
 				}
 			}
 		}
+
+//dgAssert (accNorm < 0.1);
+//dgTrace (("%f\n", accNorm));
 
 		for (dgInt32 i = 0; i < bodyCount; i++) {
 			scratchData[i].m_linear = dgVector::m_zero;
@@ -823,29 +856,28 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 			y1.m_angular = dgVector::m_zero;
 
 			const dgJointInfo* const jointInfo = &jointInfoArray[i];
+			dgSkeletonGraph* const skeletonNode = m_jointArray[i];
 			dgAssert(jointInfo->m_joint == m_jointArray[i]->m_joint);
 			const dgInt32 first = jointInfo->m_pairStart;
 			const dgInt32 count = jointInfo->m_pairActiveCount;
-
+			dgSolverJointData* const data = skeletonNode->m_data;
 			for (dgInt32 j = 0; j < count; j++) {
 				dgJacobianMatrixElement* const row = &matrixRow[j + first];
-				//dgVector val(row->m_force);
-				//dgAssert(dgCheckFloat(row->m_force));
-				dgVector val(row->m_penetrationStiffness);
-				dgAssert(dgCheckFloat(row->m_penetrationStiffness));
-				row->m_force += row->m_penetrationStiffness;
+				//dgVector val(row->m_penetrationStiffness);
+				dgVector val(data->m_data[j].m_force);
+				dgAssert(dgCheckFloat(data->m_data[j].m_force));
+				row->m_force += data->m_data[j].m_force;
 				y0.m_linear += row->m_Jt.m_jacobianM0.m_linear.CompProduct4(val);
 				y0.m_angular += row->m_Jt.m_jacobianM0.m_angular.CompProduct4(val);
 				y1.m_linear += row->m_Jt.m_jacobianM1.m_linear.CompProduct4(val);
 				y1.m_angular += row->m_Jt.m_jacobianM1.m_angular.CompProduct4(val);
 			}
-			const dgSkeletonGraph* const skeletonNode = m_jointArray[i];
 			const dgInt32 m0 = skeletonNode->m_bodyM0;
 			const dgInt32 m1 = skeletonNode->m_bodyM1;
-			scratchData[m0].m_linear = y0.m_linear;
-			scratchData[m0].m_angular = y0.m_angular;
-			scratchData[m1].m_linear = y1.m_linear;
-			scratchData[m1].m_angular = y1.m_angular;
+			scratchData[m0].m_linear += y0.m_linear;
+			scratchData[m0].m_angular += y0.m_angular;
+			scratchData[m1].m_linear += y1.m_linear;
+			scratchData[m1].m_angular += y1.m_angular;
 		}
 
 		for (dgInt32 i = 0; i < bodyCount; i++) {
@@ -857,4 +889,5 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 
 	return retAccel;
 }
+
 
