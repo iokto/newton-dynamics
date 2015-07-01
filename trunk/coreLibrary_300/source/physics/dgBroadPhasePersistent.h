@@ -42,7 +42,6 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual dgBroadPhaseNodeAggegate* CreateAggegate();
 	virtual void DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate);
 
-
 	virtual void ResetEntropy();
 	virtual void UpdateFitness();
 	virtual void ForEachBodyInAABB(const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const;
@@ -54,15 +53,8 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints);
 	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID);
 
-/*
-	void RayCast (const dgVector& p0, const dgVector& p1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const;
-	void ConvexRayCast (dgCollisionInstance* const shape, const dgMatrix& matrx, const dgVector& p1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const;
-	dgInt32 ConvexCast (dgCollisionInstance* const shape, const dgMatrix& p0, const dgVector& p1, dgFloat32& timetoImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const;
-	void ForEachBodyInAABB (const dgVector& q0, const dgVector& q1, OnBodiesInAABB callback, void* const userData) const;
-//	static void UpdateSoftBodyForcesKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
-	void ApplyDeformableForceAndtorque (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
-//	void UpdateSoftBodyForcesKernel (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
-*/
+	
+
 	dgFloat64 m_staticEntropy;
 	dgFloat64 m_dynamicsEntropy;
 	dgFitnessList m_staticFitness;

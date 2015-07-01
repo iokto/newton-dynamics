@@ -143,12 +143,8 @@ dgInt32 dgBroadPhaseDefault::ConvexCast(dgCollisionInstance* const shape, const 
 }
 
 
-void dgBroadPhaseDefault::Add(dgBody* const body)
+void dgBroadPhaseDefault::AddNode(dgBroadPhaseNode* const newNode)
 {
-	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
-	// create a new leaf node;
-	dgBroadPhaseNode* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNode(body);
-
 	if (!m_rootNode) {
 		m_rootNode = newNode;
 	} else {
@@ -160,10 +156,20 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 	}
 }
 
+void dgBroadPhaseDefault::Add(dgBody* const body)
+{
+	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
+	// create a new leaf node;
+	dgBroadPhaseNode* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNode(body);
+
+	AddNode(newNode);
+}
+
 dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 {
-	//	return m_broadPhase new (m_allocator) dgBroadPhaseNodeAggegate (this);
-	return NULL;
+	dgBroadPhaseNodeAggegate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggegate(m_world);
+	AddNode(newNode);
+	return newNode;
 }
 
 
