@@ -39,6 +39,9 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual void Add(dgBody* const body);
 	virtual void Remove(dgBody* const body);
 	virtual void InvalidateCache();
+	virtual dgBroadPhaseNodeAggegate* CreateAggegate();
+	virtual void DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate);
+
 
 	virtual void ResetEntropy();
 	virtual void UpdateFitness();

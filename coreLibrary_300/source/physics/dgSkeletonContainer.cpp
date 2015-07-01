@@ -740,7 +740,7 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 	retAccel = dgMax (accNorm, retAccel);;
 	const dgFloat32 maxAccel = DG_SOLVER_MAX_ERROR;
 	if (accNorm > maxAccel) {
-		const dgInt32 maxPasses = 16;
+		const dgInt32 maxPasses = 32;
 		for (dgInt32 passes = 0; (passes < maxPasses) && (accNorm > maxAccel); passes++) {
 			for (dgInt32 i = 0; i < bodyCount; i++) {
 				scratchData[i].m_linear = dgVector::m_zero;

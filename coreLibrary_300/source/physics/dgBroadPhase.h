@@ -117,7 +117,7 @@ class dgBroadPhaseNode
 	{
 	}
 
-	~dgBroadPhaseNode()
+	virtual ~dgBroadPhaseNode()
 	{
 		if (m_body) {
 			dgAssert(!m_left);
@@ -170,6 +170,22 @@ class dgBroadPhaseNode
 	friend class dgFitnessList;
 } DG_GCC_VECTOR_ALIGMENT;
 
+class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
+{
+	public:
+	dgBroadPhaseNodeAggegate (dgWorld* const world)
+		:dgBroadPhaseNode()
+		,m_world(world)
+		,m_chidren(NULL)
+	{
+		m_minBox = dgVector(dgFloat32(0.0f));
+		m_maxBox = dgVector(dgFloat32(0.0f));
+		m_surfaceArea = dgFloat32(0.0f);
+	}
+
+	dgWorld* m_world;
+	dgBroadPhaseNode* m_chidren;
+};
 
 class dgBroadPhase
 {
@@ -253,6 +269,8 @@ class dgBroadPhase
 	virtual void ResetEntropy() = 0;
 	virtual void InvalidateCache() = 0;
 	virtual void UpdateFitness() = 0;
+	virtual dgBroadPhaseNodeAggegate* CreateAggegate() = 0;
+	virtual void DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate) = 0;
 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) = 0;
 	virtual void ForEachBodyInAABB (const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const = 0;
@@ -271,6 +289,7 @@ class dgBroadPhase
 	
 	void UpdateContacts(dgFloat32 timestep);
 	void CollisionChange (dgBody* const body, dgCollisionInstance* const collisionSrc);
+
 
 	protected:
 	bool DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const;
