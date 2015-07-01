@@ -36,7 +36,7 @@ class dgSkeletonContainer
 	class dgSkeletonGraph;
 
 	DG_CLASS_ALLOCATOR(allocator)
-	dgSkeletonContainer(dgDynamicBody* const rootBody);
+	dgSkeletonContainer(dgWorld* const world, dgDynamicBody* const rootBody);
 	~dgSkeletonContainer();
 
 	dgInt32 GetId () const {return m_id;}
@@ -57,6 +57,7 @@ class dgSkeletonContainer
 
 	static void ResetUniqueId(dgInt32 id);
 
+	dgWorld* m_world;
 	dgSolverData* m_solverData;
 	dgSkeletonGraph* m_skeleton;
 	dgSkeletonGraph** m_bodyArray;

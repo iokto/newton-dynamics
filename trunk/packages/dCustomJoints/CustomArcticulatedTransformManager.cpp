@@ -73,26 +73,13 @@ void CustomArticulatedTransformController::Init (void* const userData, bool erro
 {
 	m_boneCount = 0;
 	m_userData = userData;
-	SetErrorProjectionMode (errorCorrection);
 }
-
-void CustomArticulatedTransformController::SetErrorProjectionMode (bool mode)
-{
-	m_errorProjectionMode = mode;
-}
-
-bool CustomArticulatedTransformController::GetErrorProjectionMode () const
-{
-	return m_errorProjectionMode;
-}
-
 
 void CustomArticulatedTransformController::PreUpdate(dFloat timestep, int threadIndex)
 {
 	CustomArticulaledTransformManager* const manager = (CustomArticulaledTransformManager*) GetManager();
 	manager->OnPreUpdate(this, timestep, threadIndex);
 }
-
 
 void CustomArticulatedTransformController::PostUpdate(dFloat timestep, int threadIndex)
 {
@@ -208,3 +195,38 @@ bool CustomArticulatedTransformController::SelfCollisionTest (const dSkeletonBon
 	return state;
 }
 
+
+void CustomArticulatedTransformController::MakeNewtonSkeleton() const
+{
+	int stack = 1;
+	NewtonBody* bonePool[32];
+	NewtonBody* boneParent[32];
+
+	bonePool[0] = GetBoneBody(0);
+	boneParent[0] = NULL;
+	NewtonWorld* const world = ((CustomArticulaledTransformManager*)GetManager())->GetWorld();
+
+	NewtonSkeletonContainer* skeleton = NULL;
+	while (stack) {
+		stack--;
+		NewtonBody* const bone = bonePool[stack];
+		NewtonBody* const parent = boneParent[stack];
+
+		if (!skeleton) {
+			skeleton = NewtonSkeletonContainerCreate(world, bone);
+		}
+		else {
+			NewtonSkeletonContainerAttachBone(skeleton, bone, parent);
+		}
+
+		for (int i = 0; i < m_boneCount; i++) {
+			const CustomArticulatedTransformController::dSkeletonBone* const child = GetBone(i);
+			if (child->m_parent && child->m_parent->m_body == bone) {
+				boneParent[stack] = bone;
+				bonePool[stack] = child->m_body;
+				stack++;
+			}
+		}
+	}
+	NewtonSkeletonContainerFinalize(skeleton);
+}
