@@ -328,7 +328,6 @@ void CustomLimitBallAndSocket::SubmitConstraints (dFloat timestep, int threadInd
 	}
 */
 
-return;
 	dMatrix localMatrix (matrix0 * matrix1.Inverse());
 	dFloat pitchAngle = -dAtan2(localMatrix[1][2], localMatrix[2][2]);
 
