@@ -25,17 +25,6 @@
 #include "dgPhysicsStdafx.h"
 #include "dgBroadPhase.h"
 
-/*
-
-class dgBody;
-class dgWorld;
-class dgContact;
-class dgCollision;
-class dgCollisionInstance;
-class dgBroadphaseSyncDescriptor;
-
-*/
-
 
 class dgBroadPhaseDefault: public dgBroadPhase
 {
@@ -51,6 +40,8 @@ class dgBroadPhaseDefault: public dgBroadPhase
 	virtual void Remove(dgBody* const body);
 	virtual void UpdateFitness();
 	virtual void InvalidateCache();
+	virtual dgBroadPhaseNodeAggegate* CreateAggegate();
+	virtual void DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate);
 
 	protected:
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) {}

@@ -1369,3 +1369,4 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	dgDeformableBodiesUpdate* const softBodyList = m_world;
 	softBodyList->ApplyExternaForces(timestep);
 }
+

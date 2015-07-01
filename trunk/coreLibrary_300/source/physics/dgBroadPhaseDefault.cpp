@@ -160,6 +160,13 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 	}
 }
 
+dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
+{
+	//	return m_broadPhase new (m_allocator) dgBroadPhaseNodeAggegate (this);
+	return NULL;
+}
+
+
 void dgBroadPhaseDefault::Remove(dgBody* const body)
 {
 	if (body->GetBroadPhase()) {
@@ -216,6 +223,13 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 		}
 	}
 }
+
+
+void dgBroadPhaseDefault::DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate)
+{
+	dgAssert(0);
+}
+
 
 void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
 {

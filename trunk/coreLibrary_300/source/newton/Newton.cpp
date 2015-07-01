@@ -8695,3 +8695,24 @@ void NewtonSkeletonContainerFinalize (NewtonSkeletonContainer* const skeleton)
 	dgSkeletonContainer* const skeletonContainer = (dgSkeletonContainer*)skeleton;
 	skeletonContainer->Finalize();
 }
+
+void* NewtonCollisionAggregateCreate(NewtonWorld* const worldPtr)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgWorld* const world = (dgWorld*) worldPtr;
+	return world->CreateAggreGate();
+}
+
+void NewtonCollisionAggregateDestroy(void* const aggregatePtr)
+{
+	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
+	aggregate->m_world->DestroyAggregate(aggregate);
+}
+
+void NewtonCollisionAggregateAddBody(void* const aggregate, const NewtonBody* const body)
+{
+}
+
+void NewtonCollisionAggregateRemoveBody(void* const aggregate, const NewtonBody* const body)
+{
+}
