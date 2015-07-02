@@ -250,9 +250,9 @@ class dgBroadPhaseInternalNode: public dgBroadPhaseNode
 		,m_right(myNode)
 		,m_fitnessNode(NULL)
 	{
-		dgAssert (0);
-/*
 		if (m_parent) {
+			dgAssert (0);
+/*
 			if (m_parent->m_left == sibling) {
 				m_parent->m_left = this;
 			}
@@ -260,7 +260,9 @@ class dgBroadPhaseInternalNode: public dgBroadPhaseNode
 				dgAssert(m_parent->m_right == sibling);
 				m_parent->m_right = this;
 			}
+*/			
 		}
+
 		sibling->m_parent = this;
 		myNode->m_parent = this;
 
@@ -271,7 +273,6 @@ class dgBroadPhaseInternalNode: public dgBroadPhaseNode
 		m_maxBox = left->m_maxBox.GetMax(right->m_maxBox);
 		dgVector side0(m_maxBox - m_minBox);
 		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
-*/	
 	}
 
 	virtual ~dgBroadPhaseInternalNode()
