@@ -85,6 +85,20 @@ class dgBroadPhaseNode
 		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
 	}
 
+	virtual dgBody* GetBody() const
+	{
+		return NULL;
+	}
+
+	virtual dgBroadPhaseNode* GetLeft() const
+	{
+		return NULL;
+	}
+
+	virtual dgBroadPhaseNode* GetRight() const
+	{
+		return NULL;
+	}
 
 	dgVector m_minBox;
 	dgVector m_maxBox;
@@ -222,6 +236,75 @@ class dgBroadPhaseNode
 */ 
 
 
+class dgBroadPhaseInternalNode: public dgBroadPhaseNode
+{
+	public:
+	dgBroadPhaseInternalNode(dgBroadPhaseNode* const sibling, dgBroadPhaseNode* const myNode)
+		:dgBroadPhaseNode(sibling->m_parent)
+		,m_left(sibling)
+		,m_right(myNode)
+		,m_fitnessNode(NULL)
+	{
+		dgAssert (0);
+/*
+		if (m_parent) {
+			if (m_parent->m_left == sibling) {
+				m_parent->m_left = this;
+			}
+			else {
+				dgAssert(m_parent->m_right == sibling);
+				m_parent->m_right = this;
+			}
+		}
+		sibling->m_parent = this;
+		myNode->m_parent = this;
+
+		dgBroadPhaseNode* const left = m_left;
+		dgBroadPhaseNode* const right = m_right;
+
+		m_minBox = left->m_minBox.GetMin(right->m_minBox);
+		m_maxBox = left->m_maxBox.GetMax(right->m_maxBox);
+		dgVector side0(m_maxBox - m_minBox);
+		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
+*/	
+	}
+
+	virtual ~dgBroadPhaseInternalNode()
+	{
+		dgAssert (0);
+/*
+		if (m_body) {
+			dgAssert(!m_left);
+			dgAssert(!m_right);
+			dgAssert(m_body->GetBroadPhase() == this);
+			m_body->SetBroadPhase(NULL);
+		} else {
+			if (m_left) {
+				delete m_left;
+			}
+			if (m_right) {
+				delete m_right;
+			}
+		}
+*/	
+	}
+	
+	virtual dgBroadPhaseNode* GetLeft() const
+	{
+		return m_left;
+	}
+
+	virtual dgBroadPhaseNode* GetRight() const
+	{
+		return m_right;
+	}
+
+	dgBroadPhaseNode* m_left;
+	dgBroadPhaseNode* m_right;
+	dgList<dgBroadPhaseNode*>::dgListNode* m_fitnessNode;
+};
+
+
 class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 {
 	public:
@@ -232,6 +315,11 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 	{
 		SetAABB(body->m_minAABB, body->m_maxAABB);
 		m_body->SetBroadPhase(this);
+	}
+
+	virtual dgBody* GetBody() const
+	{
+		return m_body;
 	}
 
 	dgBody* m_body;

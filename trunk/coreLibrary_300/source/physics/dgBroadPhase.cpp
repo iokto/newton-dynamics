@@ -511,14 +511,13 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 		if (dist > maxParam) {
 			break;
 		} else {
-			dgAssert (0);
-/*
 			const dgBroadPhaseNode* const me = stackPool[stack];
 			dgAssert(me);
-			if (me->m_body) {
-				dgAssert(!me->m_left);
-				dgAssert(!me->m_right);
-				dgFloat32 param = me->m_body->RayCast(line, filter, prefilter, userData, maxParam);
+			dgBody* const body = me->GetBody();
+			if (body) {
+				dgAssert(!me->GetLeft());
+				dgAssert(!me->GetRight());
+				dgFloat32 param = body->RayCast(line, filter, prefilter, userData, maxParam);
 				if (param < maxParam) {
 					maxParam = param;
 					if (maxParam < dgFloat32(1.0e-8f)) {
@@ -526,6 +525,8 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 					}
 				}
 			} else {
+				dgAssert (0);
+/*
 				const dgBroadPhaseNode* const left = me->m_left;
 				dgAssert(left);
 				dgFloat32 dist = ray.BoxIntersect(left->m_minBox, left->m_maxBox);
@@ -555,8 +556,8 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 					stack++;
 					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 				}
+*/				
 			}
-*/
 		}
 	}
 }
