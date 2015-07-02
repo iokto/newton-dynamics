@@ -48,6 +48,35 @@ class dgConvexCastReturnInfo
 	dgFloat32 m_penetration;                // contact penetration at collision point
 };
 
+
+DG_MSC_VECTOR_ALIGMENT
+class dgBroadPhaseNode
+{
+	public:
+	DG_CLASS_ALLOCATOR(allocator)
+	dgBroadPhaseNode()
+		:m_minBox(dgFloat32(-1.0e15f))
+		,m_maxBox(dgFloat32(1.0e15f))
+		,m_parent(NULL)
+		,m_surfaceArea(dgFloat32(1.0e20f))
+	{
+	}
+
+	~dgBroadPhaseNode()
+	{
+	}
+
+	dgVector m_minBox;
+	dgVector m_maxBox;
+	dgBroadPhaseNode* m_parent;
+	dgFloat32 m_surfaceArea;
+
+	static dgVector m_broadPhaseScale;
+	static dgVector m_broadInvPhaseScale;
+
+} DG_GCC_VECTOR_ALIGMENT;
+
+/*
 DG_MSC_VECTOR_ALIGMENT
 class dgBroadPhaseNode
 {
@@ -169,6 +198,7 @@ class dgBroadPhaseNode
 	friend class dgBroadPhaseDefault;
 	friend class dgFitnessList;
 } DG_GCC_VECTOR_ALIGMENT;
+*/ 
 
 class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 {
@@ -186,6 +216,7 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 	dgWorld* m_world;
 	dgBroadPhaseNode* m_chidren;
 };
+
 
 class dgBroadPhase
 {
