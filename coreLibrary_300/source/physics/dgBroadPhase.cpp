@@ -707,9 +707,9 @@ dgInt32 dgBroadPhase::CompareNodes(const dgBroadPhaseNode* const nodeA, const dg
 
 void dgBroadPhase::ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy, dgBroadPhaseNode** const root)
 {
-dgAssert (0);
-/*
 	if (*root) {
+		dgAssert(0);
+		/*
 		dgBroadPhaseNode* const parent = (*root)->m_parent;
 		(*root)->m_parent = NULL;
 		dgFloat64 entropy = CalculateEntropy(fitness, root);
@@ -746,8 +746,8 @@ dgAssert (0);
 		}
 		(*root)->m_parent = parent;
 		oldEntropy = entropy;
-	}
 */
+	}
 }
 
 
