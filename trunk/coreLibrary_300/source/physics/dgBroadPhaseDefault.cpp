@@ -182,9 +182,9 @@ dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 
 void dgBroadPhaseDefault::Remove(dgBody* const body)
 {
-dgAssert (0);
-/*
 	if (body->GetBroadPhase()) {
+		dgAssert(0);
+		/*
 		dgBroadPhaseNode* const node = body->GetBroadPhase();
 
 		dgAssert(!node->m_fitnessNode);
@@ -236,8 +236,8 @@ dgAssert (0);
 			delete node;
 			m_rootNode = NULL;
 		}
-	}
 */
+	}
 }
 
 
