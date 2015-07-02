@@ -54,17 +54,37 @@ class dgBroadPhaseNode
 {
 	public:
 	DG_CLASS_ALLOCATOR(allocator)
-	dgBroadPhaseNode()
+	dgBroadPhaseNode(dgBroadPhaseNode* const parent)
 		:m_minBox(dgFloat32(-1.0e15f))
 		,m_maxBox(dgFloat32(1.0e15f))
-		,m_parent(NULL)
+		,m_parent(parent)
 		,m_surfaceArea(dgFloat32(1.0e20f))
 	{
 	}
 
-	~dgBroadPhaseNode()
+	virtual ~dgBroadPhaseNode()
 	{
 	}
+
+	void SetAABB(const dgVector& minBox, const dgVector& maxBox)
+	{
+		dgAssert(minBox.m_x <= maxBox.m_x);
+		dgAssert(minBox.m_y <= maxBox.m_y);
+		dgAssert(minBox.m_z <= maxBox.m_z);
+
+		dgVector p0(minBox.CompProduct4(m_broadPhaseScale));
+		dgVector p1(maxBox.CompProduct4(m_broadPhaseScale) + dgVector::m_one);
+
+		m_minBox = p0.Floor().CompProduct4(m_broadInvPhaseScale);
+		m_maxBox = p1.Floor().CompProduct4(m_broadInvPhaseScale);
+
+		dgAssert(m_minBox.m_w == dgFloat32(0.0f));
+		dgAssert(m_maxBox.m_w == dgFloat32(0.0f));
+
+		dgVector side0(m_maxBox - m_minBox);
+		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
+	}
+
 
 	dgVector m_minBox;
 	dgVector m_maxBox;
@@ -75,6 +95,7 @@ class dgBroadPhaseNode
 	static dgVector m_broadInvPhaseScale;
 
 } DG_GCC_VECTOR_ALIGMENT;
+
 
 /*
 DG_MSC_VECTOR_ALIGMENT
@@ -200,11 +221,28 @@ class dgBroadPhaseNode
 } DG_GCC_VECTOR_ALIGMENT;
 */ 
 
+
+class dgBroadPhaseBodyNode: public dgBroadPhaseNode
+{
+	public:
+	dgBroadPhaseBodyNode(dgBody* const body)
+		:dgBroadPhaseNode(NULL)
+		,m_body(body)
+		,m_updateNode(NULL)
+	{
+		SetAABB(body->m_minAABB, body->m_maxAABB);
+		m_body->SetBroadPhase(this);
+	}
+
+	dgBody* m_body;
+	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
+};
+
 class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 {
 	public:
 	dgBroadPhaseNodeAggegate (dgWorld* const world)
-		:dgBroadPhaseNode()
+		:dgBroadPhaseNode(NULL)
 		,m_world(world)
 		,m_chidren(NULL)
 	{

@@ -278,6 +278,7 @@ class dgBody
 	friend class dgCollisionUserMesh;
 	friend class dgBodyMasterListRow;
 	friend class dgWorldDynamicUpdate;
+	friend class dgBroadPhaseBodyNode;
 	friend class dgBilateralConstraint;
 	friend class dgCollisionConvexPolygon;
 	friend class dgCollidingPairCollector;

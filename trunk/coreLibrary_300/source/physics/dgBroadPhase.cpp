@@ -496,8 +496,6 @@ return 0;
 
 void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& l0, const dgVector& l1, dgFastRayTest& ray, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const
 {
-dgAssert (0);
-/*
 	dgLineBox line;
 	line.m_l0 = l0;
 	line.m_l1 = l1;
@@ -512,8 +510,9 @@ dgAssert (0);
 		dgFloat32 dist = distance[stack];
 		if (dist > maxParam) {
 			break;
-		}
-		else {
+		} else {
+			dgAssert (0);
+/*
 			const dgBroadPhaseNode* const me = stackPool[stack];
 			dgAssert(me);
 			if (me->m_body) {
@@ -557,9 +556,9 @@ dgAssert (0);
 					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 				}
 			}
+*/
 		}
 	}
-*/
 }
 
 void dgBroadPhase::CollisionChange (dgBody* const body, dgCollisionInstance* const collision)
