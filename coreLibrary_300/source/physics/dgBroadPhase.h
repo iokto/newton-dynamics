@@ -334,6 +334,7 @@ class dgBroadPhase
 	dgWorld* m_world;
 	dgBroadPhaseNode* m_rootNode;
 	dgList<dgBody*> m_generatedBodies;
+	dgList<dgBroadPhaseNode*> m_updateNodes;
 	dgUnsigned32 m_lru;
 	dgThread::dgCriticalSection m_contacJointLock;
 	dgThread::dgCriticalSection m_criticalSectionLock;
