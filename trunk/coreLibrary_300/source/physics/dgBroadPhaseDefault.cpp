@@ -148,9 +148,8 @@ void dgBroadPhaseDefault::AddNode(dgBroadPhaseNode* const newNode)
 	if (!m_rootNode) {
 		m_rootNode = newNode;
 	} else {
-		dgAssert (0);
+		dgBroadPhaseInternalNode* const node = InsertNode(m_rootNode, newNode);
 /*
-		dgBroadPhaseNode* const node = InsertNode(m_rootNode, newNode);
 		node->m_fitnessNode = m_fitness.Append(node);
 		if (!node->m_parent) {
 			m_rootNode = node;
