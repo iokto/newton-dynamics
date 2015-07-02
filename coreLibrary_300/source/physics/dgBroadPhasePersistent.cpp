@@ -33,11 +33,13 @@ dgBroadPhasePersistent::dgBroadPhasePersistent(dgWorld* const world)
 	,m_dynamicsFitness(world->GetAllocator())
 	,m_staticNeedsUpdate(true)
 {
-	m_rootNode = new (world->GetAllocator()) dgBroadPhaseNode;
+	dgAssert (0);
+//	m_rootNode = new (world->GetAllocator()) dgBroadPhaseNode(NULL);
 }
 
 dgBroadPhasePersistent::~dgBroadPhasePersistent()
 {
+	dgAssert (0);
 	delete m_rootNode;
 }
 

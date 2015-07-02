@@ -145,30 +145,27 @@ dgInt32 dgBroadPhaseDefault::ConvexCast(dgCollisionInstance* const shape, const 
 
 void dgBroadPhaseDefault::AddNode(dgBroadPhaseNode* const newNode)
 {
-	dgAssert (0);
-/*
 	if (!m_rootNode) {
 		m_rootNode = newNode;
 	} else {
+		dgAssert (0);
+/*
 		dgBroadPhaseNode* const node = InsertNode(m_rootNode, newNode);
 		node->m_fitnessNode = m_fitness.Append(node);
 		if (!node->m_parent) {
 			m_rootNode = node;
 		}
-	}
 */
+	}
 }
 
 void dgBroadPhaseDefault::Add(dgBody* const body)
 {
-	dgAssert (0);
-/*
-	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
 	// create a new leaf node;
-	dgBroadPhaseNode* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNode(body);
-
+	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
+	dgBroadPhaseBodyNode* const newNode = new (m_world->GetAllocator()) dgBroadPhaseBodyNode(body);
+	newNode->m_updateNode = m_updateNodes.Append(newNode);
 	AddNode(newNode);
-*/
 }
 
 dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
