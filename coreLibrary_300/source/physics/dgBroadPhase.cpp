@@ -159,17 +159,15 @@ dgBroadPhase::~dgBroadPhase()
 }
 
 
-dgBroadPhaseNode* dgBroadPhase::InsertNode(dgBroadPhaseNode* const root, dgBroadPhaseNode* const node)
+dgBroadPhaseInternalNode* dgBroadPhase::InsertNode(dgBroadPhaseNode* const root, dgBroadPhaseNode* const node)
 {
-dgAssert (0);
-return NULL;
-/*
 	dgVector p0;
 	dgVector p1;
 
 	dgBroadPhaseNode* sibling = root;
 	dgFloat32 surfaceArea = CalculateSurfaceArea(node, sibling, p0, p1);
-	while (sibling->m_left && sibling->m_right) {
+	while (!sibling->IsLeafNode()) {
+
 		if (surfaceArea > sibling->m_surfaceArea) {
 			break;
 		}
@@ -180,29 +178,27 @@ return NULL;
 
 		dgVector leftP0;
 		dgVector leftP1;
-		dgFloat32 leftSurfaceArea = CalculateSurfaceArea(node, sibling->m_left, leftP0, leftP1);
+		dgFloat32 leftSurfaceArea = CalculateSurfaceArea(node, sibling->GetLeft(), leftP0, leftP1);
 
 		dgVector rightP0;
 		dgVector rightP1;
-		dgFloat32 rightSurfaceArea = CalculateSurfaceArea(node, sibling->m_right, rightP0, rightP1);
+		dgFloat32 rightSurfaceArea = CalculateSurfaceArea(node, sibling->GetRight(), rightP0, rightP1);
 
 		if (leftSurfaceArea < rightSurfaceArea) {
-			sibling = sibling->m_left;
+			sibling = sibling->GetLeft();
 			p0 = leftP0;
 			p1 = leftP1;
 			surfaceArea = leftSurfaceArea;
-		}
-		else {
-			sibling = sibling->m_right;
+		} else {
+			sibling = sibling->GetRight();
 			p0 = rightP0;
 			p1 = rightP1;
 			surfaceArea = rightSurfaceArea;
 		}
 	}
 
-	dgBroadPhaseNode* const parent = new (m_world->GetAllocator()) dgBroadPhaseNode(sibling, node);
+	dgBroadPhaseInternalNode* const parent = new (m_world->GetAllocator()) dgBroadPhaseInternalNode(sibling, node);
 	return parent;
-*/
 }
 
 

@@ -66,6 +66,11 @@ class dgBroadPhaseNode
 	{
 	}
 
+	virtual bool IsLeafNode() const
+	{
+		return false;
+	}
+
 	void SetAABB(const dgVector& minBox, const dgVector& maxBox)
 	{
 		dgAssert(minBox.m_x <= maxBox.m_x);
@@ -317,6 +322,12 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 		m_body->SetBroadPhase(this);
 	}
 
+	virtual bool IsLeafNode() const
+	{
+		return true;
+	}
+
+
 	virtual dgBody* GetBody() const
 	{
 		return m_body;
@@ -451,7 +462,7 @@ class dgBroadPhase
 	protected:
 	bool DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const;
 	dgFloat64 CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNode** const root);
-	dgBroadPhaseNode* InsertNode (dgBroadPhaseNode* const root, dgBroadPhaseNode* const node);
+	dgBroadPhaseInternalNode* InsertNode (dgBroadPhaseNode* const root, dgBroadPhaseNode* const node);
 
 	void RotateLeft(dgBroadPhaseNode* const node, dgBroadPhaseNode** const root);
 	void RotateRight(dgBroadPhaseNode* const node, dgBroadPhaseNode** const root);
