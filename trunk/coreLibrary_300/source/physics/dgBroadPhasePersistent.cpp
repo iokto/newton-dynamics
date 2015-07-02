@@ -62,6 +62,8 @@ void dgBroadPhasePersistent::CheckStaticDynamic(dgBody* const body, dgFloat32 ma
 
 void dgBroadPhasePersistent::Add(dgBody* const body)
 {
+dgAssert (0);
+/*
 	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
 	if (body->GetInvMass().m_w == dgFloat32(0.0f)) {
 		m_staticNeedsUpdate = true;
@@ -81,11 +83,14 @@ void dgBroadPhasePersistent::Add(dgBody* const body)
 			m_rootNode->m_left->m_parent = m_rootNode;
 		}
 	}
+*/
 }
 
 
 void dgBroadPhasePersistent::Remove(dgBody* const body)
 {
+dgAssert (0);
+/*
 	dgBroadPhaseNode* const node = body->GetBroadPhase();
 	if (node) {
 		dgAssert(node->m_parent);
@@ -137,6 +142,7 @@ void dgBroadPhasePersistent::Remove(dgBody* const body)
 			delete node;
 		}
 	}
+*/
 }
 
 
@@ -162,23 +168,31 @@ void dgBroadPhasePersistent::ResetEntropy()
 
 void dgBroadPhasePersistent::InvalidateCache()
 {
+dgAssert (0);
+/*
 	ResetEntropy();
 	m_staticNeedsUpdate = false;
 	ImproveFitness(m_staticFitness, m_staticEntropy, &m_rootNode->m_right);
 	ImproveFitness(m_dynamicsFitness, m_dynamicsEntropy, &m_rootNode->m_left);
+*/
 }
 
 void dgBroadPhasePersistent::UpdateFitness()
 {
+dgAssert (0);
+/*
 	if (m_staticNeedsUpdate) {
 		m_staticNeedsUpdate = false;
 		ImproveFitness(m_staticFitness, m_staticEntropy, &m_rootNode->m_right);
 	}
 	ImproveFitness(m_dynamicsFitness, m_dynamicsEntropy, &m_rootNode->m_left);
+*/
 }
 
 void dgBroadPhasePersistent::ForEachBodyInAABB(const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const
 {
+dgAssert (0);
+/*
 	const dgBroadPhaseNode* stackPool[DG_BROADPHASE_MAX_STACK_DEPTH];
 
 	dgInt32 stack = 0;
@@ -192,10 +206,13 @@ void dgBroadPhasePersistent::ForEachBodyInAABB(const dgVector& minBox, const dgV
 		stack++;
 	}
 	dgBroadPhase::ForEachBodyInAABB(stackPool, stack, minBox, maxBox, callback, userData);
+*/
 }
 
 void dgBroadPhasePersistent::RayCast(const dgVector& l0, const dgVector& l1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const
 {
+dgAssert (0);
+/*
 	if (filter && (m_rootNode->m_left || m_rootNode->m_right)) {
 		dgVector segment(l1 - l0);
 		dgFloat32 dist2 = segment % segment;
@@ -227,10 +244,13 @@ void dgBroadPhasePersistent::RayCast(const dgVector& l0, const dgVector& l1, OnR
 			dgBroadPhase::RayCast(stackPool, distance, stack, l0, l1, ray, filter, prefilter, userData);
 		}
 	}
+*/
 }
 
 void dgBroadPhasePersistent::ConvexRayCast(dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const
 {
+dgAssert (0);
+/*
 	if (filter && m_rootNode && shape->IsType(dgCollision::dgCollisionConvexShape_RTTI)) {
 		dgVector boxP0;
 		dgVector boxP1;
@@ -273,10 +293,14 @@ void dgBroadPhasePersistent::ConvexRayCast(dgCollisionInstance* const shape, con
 
 		dgBroadPhase::ConvexRayCast(stackPool, distance, stack, velocA, ray, shape, matrix, target, filter, prefilter, userData, threadId);
 	}
+*/
 }
 
 dgInt32 dgBroadPhasePersistent::ConvexCast(dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32& timeToImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const
 {
+dgAssert (0);
+return 0;
+/*
 	dgInt32 totalCount = 0;
 	if (m_rootNode) {
 		dgVector boxP0;
@@ -323,10 +347,13 @@ dgInt32 dgBroadPhasePersistent::ConvexCast(dgCollisionInstance* const shape, con
 	}
 
 	return totalCount;
+*/
 }
 
 void dgBroadPhasePersistent::FindCollidingPairs(dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
 {
+dgAssert (0);
+/*
 	const dgFloat32 timestep = descriptor->m_timestep;
 
 	const dgInt32 threadCount = descriptor->m_world->GetThreadCount();
@@ -345,6 +372,7 @@ void dgBroadPhasePersistent::FindCollidingPairs(dgBroadphaseSyncDescriptor* cons
 			node = (node && (node->GetPrev()->GetInfo().GetBody()->GetInvMass().m_w != dgFloat32(0.0f))) ? node->GetPrev() : NULL;
 		}
 	}
+*/
 }
 
 

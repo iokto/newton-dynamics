@@ -145,6 +145,8 @@ dgInt32 dgBroadPhaseDefault::ConvexCast(dgCollisionInstance* const shape, const 
 
 void dgBroadPhaseDefault::AddNode(dgBroadPhaseNode* const newNode)
 {
+	dgAssert (0);
+/*
 	if (!m_rootNode) {
 		m_rootNode = newNode;
 	} else {
@@ -154,15 +156,19 @@ void dgBroadPhaseDefault::AddNode(dgBroadPhaseNode* const newNode)
 			m_rootNode = node;
 		}
 	}
+*/
 }
 
 void dgBroadPhaseDefault::Add(dgBody* const body)
 {
+	dgAssert (0);
+/*
 	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
 	// create a new leaf node;
 	dgBroadPhaseNode* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNode(body);
 
 	AddNode(newNode);
+*/
 }
 
 dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
@@ -176,6 +182,8 @@ dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 
 void dgBroadPhaseDefault::Remove(dgBody* const body)
 {
+dgAssert (0);
+/*
 	if (body->GetBroadPhase()) {
 		dgBroadPhaseNode* const node = body->GetBroadPhase();
 
@@ -229,6 +237,7 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 			m_rootNode = NULL;
 		}
 	}
+*/
 }
 
 
@@ -240,6 +249,8 @@ void dgBroadPhaseDefault::DestroyAggregate(dgBroadPhaseNodeAggegate* const aggre
 
 void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
 {
+dgAssert (0);
+/*
 	const dgFloat32 timestep = descriptor->m_timestep;
 	
 	const dgInt32 threadCount = descriptor->m_world->GetThreadCount();
@@ -258,6 +269,7 @@ void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const 
 			node = node ? node->GetNext() : NULL;
 		}
 	}
+*/
 }
 
 void dgBroadPhaseDefault::ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints)

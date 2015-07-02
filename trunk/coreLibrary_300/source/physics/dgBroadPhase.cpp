@@ -51,6 +51,8 @@ class dgBroadPhase::dgSpliteInfo
 	public:
 	dgSpliteInfo (dgBroadPhaseNode** const boxArray, dgInt32 boxCount)
 	{
+		dgAssert (0);
+/*
 		dgVector minP ( dgFloat32 (1.0e15f)); 
 		dgVector maxP (-dgFloat32 (1.0e15f)); 
 
@@ -131,6 +133,7 @@ class dgBroadPhase::dgSpliteInfo
 		dgAssert (maxP.m_z - minP.m_z >= dgFloat32 (0.0f));
 		m_p0 = minP;
 		m_p1 = maxP;
+*/
 	}
 
 	dgInt32 m_axis;
@@ -158,6 +161,9 @@ dgBroadPhase::~dgBroadPhase()
 
 dgBroadPhaseNode* dgBroadPhase::InsertNode(dgBroadPhaseNode* const root, dgBroadPhaseNode* const node)
 {
+dgAssert (0);
+return NULL;
+/*
 	dgVector p0;
 	dgVector p1;
 
@@ -196,8 +202,8 @@ dgBroadPhaseNode* dgBroadPhase::InsertNode(dgBroadPhaseNode* const root, dgBroad
 
 	dgBroadPhaseNode* const parent = new (m_world->GetAllocator()) dgBroadPhaseNode(sibling, node);
 	return parent;
+*/
 }
-
 
 
 void dgBroadPhase::ForceAndToqueKernel(void* const context, void* const node, dgInt32 threadID)
@@ -273,6 +279,8 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 
 void dgBroadPhase::ForEachBodyInAABB(const dgBroadPhaseNode** stackPool, dgInt32 stack, const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const
 {
+dgAssert (0);
+/*
 	while (stack) {
 		stack--;
 		const dgBroadPhaseNode* const rootNode = stackPool[stack];
@@ -299,12 +307,14 @@ void dgBroadPhase::ForEachBodyInAABB(const dgBroadPhaseNode** stackPool, dgInt32
 			}
 		}
 	}
+*/
 }
-
 
 void dgBroadPhase::ConvexRayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& velocA, dgFastRayTest& ray,
 								dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const
 {
+dgAssert (0);
+/*
 	dgVector boxP0;
 	dgVector boxP1;
 	shape->CalcAABB(shape->GetLocalMatrix() * matrix, boxP0, boxP1);
@@ -369,11 +379,15 @@ void dgBroadPhase::ConvexRayCast(const dgBroadPhaseNode** stackPool, dgFloat32* 
 			}
 		}
 	}
+*/
 }
 
 dgInt32 dgBroadPhase::ConvexCast(const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& velocA, const dgVector& velocB, dgFastRayTest& ray,
 								 dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32& timeToImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const
 {
+dgAssert (0);
+return 0;
+/*
 	dgTriplex points[DG_CONVEX_CAST_POOLSIZE];
 	dgTriplex normals[DG_CONVEX_CAST_POOLSIZE];
 	dgFloat32 penetration[DG_CONVEX_CAST_POOLSIZE];
@@ -476,11 +490,14 @@ dgInt32 dgBroadPhase::ConvexCast(const dgBroadPhaseNode** stackPool, dgFloat32* 
 	}
 	timeToImpact = maxParam;
 	return totalCount;
+*/
 }
 
 
 void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& l0, const dgVector& l1, dgFastRayTest& ray, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const
 {
+dgAssert (0);
+/*
 	dgLineBox line;
 	line.m_l0 = l0;
 	line.m_l1 = l1;
@@ -542,6 +559,7 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 			}
 		}
 	}
+*/
 }
 
 void dgBroadPhase::CollisionChange (dgBody* const body, dgCollisionInstance* const collision)
@@ -561,6 +579,8 @@ void dgBroadPhase::CollisionChange (dgBody* const body, dgCollisionInstance* con
 
 void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 {
+dgAssert (0);
+/*
 	if (m_rootNode && (m_rootNode->m_left || m_rootNode->m_right)) {
 		dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
 
@@ -586,18 +606,21 @@ void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 			}
 		}
 	}
+*/
 }
 
 
 dgBroadPhaseNode* dgBroadPhase::BuildTopDown(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode)
 {
+dgAssert (0);
+return NULL;
+/*
 	dgAssert(firstBox >= 0);
 	dgAssert(lastBox >= 0);
 
 	if (lastBox == firstBox) {
 		return leafArray[firstBox];
-	}
-	else {
+	} else {
 		dgSpliteInfo info(&leafArray[firstBox], lastBox - firstBox + 1);
 
 		dgBroadPhaseNode* const parent = (*nextNode)->GetInfo();
@@ -613,11 +636,15 @@ dgBroadPhaseNode* dgBroadPhase::BuildTopDown(dgBroadPhaseNode** const leafArray,
 		parent->m_right->m_parent = parent;
 		return parent;
 	}
+*/
 }
 
 
 dgBroadPhaseNode* dgBroadPhase::BuildTopDownBig(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode)
 {
+dgAssert (0);
+return NULL;
+/*
 	if (lastBox == firstBox) {
 		return BuildTopDown(leafArray, firstBox, lastBox, nextNode);
 	}
@@ -637,8 +664,7 @@ dgBroadPhaseNode* dgBroadPhase::BuildTopDownBig(dgBroadPhaseNode** const leafArr
 
 	if (midPoint == -1) {
 		return BuildTopDown(leafArray, firstBox, lastBox, nextNode);
-	}
-	else {
+	} else {
 		dgBroadPhaseNode* const parent = (*nextNode)->GetInfo();
 
 		parent->m_parent = NULL;
@@ -661,6 +687,7 @@ dgBroadPhaseNode* dgBroadPhase::BuildTopDownBig(dgBroadPhaseNode** const leafArr
 		parent->m_right->m_parent = parent;
 		return parent;
 	}
+*/
 }
 
 
@@ -680,6 +707,8 @@ dgInt32 dgBroadPhase::CompareNodes(const dgBroadPhaseNode* const nodeA, const dg
 
 void dgBroadPhase::ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy, dgBroadPhaseNode** const root)
 {
+dgAssert (0);
+/*
 	if (*root) {
 		dgBroadPhaseNode* const parent = (*root)->m_parent;
 		(*root)->m_parent = NULL;
@@ -718,11 +747,14 @@ void dgBroadPhase::ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy,
 		(*root)->m_parent = parent;
 		oldEntropy = entropy;
 	}
+*/
 }
 
 
 void dgBroadPhase::RotateLeft(dgBroadPhaseNode* const node, dgBroadPhaseNode** const root)
 {
+dgAssert (0);
+/*
 	dgVector cost1P0;
 	dgVector cost1P1;
 	dgFloat32 cost1 = CalculateSurfaceArea(node->m_left, node->m_parent->m_left, cost1P0, cost1P1);
@@ -742,13 +774,11 @@ void dgBroadPhase::RotateLeft(dgBroadPhaseNode* const node, dgBroadPhaseNode** c
 		if (parent->m_parent) {
 			if (parent->m_parent->m_left == parent) {
 				parent->m_parent->m_left = node;
-			}
-			else {
+			} else {
 				dgAssert(parent->m_parent->m_right == parent);
 				parent->m_parent->m_right = node;
 			}
-		}
-		else {
+		} else {
 			(*root) = node;
 		}
 
@@ -772,13 +802,11 @@ void dgBroadPhase::RotateLeft(dgBroadPhaseNode* const node, dgBroadPhaseNode** c
 		if (parent->m_parent) {
 			if (parent->m_parent->m_left == parent) {
 				parent->m_parent->m_left = node;
-			}
-			else {
+			} else {
 				dgAssert(parent->m_parent->m_right == parent);
 				parent->m_parent->m_right = node;
 			}
-		}
-		else {
+		} else {
 			(*root) = node;
 		}
 
@@ -792,10 +820,13 @@ void dgBroadPhase::RotateLeft(dgBroadPhaseNode* const node, dgBroadPhaseNode** c
 		parent->m_maxBox = cost2P1;
 		parent->m_surfaceArea = cost2;
 	}
+*/
 }
 
 void dgBroadPhase::RotateRight(dgBroadPhaseNode* const node, dgBroadPhaseNode** const root)
 {
+dgAssert (0);
+/*
 	dgVector cost1P0;
 	dgVector cost1P1;
 	dgFloat32 cost1 = CalculateSurfaceArea(node->m_right, node->m_parent->m_right, cost1P0, cost1P1);
@@ -814,13 +845,11 @@ void dgBroadPhase::RotateRight(dgBroadPhaseNode* const node, dgBroadPhaseNode** 
 		if (parent->m_parent) {
 			if (parent->m_parent->m_left == parent) {
 				parent->m_parent->m_left = node;
-			}
-			else {
+			} else {
 				dgAssert(parent->m_parent->m_right == parent);
 				parent->m_parent->m_right = node;
 			}
-		}
-		else {
+		} else {
 			(*root) = node;
 		}
 
@@ -843,13 +872,11 @@ void dgBroadPhase::RotateRight(dgBroadPhaseNode* const node, dgBroadPhaseNode** 
 		if (parent->m_parent) {
 			if (parent->m_parent->m_left == parent) {
 				parent->m_parent->m_left = node;
-			}
-			else {
+			} else {
 				dgAssert(parent->m_parent->m_right == parent);
 				parent->m_parent->m_right = node;
 			}
-		}
-		else {
+		} else {
 			(*root) = node;
 		}
 
@@ -863,6 +890,7 @@ void dgBroadPhase::RotateRight(dgBroadPhaseNode* const node, dgBroadPhaseNode** 
 		parent->m_maxBox = cost2P1;
 		parent->m_surfaceArea = cost2;
 	}
+*/
 }
 
 
@@ -1083,6 +1111,8 @@ void dgBroadPhase::AddPair (dgBody* const body0, dgBody* const body1, const dgFl
 
 void dgBroadPhase::FindGeneratedBodiesCollidingPairs(dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID)
 {
+dgAssert (0);
+/*
 	dgList<dgBody*>::dgListNode* node = NULL;
 	{
 		dgThreadHiveScopeLock lock(m_world, &m_criticalSectionLock, false);
@@ -1122,11 +1152,14 @@ void dgBroadPhase::FindGeneratedBodiesCollidingPairs(dgBroadphaseSyncDescriptor*
 			descriptor->m_newBodiesNodes = node->GetNext();
 		}
 	}
+*/
 }
 
 
 void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const bodyNode, dgBroadPhaseNode* const node, dgFloat32 timestep, dgInt32 threadID)
 {
+dgAssert (0);
+/*
 	dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH];
 	pool[0] = node;
 	dgInt32 stack = 1;
@@ -1152,11 +1185,14 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const bodyNode, dgBroadPhaseNod
 			}
 		}
 	}
+*/
 }
 
 
 void dgBroadPhase::ImproveNodeFitness(dgBroadPhaseNode* const node, dgBroadPhaseNode** const root)
 {
+dgAssert (0);
+/*
 	dgAssert(node->m_left);
 	dgAssert(node->m_right);
 
@@ -1169,9 +1205,8 @@ void dgBroadPhase::ImproveNodeFitness(dgBroadPhaseNode* const node, dgBroadPhase
 		}
 	}
 	dgAssert(!m_rootNode->m_parent);
+*/
 }
-
-
 
 dgFloat64 dgBroadPhase::CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNode** const root)
 {
