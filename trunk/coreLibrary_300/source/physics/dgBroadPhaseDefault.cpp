@@ -177,60 +177,63 @@ dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 void dgBroadPhaseDefault::Remove(dgBody* const body)
 {
 	if (body->GetBroadPhase()) {
-		dgAssert(0);
-		/*
-		dgBroadPhaseNode* const node = body->GetBroadPhase();
-
-		dgAssert(!node->m_fitnessNode);
+		dgBroadPhaseBodyNode* const node = (dgBroadPhaseBodyNode*)body->GetBroadPhase();
+		if (node->m_updateNode) {
+			m_updateNodes.Remove(node->m_updateNode);
+		}
 
 		if (node->m_parent) {
-			dgBroadPhaseNode* const grandParent = node->m_parent->m_parent;
+			dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)node->m_parent;
+			dgAssert (!parent->IsLeafNode());
+			dgBroadPhaseInternalNode* const grandParent = (dgBroadPhaseInternalNode*) parent->m_parent;
 			if (grandParent) {
-				if (grandParent->m_left == node->m_parent) {
-					if (node->m_parent->m_right == node) {
-						grandParent->m_left = node->m_parent->m_left;
-						node->m_parent->m_left->m_parent = grandParent;
-						node->m_parent->m_left = NULL;
-						node->m_parent->m_parent = NULL;
+				dgAssert (!grandParent->IsLeafNode());
+				if (grandParent->m_left == parent) {
+					if (parent->m_right == node) {
+						grandParent->m_left = parent->m_left;
+						parent->m_left->m_parent = grandParent;
+						parent->m_left = NULL;
+						parent->m_parent = NULL;
 					} else {
-						grandParent->m_left = node->m_parent->m_right;
-						node->m_parent->m_right->m_parent = grandParent;
-						node->m_parent->m_right = NULL;
-						node->m_parent->m_parent = NULL;
+						grandParent->m_left = parent->m_right;
+						parent->m_right->m_parent = grandParent;
+						parent->m_right = NULL;
+						parent->m_parent = NULL;
 					}
 				} else {
-					if (node->m_parent->m_right == node) {
-						grandParent->m_right = node->m_parent->m_left;
-						node->m_parent->m_left->m_parent = grandParent;
-						node->m_parent->m_left = NULL;
-						node->m_parent->m_parent = NULL;
+					if (parent->m_right == node) {
+						grandParent->m_right = parent->m_left;
+						parent->m_left->m_parent = grandParent;
+						parent->m_left = NULL;
+						parent->m_parent = NULL;
 					} else {
-						grandParent->m_right = node->m_parent->m_right;
-						node->m_parent->m_right->m_parent = grandParent;
-						node->m_parent->m_right = NULL;
-						node->m_parent->m_parent = NULL;
+						grandParent->m_right = parent->m_right;
+						parent->m_right->m_parent = grandParent;
+						parent->m_right = NULL;
+						parent->m_parent = NULL;
 					}
 				}
 			} else {
-				if (node->m_parent->m_right == node) {
-					m_rootNode = node->m_parent->m_left;
+				dgAssert (!node->m_parent->IsLeafNode());
+				dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)node->m_parent;
+				if (parent->m_right == node) {
+					m_rootNode = parent->m_left;
 					m_rootNode->m_parent = NULL;
-					node->m_parent->m_left = NULL;
+					parent->m_left = NULL;
 				} else {
-					m_rootNode = node->m_parent->m_right;
+					m_rootNode = parent->m_right;
 					m_rootNode->m_parent = NULL;
-					node->m_parent->m_right = NULL;
+					parent->m_right = NULL;
 				}
 			}
 
-			dgAssert(node->m_parent->m_fitnessNode);
-			m_fitness.Remove(node->m_parent->m_fitnessNode);
-			delete node->m_parent;
+			dgAssert(parent->m_fitnessNode);
+			m_fitness.Remove(parent->m_fitnessNode);
+			delete parent;
 		} else {
 			delete node;
 			m_rootNode = NULL;
 		}
-*/
 	}
 }
 
@@ -241,36 +244,40 @@ void dgBroadPhaseDefault::DestroyAggregate(dgBroadPhaseNodeAggegate* const aggre
 }
 
 
-void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
+void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const nodePtr, dgInt32 threadID)
 {
-dgAssert (0);
-/*
 	const dgFloat32 timestep = descriptor->m_timestep;
 	
+	dgList<dgBroadPhaseNode*>::dgListNode* node = nodePtr;
 	const dgInt32 threadCount = descriptor->m_world->GetThreadCount();
 	while (node) {
-		dgBody* const body = node->GetInfo().GetBody();
-		dgBroadPhaseNode* const broadPhaseNode = body->GetBroadPhase();
-		if (broadPhaseNode) {
-			for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
-				dgBroadPhaseNode* const sibling = ptr->m_parent->m_right;
-				if (sibling != ptr) {
-					SubmitPairs (broadPhaseNode, sibling, timestep, threadID);
-				}
+		dgBroadPhaseNode* const broadPhaseNode = node->GetInfo();
+		dgAssert (broadPhaseNode->IsLeafNode());
+		dgAssert (!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
+
+		if (broadPhaseNode->IsAggregate()) {
+			dgAssert (0);
+		}
+
+		for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
+			dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)ptr->m_parent;
+			dgAssert (!parent->IsLeafNode());
+			dgBroadPhaseNode* const sibling = parent->m_right;
+			if (sibling != ptr) {
+				SubmitPairs (broadPhaseNode, sibling, timestep, threadID);
 			}
 		}
+		
 		for (dgInt32 i = 0; i < threadCount; i++) {
 			node = node ? node->GetNext() : NULL;
 		}
 	}
-*/
 }
 
 void dgBroadPhaseDefault::ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints)
 {
 	dgInt32 threadsCount = m_world->GetThreadCount();
-	const dgBodyMasterList* const masterList = m_world;
-	dgBodyMasterList::dgListNode* node = masterList->GetFirst()->GetNext();
+	dgList<dgBroadPhaseNode*>::dgListNode* node = m_updateNodes.GetFirst();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(CollidingPairsKernel, &syncPoints, node);
 		node = node ? node->GetNext() : NULL;

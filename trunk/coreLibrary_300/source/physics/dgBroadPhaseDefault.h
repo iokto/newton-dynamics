@@ -46,7 +46,7 @@ class dgBroadPhaseDefault: public dgBroadPhase
 	protected:
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) {}
 	virtual void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints);
-	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID);
+	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID);
 
 	void RayCast (const dgVector& p0, const dgVector& p1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const;
 	void ConvexRayCast (dgCollisionInstance* const shape, const dgMatrix& matrx, const dgVector& p1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const;

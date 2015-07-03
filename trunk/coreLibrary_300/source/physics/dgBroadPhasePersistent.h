@@ -51,9 +51,7 @@ class dgBroadPhasePersistent: public dgBroadPhase
 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass);
 	virtual void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints);
-	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID);
-
-	
+	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID);
 
 	dgFloat64 m_staticEntropy;
 	dgFloat64 m_dynamicsEntropy;
