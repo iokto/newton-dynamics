@@ -338,6 +338,8 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 		,m_world(world)
 		,m_root(NULL)
 		,m_updateNode(NULL)
+		,m_isSleeping(false)
+		,m_isSelfColliodable(false)
 	{
 		m_minBox = dgVector(dgFloat32(0.0f));
 		m_maxBox = dgVector(dgFloat32(0.0f));
@@ -354,6 +356,19 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 		return true;
 	}
 
+	bool GetSelfCollision() const 
+	{
+		return m_isSelfColliodable;
+	}
+	
+	void SetSelfCollision(bool state) 
+	{
+		m_isSelfColliodable = state;
+	}
+
+	void AddBody (dgBody* const body);
+	void RemoveBody (dgBody* const body);
+
 	void SummitSeltPairs() const;
 	void SummitPairs(dgBody* const body) const;
 	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate) const;
@@ -361,6 +376,8 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 	dgWorld* m_world;
 	dgBroadPhaseNode* m_root;
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
+	bool m_isSleeping;
+	bool m_isSelfColliodable;
 };
 
 

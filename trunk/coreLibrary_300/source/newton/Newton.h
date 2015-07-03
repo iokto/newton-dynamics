@@ -844,9 +844,13 @@ extern "C" {
 	//
 	// **********************************************************************************************
 	NEWTON_API void* NewtonCollisionAggregateCreate (NewtonWorld* const world); 	
-	NEWTON_API void NewtonCollisionAggregateDestroy (void* const aggragate); 	
+	NEWTON_API void NewtonCollisionAggregateDestroy (void* const aggregate); 	
 	NEWTON_API void NewtonCollisionAggregateAddBody (void* const aggregate, const NewtonBody* const body);
 	NEWTON_API void NewtonCollisionAggregateRemoveBody (void* const aggregate, const NewtonBody* const body); 	
+
+	NEWTON_API int NewtonCollisionAggregateGetSeltCollision (void* const aggregate);
+	NEWTON_API void NewtonCollisionAggregateSetSeltCollision (void* const aggregate, int state);
+	
 	
 	// **********************************************************************************************
 	//

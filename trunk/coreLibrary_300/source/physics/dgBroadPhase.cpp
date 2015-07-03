@@ -1433,3 +1433,14 @@ void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggre
 {
 	dgTrace(("TODO %s\n", __FUNCTION__));
 }
+
+
+void dgBroadPhaseNodeAggegate::AddBody (dgBody* const body)
+{
+	dgAssert (0);
+}
+
+void dgBroadPhaseNodeAggegate::RemoveBody(dgBody* const body)
+{
+	dgAssert(0);
+}
