@@ -280,6 +280,7 @@ class dgBody
 	friend class dgWorldDynamicUpdate;
 	friend class dgBroadPhaseBodyNode;
 	friend class dgBilateralConstraint;
+	friend class dgBroadPhaseNodeAggegate;
 	friend class dgCollisionConvexPolygon;
 	friend class dgCollidingPairCollector;
 

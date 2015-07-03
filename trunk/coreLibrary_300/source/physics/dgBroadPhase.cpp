@@ -1220,8 +1220,8 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const leafNode, dgBroadPhaseNod
 			if (rootNode->IsLeafNode()) {
 				dgAssert(!rootNode->GetRight());
 				dgAssert(!rootNode->GetLeft());
+				dgBody* const body1 = rootNode->GetBody();
 				if (body0) {
-					dgBody* const body1 = rootNode->GetBody();
 					if (body1) {
 						AddPair(body0, body1, timestep, threadID);
 					} else {
@@ -1230,7 +1230,6 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const leafNode, dgBroadPhaseNod
 						aggregate->SummitPairs(body0, timestep, threadID);
 					}
 				} else {
-					dgBody* const body1 = rootNode->GetBody();
 					dgAssert (leafNode->IsAggregate());
 					dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) leafNode;
 					if (body1) {
@@ -1488,7 +1487,36 @@ void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body, dgFloat32 timeste
 			dgAssert (m_root->GetBody());
 			m_broadPhase->AddPair(body, m_root->GetBody(), timestep, threadID);
 		} else {
-			dgTrace(("TODO %s\n", __FUNCTION__));
+			dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH/2];
+			pool[0] = m_root;
+			dgInt32 stack = 1;
+
+			const dgVector& boxP0 = body->m_minAABB;
+			const dgVector& boxP1 = body->m_maxAABB;
+
+			while (stack) {
+				stack--;
+				dgBroadPhaseNode* const rootNode = pool[stack];
+				if (dgOverlapTest(rootNode->m_minBox, rootNode->m_maxBox, boxP0, boxP1)) {
+					if (rootNode->IsLeafNode()) {
+						dgBody* const body1 = rootNode->GetBody();
+						dgAssert (body1);
+						m_broadPhase->AddPair(body, body1, timestep, threadID);
+					} else {
+						dgBroadPhaseInternalNode* const tmpNode = (dgBroadPhaseInternalNode*)rootNode;
+						dgAssert(tmpNode->m_left);
+						dgAssert(tmpNode->m_right);
+
+						pool[stack] = tmpNode->m_left;
+						stack++;
+						dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+						pool[stack] = tmpNode->m_right;
+						stack++;
+						dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+					}
+				}
+			}
 		}
 	}
 }
@@ -1518,10 +1546,10 @@ void dgBroadPhaseNodeAggegate::AddBody(dgBody* const body)
 		m_root = newNode;
 		newNode->m_parent = this;
 	} else {
-		dgBroadPhaseInternalNode* const node = m_broadPhase->InsertNode(m_root, newNode);
-		//node->m_fitnessNode = m_fitness.Append(node);
-		if (!node->m_parent) {
-			m_root = node;
-		}
+		m_broadPhase->InsertNode(m_root, newNode);
+		//dgBroadPhaseInternalNode* const node = m_broadPhase->InsertNode(m_root, newNode);
+		//if (!node->m_parent) {
+			//m_root = node;
+		//}
 	}
 }
