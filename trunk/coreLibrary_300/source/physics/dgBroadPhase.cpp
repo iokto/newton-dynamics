@@ -588,10 +588,16 @@ void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 			for (dgBroadPhaseNode* parent = node->m_parent; parent != root; parent = parent->m_parent) {
 				dgVector minBox;
 				dgVector maxBox;
-				dgAssert (!parent->IsAggregate());
-				dgFloat32 area = CalculateSurfaceArea (parent->GetLeft(), parent->GetRight(), minBox, maxBox);
-				if (dgBoxInclusionTest (minBox, maxBox, parent->m_minBox, parent->m_maxBox)) {
-					break;
+				dgFloat32 area;
+				if (!parent->IsAggregate()) {
+					area = CalculateSurfaceArea (parent->GetLeft(), parent->GetRight(), minBox, maxBox);
+					if (dgBoxInclusionTest (minBox, maxBox, parent->m_minBox, parent->m_maxBox)) {
+						break;
+					}
+				} else {
+					minBox = node->m_minBox;
+					maxBox = node->m_maxBox;
+					area = node->m_surfaceArea;
 				}
 				parent->m_minBox = minBox;
 				parent->m_maxBox = maxBox;
@@ -1434,13 +1440,30 @@ void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggre
 	dgTrace(("TODO %s\n", __FUNCTION__));
 }
 
-
-void dgBroadPhaseNodeAggegate::AddBody (dgBody* const body)
-{
-	dgAssert (0);
-}
-
 void dgBroadPhaseNodeAggegate::RemoveBody(dgBody* const body)
 {
 	dgAssert(0);
+}
+
+void dgBroadPhaseNodeAggegate::AddBody(dgBody* const body)
+{
+	dgAssert (body->GetBroadPhase());
+	dgBroadPhaseBodyNode* const node = (dgBroadPhaseBodyNode*)body->GetBroadPhase();
+	if (node->m_updateNode) {
+		m_broadPhase->Remove(body);
+	} else {
+		dgAssert(0);
+	}
+	
+	dgBroadPhaseBodyNode* const newNode = new (m_broadPhase->GetWorld()->GetAllocator()) dgBroadPhaseBodyNode(body);
+	if (!m_root) {
+		m_root = newNode;
+		newNode->m_parent = this;
+	} else {
+		dgBroadPhaseInternalNode* const node = m_broadPhase->InsertNode(m_root, newNode);
+		//node->m_fitnessNode = m_fitness.Append(node);
+		if (!node->m_parent) {
+			m_root = node;
+		}
+	}
 }

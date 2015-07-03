@@ -333,10 +333,10 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 {
 	public:
-	dgBroadPhaseNodeAggegate (dgWorld* const world)
+	dgBroadPhaseNodeAggegate (dgBroadPhase* const broadPhase)
 		:dgBroadPhaseNode(NULL)
-		,m_world(world)
 		,m_root(NULL)
+		,m_broadPhase(broadPhase)
 		,m_updateNode(NULL)
 		,m_isSleeping(false)
 		,m_isSelfColliodable(false)
@@ -344,6 +344,14 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 		m_minBox = dgVector(dgFloat32(0.0f));
 		m_maxBox = dgVector(dgFloat32(0.0f));
 		m_surfaceArea = dgFloat32(0.0f);
+	}
+
+	virtual ~dgBroadPhaseNodeAggegate()
+	{
+		if (m_root) {
+			m_root->m_parent = NULL;
+			delete m_root;
+		}
 	}
 
 	virtual bool IsLeafNode() const
@@ -373,8 +381,8 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 	void SummitPairs(dgBody* const body) const;
 	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate) const;
 
-	dgWorld* m_world;
 	dgBroadPhaseNode* m_root;
+	dgBroadPhase* m_broadPhase;
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
 	bool m_isSleeping;
 	bool m_isSelfColliodable;
@@ -455,6 +463,8 @@ class dgBroadPhase
 		dgVector side0(maxBox - minBox);
 		return side0.DotProduct4(side0.ShiftTripleRight()).GetScalar();
 	}
+
+	dgWorld* GetWorld() const { return m_world;}
 
 	virtual dgInt32 GetType() const = 0;
 	
@@ -541,6 +551,7 @@ class dgBroadPhase
 	friend class dgBody;
 	friend class dgWorld;
 	friend class dgWorldDynamicUpdate;
+	friend class dgBroadPhaseNodeAggegate;
 	friend class dgCollisionCompoundFractured;
 };
 

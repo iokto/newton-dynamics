@@ -167,7 +167,7 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 
 dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 {
-	dgBroadPhaseNodeAggegate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggegate(m_world);
+	dgBroadPhaseNodeAggegate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggegate(m_world->GetBroadPhase());
 	AddNode(newNode);
 	newNode->m_updateNode = m_updateNodes.Append(newNode);
 	return newNode;
@@ -183,53 +183,59 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 		}
 
 		if (node->m_parent) {
-			dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)node->m_parent;
-			dgAssert (!parent->IsLeafNode());
-			dgBroadPhaseInternalNode* const grandParent = (dgBroadPhaseInternalNode*) parent->m_parent;
-			if (grandParent) {
-				dgAssert (!grandParent->IsLeafNode());
-				if (grandParent->m_left == parent) {
-					if (parent->m_right == node) {
-						grandParent->m_left = parent->m_left;
-						parent->m_left->m_parent = grandParent;
-						parent->m_left = NULL;
-						parent->m_parent = NULL;
-					} else {
-						grandParent->m_left = parent->m_right;
-						parent->m_right->m_parent = grandParent;
-						parent->m_right = NULL;
-						parent->m_parent = NULL;
-					}
-				} else {
-					if (parent->m_right == node) {
-						grandParent->m_right = parent->m_left;
-						parent->m_left->m_parent = grandParent;
-						parent->m_left = NULL;
-						parent->m_parent = NULL;
-					} else {
-						grandParent->m_right = parent->m_right;
-						parent->m_right->m_parent = grandParent;
-						parent->m_right = NULL;
-						parent->m_parent = NULL;
-					}
-				}
-			} else {
-				dgAssert (!node->m_parent->IsLeafNode());
+			if (!node->m_parent->IsAggregate()) {
 				dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)node->m_parent;
-				if (parent->m_right == node) {
-					m_rootNode = parent->m_left;
-					m_rootNode->m_parent = NULL;
-					parent->m_left = NULL;
+				dgBroadPhaseInternalNode* const grandParent = (dgBroadPhaseInternalNode*) parent->m_parent;
+				if (grandParent) {
+					dgAssert (!grandParent->IsLeafNode());
+					if (grandParent->m_left == parent) {
+						if (parent->m_right == node) {
+							grandParent->m_left = parent->m_left;
+							parent->m_left->m_parent = grandParent;
+							parent->m_left = NULL;
+							parent->m_parent = NULL;
+						} else {
+							grandParent->m_left = parent->m_right;
+							parent->m_right->m_parent = grandParent;
+							parent->m_right = NULL;
+							parent->m_parent = NULL;
+						}
+					} else {
+						if (parent->m_right == node) {
+							grandParent->m_right = parent->m_left;
+							parent->m_left->m_parent = grandParent;
+							parent->m_left = NULL;
+							parent->m_parent = NULL;
+						} else {
+							grandParent->m_right = parent->m_right;
+							parent->m_right->m_parent = grandParent;
+							parent->m_right = NULL;
+							parent->m_parent = NULL;
+						}
+					}
 				} else {
-					m_rootNode = parent->m_right;
-					m_rootNode->m_parent = NULL;
-					parent->m_right = NULL;
+					dgAssert (!node->m_parent->IsLeafNode());
+					dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)node->m_parent;
+					if (parent->m_right == node) {
+						m_rootNode = parent->m_left;
+						m_rootNode->m_parent = NULL;
+						parent->m_left = NULL;
+					} else {
+						m_rootNode = parent->m_right;
+						m_rootNode->m_parent = NULL;
+						parent->m_right = NULL;
+					}
 				}
-			}
 
-			dgAssert(parent->m_fitnessNode);
-			m_fitness.Remove(parent->m_fitnessNode);
-			delete parent;
+				dgAssert(parent->m_fitnessNode);
+				m_fitness.Remove(parent->m_fitnessNode);
+				delete parent;
+			} else {
+				dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) node->m_parent;
+				aggregate->m_root = NULL;
+				node->m_parent = NULL;
+				delete node;
+			}
 		} else {
 			delete node;
 			m_rootNode = NULL;
