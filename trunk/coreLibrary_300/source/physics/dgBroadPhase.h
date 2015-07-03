@@ -377,9 +377,9 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 	void AddBody (dgBody* const body);
 	void RemoveBody (dgBody* const body);
 
-	void SummitSeltPairs() const;
-	void SummitPairs(dgBody* const body) const;
-	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate) const;
+	void SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const;
+	void SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const;
+	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const;
 
 	dgBroadPhaseNode* m_root;
 	dgBroadPhase* m_broadPhase;

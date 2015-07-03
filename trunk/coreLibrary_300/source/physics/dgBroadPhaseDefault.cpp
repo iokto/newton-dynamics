@@ -262,7 +262,7 @@ void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const 
 		dgAssert (!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
 
 		if (broadPhaseNode->IsAggregate()) {
-			((dgBroadPhaseNodeAggegate*)broadPhaseNode)->SummitSeltPairs();
+			((dgBroadPhaseNodeAggegate*)broadPhaseNode)->SummitSeltPairs(timestep, threadID);
 		}
 
 		for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {

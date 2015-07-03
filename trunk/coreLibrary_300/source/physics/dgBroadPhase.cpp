@@ -1178,17 +1178,17 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const leafNode, dgBroadPhaseNod
 					} else {
 						dgAssert (rootNode->IsAggregate());
 						dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) rootNode;
-						aggregate->SummitPairs(body0);
+						aggregate->SummitPairs(body0, timestep, threadID);
 					}
 				} else {
 					dgBody* const body1 = rootNode->GetBody();
 					dgAssert (leafNode->IsAggregate());
 					dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) leafNode;
 					if (body1) {
-						aggregate->SummitPairs(body1);
+						aggregate->SummitPairs(body1, timestep, threadID);
 					} else {
 						dgAssert (rootNode->IsAggregate());
-						aggregate->SummitPairs((dgBroadPhaseNodeAggegate*) rootNode);
+						aggregate->SummitPairs((dgBroadPhaseNodeAggegate*) rootNode, timestep, threadID);
 					}
 				}
 			} else {
@@ -1425,17 +1425,26 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 }
 
 
-void dgBroadPhaseNodeAggegate::SummitSeltPairs() const
+void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const
 {
-	dgTrace(("TODO %s\n", __FUNCTION__));
+	if (m_root && !m_root->IsLeafNode()) {
+		dgTrace(("TODO %s\n", __FUNCTION__));
+	}
 }
 
-void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body) const
+void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const
 {
-	dgTrace(("TODO %s\n", __FUNCTION__));
+	if (m_root) {
+		if (m_root->IsLeafNode()) {
+			dgAssert (m_root->GetBody());
+			m_broadPhase->AddPair(body, m_root->GetBody(), timestep, threadID);
+		} else {
+			dgTrace(("TODO %s\n", __FUNCTION__));
+		}
+	}
 }
 
-void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggregate) const
+void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const
 {
 	dgTrace(("TODO %s\n", __FUNCTION__));
 }
