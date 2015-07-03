@@ -8707,7 +8707,7 @@ void NewtonCollisionAggregateDestroy(void* const aggregatePtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
-	aggregate->m_world->DestroyAggregate(aggregate);
+	aggregate->m_broadPhase->GetWorld()->DestroyAggregate(aggregate);
 }
 
 void NewtonCollisionAggregateAddBody(void* const aggregatePtr, const NewtonBody* const body)
