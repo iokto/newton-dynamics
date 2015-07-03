@@ -256,7 +256,7 @@ class dgBroadPhaseInternalNode: public dgBroadPhaseNode
 		,m_fitnessNode(NULL)
 	{
 		if (m_parent) {
-			dgAssert (!m_parent->IsLeafNode());
+			//dgAssert (!m_parent->IsLeafNode());
 			dgBroadPhaseInternalNode* const myParent = (dgBroadPhaseInternalNode*)m_parent;
 			if (myParent->m_left == sibling) {
 				myParent->m_left = this;
