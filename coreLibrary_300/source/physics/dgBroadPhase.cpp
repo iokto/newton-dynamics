@@ -517,10 +517,11 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 						break;
 					}
 				}
-			} else {
+			} else if (me->IsAggregate()) {
 				dgAssert (0);
-/*
-				const dgBroadPhaseNode* const left = me->m_left;
+
+			} else {
+				const dgBroadPhaseNode* const left = me->GetLeft();
 				dgAssert(left);
 				dgFloat32 dist = ray.BoxIntersect(left->m_minBox, left->m_maxBox);
 				if (dist < maxParam) {
@@ -535,7 +536,7 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 				}
 
-				const dgBroadPhaseNode* const right = me->m_right;
+				const dgBroadPhaseNode* const right = me->GetRight();
 				dgAssert(right);
 				dist = ray.BoxIntersect(right->m_minBox, right->m_maxBox);
 				if (dist < maxParam) {
@@ -549,7 +550,6 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 					stack++;
 					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 				}
-*/				
 			}
 		}
 	}
@@ -710,7 +710,6 @@ void dgBroadPhase::ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy,
 						leafArray[leafNodesCount] = leftNode;
 						leafNodesCount++;
 					} else if (leftNode->IsAggregate()) {
-						dgAssert (0);
 						leafArray[leafNodesCount] = leftNode;
 						leafNodesCount++;
 					}
@@ -721,7 +720,6 @@ void dgBroadPhase::ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy,
 						leafArray[leafNodesCount] = rightNode;
 						leafNodesCount++;
 					} else if (rightNode->IsAggregate()) {
-						dgAssert(0);
 						leafArray[leafNodesCount] = rightNode;
 						leafNodesCount++;
 					}
@@ -1172,10 +1170,20 @@ void dgBroadPhase::SubmitPairs(dgBroadPhaseNode* const leafNode, dgBroadPhaseNod
 					if (body1) {
 						AddPair(body0, body1, timestep, threadID);
 					} else {
-						dgAssert (0);
+						dgAssert (rootNode->IsAggregate());
+						dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) rootNode;
+						aggregate->SummitPairs(body0);
 					}
 				} else {
-					dgAssert (0);
+					dgBody* const body1 = rootNode->GetBody();
+					dgAssert (leafNode->IsAggregate());
+					dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) leafNode;
+					if (body1) {
+						aggregate->SummitPairs(body1);
+					} else {
+						dgAssert (rootNode->IsAggregate());
+						aggregate->SummitPairs((dgBroadPhaseNodeAggegate*) rootNode);
+					}
 				}
 			} else {
 				dgBroadPhaseInternalNode* const tmpNode = (dgBroadPhaseInternalNode*) rootNode;
@@ -1410,3 +1418,18 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	softBodyList->ApplyExternaForces(timestep);
 }
 
+
+void dgBroadPhaseNodeAggegate::SummitSeltPairs() const
+{
+	dgTrace(("TODO %s\n", __FUNCTION__));
+}
+
+void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body) const
+{
+	dgTrace(("TODO %s\n", __FUNCTION__));
+}
+
+void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggregate) const
+{
+	dgTrace(("TODO %s\n", __FUNCTION__));
+}

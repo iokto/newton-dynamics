@@ -321,7 +321,6 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 		return true;
 	}
 
-
 	virtual dgBody* GetBody() const
 	{
 		return m_body;
@@ -337,11 +336,17 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 	dgBroadPhaseNodeAggegate (dgWorld* const world)
 		:dgBroadPhaseNode(NULL)
 		,m_world(world)
-		,m_chidren(NULL)
+		,m_root(NULL)
+		,m_updateNode(NULL)
 	{
 		m_minBox = dgVector(dgFloat32(0.0f));
 		m_maxBox = dgVector(dgFloat32(0.0f));
 		m_surfaceArea = dgFloat32(0.0f);
+	}
+
+	virtual bool IsLeafNode() const
+	{
+		return true;
 	}
 
 	virtual bool IsAggregate() const
@@ -349,9 +354,13 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 		return true;
 	}
 
+	void SummitSeltPairs() const;
+	void SummitPairs(dgBody* const body) const;
+	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate) const;
 
 	dgWorld* m_world;
-	dgBroadPhaseNode* m_chidren;
+	dgBroadPhaseNode* m_root;
+	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
 };
 
 

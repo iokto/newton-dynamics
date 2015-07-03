@@ -167,10 +167,10 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 
 dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 {
-	return NULL;
-//	dgBroadPhaseNodeAggegate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggegate(m_world);
-//	AddNode(newNode);
-//	return newNode;
+	dgBroadPhaseNodeAggegate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggegate(m_world);
+	AddNode(newNode);
+	newNode->m_updateNode = m_updateNodes.Append(newNode);
+	return newNode;
 }
 
 
@@ -256,7 +256,7 @@ void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const 
 		dgAssert (!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
 
 		if (broadPhaseNode->IsAggregate()) {
-			dgAssert (0);
+			((dgBroadPhaseNodeAggegate*)broadPhaseNode)->SummitSeltPairs();
 		}
 
 		for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
@@ -284,3 +284,4 @@ void dgBroadPhaseDefault::ScanForContactJoints(dgBroadphaseSyncDescriptor& syncP
 	}
 	m_world->SynchronizationBarrier();
 }
+
