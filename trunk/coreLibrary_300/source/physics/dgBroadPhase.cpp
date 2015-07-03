@@ -272,42 +272,44 @@ void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descrip
 
 void dgBroadPhase::ForEachBodyInAABB(const dgBroadPhaseNode** stackPool, dgInt32 stack, const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const
 {
-dgAssert (0);
-/*
 	while (stack) {
 		stack--;
 		const dgBroadPhaseNode* const rootNode = stackPool[stack];
 		if (dgOverlapTest(rootNode->m_minBox, rootNode->m_maxBox, minBox, maxBox)) {
 
-			if (rootNode->m_body) {
-				dgAssert(!rootNode->m_left);
-				dgAssert(!rootNode->m_right);
-				dgBody* const body = rootNode->m_body;
+			dgBody* const body = rootNode->GetBody();
+			if (body) {
 				if (dgOverlapTest(body->m_minAABB, body->m_maxAABB, minBox, maxBox)) {
 					if (!callback(body, userData)) {
 						break;
 					}
 				}
-			}
-			else {
-				stackPool[stack] = rootNode->m_left;
+			} else if (rootNode->IsAggregate()) {
+				dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*)rootNode;
+				if (aggregate->m_root) {
+					stackPool[stack] = aggregate->m_root;
+					stack++;
+					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
+				}
+
+			} else {
+				dgAssert (!rootNode->IsLeafNode());
+				dgBroadPhaseInternalNode* const node = (dgBroadPhaseInternalNode*)rootNode;
+				stackPool[stack] = node->m_left;
 				stack++;
 				dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 
-				stackPool[stack] = rootNode->m_right;
+				stackPool[stack] = node->m_right;
 				stack++;
 				dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 			}
 		}
 	}
-*/
 }
 
 void dgBroadPhase::ConvexRayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& velocA, dgFastRayTest& ray,
 								dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const
 {
-dgAssert (0);
-/*
 	dgVector boxP0;
 	dgVector boxP1;
 	shape->CalcAABB(shape->GetLocalMatrix() * matrix, boxP0, boxP1);
@@ -324,10 +326,8 @@ dgAssert (0);
 		else {
 			const dgBroadPhaseNode* const me = stackPool[stack];
 			dgAssert(me);
-			if (me->m_body) {
-				dgAssert(!me->m_left);
-				dgAssert(!me->m_right);
-				dgBody* const body = me->m_body;
+			dgBody* const body = me->GetBody();
+			if (body) {
 				if (!PREFILTER_RAYCAST(prefilter, body, shape, userData)) {
 					dgFloat32 param = body->ConvexRayCast(ray, shape, boxP0, boxP1, matrix, velocA, filter, prefilter, userData, maxParam, threadId);
 					if (param < maxParam) {
@@ -335,8 +335,29 @@ dgAssert (0);
 						maxParam = param;
 					}
 				}
+			} else if (me->IsAggregate()) {
+				dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*)me;
+				const dgBroadPhaseNode* const node = aggregate->m_root;
+				if (node) {
+					dgVector minBox(node->m_minBox - boxP1);
+					dgVector maxBox(node->m_maxBox - boxP0);
+					dgFloat32 dist = ray.BoxIntersect(minBox, maxBox);
+					if (dist < maxParam) {
+						dgInt32 j = stack;
+						for (; j && (dist > distance[j - 1]); j--) {
+							stackPool[j] = stackPool[j - 1];
+							distance[j] = distance[j - 1];
+						}
+						stackPool[j] = node;
+						distance[j] = dist;
+						stack++;
+						dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
+					}
+				}
+
 			} else {
-				const dgBroadPhaseNode* const left = me->m_left;
+				dgBroadPhaseInternalNode* const node = (dgBroadPhaseInternalNode*)me;
+				const dgBroadPhaseNode* const left = node->m_left;
 				dgAssert(left);
 				dgVector minBox(left->m_minBox - boxP1);
 				dgVector maxBox(left->m_maxBox - boxP0);
@@ -353,7 +374,7 @@ dgAssert (0);
 					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 				}
 
-				const dgBroadPhaseNode* const right = me->m_right;
+				const dgBroadPhaseNode* const right = node->m_right;
 				dgAssert(right);
 				minBox = right->m_minBox - boxP1;
 				maxBox = right->m_maxBox - boxP0;
@@ -372,15 +393,11 @@ dgAssert (0);
 			}
 		}
 	}
-*/
 }
 
 dgInt32 dgBroadPhase::ConvexCast(const dgBroadPhaseNode** stackPool, dgFloat32* const distance, dgInt32 stack, const dgVector& velocA, const dgVector& velocB, dgFastRayTest& ray,
 								 dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32& timeToImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const
 {
-dgAssert (0);
-return 0;
-/*
 	dgTriplex points[DG_CONVEX_CAST_POOLSIZE];
 	dgTriplex normals[DG_CONVEX_CAST_POOLSIZE];
 	dgFloat32 penetration[DG_CONVEX_CAST_POOLSIZE];
@@ -403,13 +420,11 @@ return 0;
 
 		if (dist > maxParam) {
 			break;
-		}
-		else {
+		} else {
 			const dgBroadPhaseNode* const me = stackPool[stack];
-			if (me->m_body) {
-				dgAssert(!me->m_left);
-				dgAssert(!me->m_right);
-				dgBody* const body = me->m_body;
+
+			dgBody* const body = me->GetBody();
+			if (body) {
 				if (!PREFILTER_RAYCAST(prefilter, body, shape, userData)) {
 					dgInt32 count = m_world->CollideContinue(shape, matrix, velocA, velocB, body->m_collision, body->m_matrix, velocB, velocB, time, points, normals, penetration, attributeA, attributeB, DG_CONVEX_CAST_POOLSIZE, threadIndex);
 
@@ -443,9 +458,29 @@ return 0;
 						}
 					}
 				}
-			}
-			else {
-				const dgBroadPhaseNode* const left = me->m_left;
+			} else if (me->IsAggregate()) {
+				dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*)me;
+				const dgBroadPhaseNode* const node = aggregate->m_root;
+				if (node) {
+					dgVector minBox(node->m_minBox - boxP1);
+					dgVector maxBox(node->m_maxBox - boxP0);
+					dgFloat32 dist = ray.BoxIntersect(minBox, maxBox);
+					if (dist < maxParam) {
+						dgInt32 j = stack;
+						for (; j && (dist > distance[j - 1]); j--) {
+							stackPool[j] = stackPool[j - 1];
+							distance[j] = distance[j - 1];
+						}
+						stackPool[j] = node;
+						distance[j] = dist;
+						stack++;
+						dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
+					}
+				}
+
+			} else {
+				dgBroadPhaseInternalNode* const node = (dgBroadPhaseInternalNode*)me;
+				const dgBroadPhaseNode* const left = node->m_left;
 				dgAssert(left);
 				dgVector minBox(left->m_minBox - boxP1);
 				dgVector maxBox(left->m_maxBox - boxP0);
@@ -462,7 +497,7 @@ return 0;
 					dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
 				}
 
-				const dgBroadPhaseNode* const right = me->m_right;
+				const dgBroadPhaseNode* const right = node->m_right;
 				dgAssert(right);
 				minBox = right->m_minBox - boxP1;
 				maxBox = right->m_maxBox - boxP0;
@@ -483,7 +518,6 @@ return 0;
 	}
 	timeToImpact = maxParam;
 	return totalCount;
-*/
 }
 
 
@@ -518,8 +552,23 @@ void dgBroadPhase::RayCast(const dgBroadPhaseNode** stackPool, dgFloat32* const 
 					}
 				}
 			} else if (me->IsAggregate()) {
-				dgAssert (0);
-
+				dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) me;
+				if (aggregate->m_root) {
+					const dgBroadPhaseNode* const child = aggregate->m_root;
+					dgAssert(child);
+					dgFloat32 dist = ray.BoxIntersect(child->m_minBox, child->m_maxBox);
+					if (dist < maxParam) {
+						dgInt32 j = stack;
+						for (; j && (dist > distance[j - 1]); j--) {
+							stackPool[j] = stackPool[j - 1];
+							distance[j] = distance[j - 1];
+						}
+						stackPool[j] = child;
+						distance[j] = dist;
+						stack++;
+						dgAssert(stack < DG_BROADPHASE_MAX_STACK_DEPTH);
+					}
+				}
 			} else {
 				const dgBroadPhaseNode* const left = me->GetLeft();
 				dgAssert(left);

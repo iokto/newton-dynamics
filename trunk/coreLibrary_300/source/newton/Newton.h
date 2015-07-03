@@ -851,7 +851,6 @@ extern "C" {
 	NEWTON_API int NewtonCollisionAggregateGetSeltCollision (void* const aggregate);
 	NEWTON_API void NewtonCollisionAggregateSetSeltCollision (void* const aggregate, int state);
 	
-	
 	// **********************************************************************************************
 	//
 	// transforms utility functions
