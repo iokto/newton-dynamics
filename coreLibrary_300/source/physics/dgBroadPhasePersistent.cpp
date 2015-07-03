@@ -352,7 +352,8 @@ return 0;
 */
 }
 
-void dgBroadPhasePersistent::FindCollidingPairs(dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
+//void dgBroadPhasePersistent::FindCollidingPairs(dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
+void dgBroadPhasePersistent::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const nodePtr, dgInt32 threadID)
 {
 dgAssert (0);
 /*

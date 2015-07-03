@@ -836,8 +836,9 @@ void dgWorld::BodySetMatrix (dgBody* const body, const dgMatrix& matrix)
 		dgBody* body = queue[index];
 		dgAssert (body != m_sentinelBody);
 
-		m_broadPhase->Remove (body);
-		m_broadPhase->Add (body);
+		// why should I do this? I do no remember the reason
+		//m_broadPhase->Remove (body);
+		//m_broadPhase->Add (body);
 
 		dgMatrix matrix (body->GetMatrix() * relMatrix);
 		body->SetVelocity (dgVector (dgFloat32 (0.0f)));    
