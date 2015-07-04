@@ -161,7 +161,7 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 	// create a new leaf node;
 	dgAssert (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI));
 	dgBroadPhaseBodyNode* const newNode = new (m_world->GetAllocator()) dgBroadPhaseBodyNode(body);
-	newNode->m_updateNode = m_updateNodes.Append(newNode);
+	newNode->m_updateNode = m_updateList.Append(newNode);
 	AddNode(newNode);
 }
 
@@ -169,7 +169,8 @@ dgBroadPhaseNodeAggegate* dgBroadPhaseDefault::CreateAggegate()
 {
 	dgBroadPhaseNodeAggegate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggegate(m_world->GetBroadPhase());
 	AddNode(newNode);
-	newNode->m_updateNode = m_updateNodes.Append(newNode);
+	newNode->m_updateNode = m_updateList.Append(newNode);
+	newNode->m_myAggregateNode = m_aggregateList.Append(newNode);
 	return newNode;
 }
 
@@ -179,7 +180,7 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 	if (body->GetBroadPhase()) {
 		dgBroadPhaseBodyNode* const node = (dgBroadPhaseBodyNode*)body->GetBroadPhase();
 		if (node->m_updateNode) {
-			m_updateNodes.Remove(node->m_updateNode);
+			m_updateList.Remove(node->m_updateNode);
 		}
 
 		if (node->m_parent) {
@@ -263,6 +264,7 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 void dgBroadPhaseDefault::DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate)
 {
 	dgAssert(0);
+//	m_aggregateList.Append(aggregate);
 }
 
 
@@ -299,7 +301,7 @@ void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const 
 void dgBroadPhaseDefault::ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints)
 {
 	dgInt32 threadsCount = m_world->GetThreadCount();
-	dgList<dgBroadPhaseNode*>::dgListNode* node = m_updateNodes.GetFirst();
+	dgList<dgBroadPhaseNode*>::dgListNode* node = m_updateList.GetFirst();
 	for (dgInt32 i = 0; i < threadsCount; i++) {
 		m_world->QueueJob(CollidingPairsKernel, &syncPoints, node);
 		node = node ? node->GetNext() : NULL;

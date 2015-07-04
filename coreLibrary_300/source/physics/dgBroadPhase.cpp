@@ -143,7 +143,8 @@ dgBroadPhase::dgBroadPhase(dgWorld* const world)
 	:m_world(world)
 	,m_rootNode(NULL)
 	,m_generatedBodies(world->GetAllocator())
-	,m_updateNodes(world->GetAllocator())
+	,m_updateList(world->GetAllocator())
+	,m_aggregateList(world->GetAllocator())
 	,m_lru(0)
 	,m_contacJointLock()
 	,m_criticalSectionLock()
@@ -199,6 +200,14 @@ dgBroadPhaseInternalNode* dgBroadPhase::InsertNode(dgBroadPhaseNode* const root,
 }
 
 
+void dgBroadPhase::UpdateAggregateEntropy(void* const context, void* const node, dgInt32 threadID)
+{
+	dgBroadphaseSyncDescriptor* const descriptor = (dgBroadphaseSyncDescriptor*)context;
+	dgWorld* const world = descriptor->m_world;
+	dgBroadPhase* const broadPhase = world->GetBroadPhase();
+	broadPhase->UpdateAggregateEntropy(descriptor, (dgList<dgBroadPhaseNodeAggegate*>::dgListNode*) node, threadID);
+}
+
 void dgBroadPhase::ForceAndToqueKernel(void* const context, void* const node, dgInt32 threadID)
 {
 	dgBroadphaseSyncDescriptor* const descriptor = (dgBroadphaseSyncDescriptor*)context;
@@ -215,6 +224,18 @@ bool dgBroadPhase::DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const
 	state = state || !body->m_equilibrium || (body->GetExtForceAndTorqueCallback() != NULL);
 	return state;
 }
+
+void dgBroadPhase::UpdateAggregateEntropy (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNodeAggegate*>::dgListNode* node, dgInt32 threadID)
+{
+	const dgInt32 threadCount = descriptor->m_world->GetThreadCount();
+	while (node) {
+		node->GetInfo()->ImproveEntropy();
+		for (dgInt32 i = 0; i < threadCount; i++) {
+			node = node ? node->GetNext() : NULL;
+		}
+	}
+}
+
 
 void dgBroadPhase::ApplyForceAndtorque(dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID)
 {
@@ -635,22 +656,23 @@ void dgBroadPhase::UpdateBody(dgBody* const body, dgInt32 threadIndex)
 			dgAssert (!node->IsAggregate());
 			node->SetAABB(body->m_minAABB, body->m_maxAABB);
 			for (dgBroadPhaseNode* parent = node->m_parent; parent != root; parent = parent->m_parent) {
-				dgVector minBox;
-				dgVector maxBox;
-				dgFloat32 area;
 				if (!parent->IsAggregate()) {
+					dgVector minBox;
+					dgVector maxBox;
+					dgFloat32 area;
 					area = CalculateSurfaceArea (parent->GetLeft(), parent->GetRight(), minBox, maxBox);
 					if (dgBoxInclusionTest (minBox, maxBox, parent->m_minBox, parent->m_maxBox)) {
 						break;
 					}
+					parent->m_minBox = minBox;
+					parent->m_maxBox = maxBox;
+					parent->m_surfaceArea = area;
 				} else {
-					minBox = node->m_minBox;
-					maxBox = node->m_maxBox;
-					area = node->m_surfaceArea;
+					dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) parent;
+					aggregate->m_minBox = aggregate->m_root->m_minBox;
+					aggregate->m_maxBox = aggregate->m_root->m_maxBox;
+					aggregate->m_surfaceArea = aggregate->m_root->m_surfaceArea;
 				}
-				parent->m_minBox = minBox;
-				parent->m_maxBox = maxBox;
-				parent->m_surfaceArea = area;
 			}
 		}
 	}
@@ -1443,6 +1465,13 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 #endif
 
 
+	dgList<dgBroadPhaseNodeAggegate*>::dgListNode* aggregateNode = m_aggregateList.GetFirst();
+	for (dgInt32 i = 0; i < threadsCount; i++) {
+		m_world->QueueJob (UpdateAggregateEntropy, &syncPoints, aggregateNode);
+		aggregateNode = aggregateNode ? aggregateNode->GetNext() : NULL;
+	}
+	m_world->SynchronizationBarrier();
+
 	UpdateFitness();
 	ScanForContactJoints (syncPoints);
 
@@ -1473,12 +1502,6 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 }
 
 
-void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const
-{
-	if (m_root && !m_root->IsLeafNode()) {
-		dgTrace(("TODO %s\n", __FUNCTION__));
-	}
-}
 
 void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const
 {
@@ -1551,5 +1574,75 @@ void dgBroadPhaseNodeAggegate::AddBody(dgBody* const body)
 		//if (!node->m_parent) {
 			//m_root = node;
 		//}
+	}
+}
+
+void dgBroadPhaseNodeAggegate::ImproveEntropy ()
+{
+	if (m_root && !m_root->IsLeafNode()) {
+		if (!m_isSleeping) {
+			dgBroadPhaseInternalNode* buffer[512];
+			dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH / 2];
+			pool[0] = m_root;
+			dgInt32 stack = 1;
+
+			dgInt32 nodeCount = 0;
+			dgFloat64 entropy = dgFloat32(0.0f);
+			while (stack) {
+				stack--;
+				dgBroadPhaseNode* const rootNode = pool[stack];
+				if (!rootNode->IsLeafNode()) {
+					dgBroadPhaseInternalNode* const tmpNode = (dgBroadPhaseInternalNode*)rootNode;
+
+					buffer[nodeCount] = tmpNode;
+					nodeCount++;
+					dgAssert(nodeCount < dgInt32(sizeof (buffer) / sizeof (buffer[0])));
+					entropy += tmpNode->m_surfaceArea;
+
+					dgAssert(tmpNode->m_left);
+					dgAssert(tmpNode->m_right);
+
+					pool[stack] = tmpNode->m_left;
+					stack++;
+					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+					pool[stack] = tmpNode->m_right;
+					stack++;
+					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+				}
+			}
+
+			if ((entropy > m_treeEntropy * dgFloat32(2.0f)) || (entropy < m_treeEntropy * dgFloat32(0.5f))) {
+				m_root->m_parent = NULL;
+				dgFloat64 cost0 = entropy;
+				dgFloat64 cost1 = cost0;
+				do {
+					cost0 = cost1;
+
+					for (dgInt32 i = 0; i < nodeCount; i++) {
+						m_broadPhase->ImproveNodeFitness(buffer[i], &m_root);
+					}
+					cost1 = dgFloat32(0.0f);
+					for (dgInt32 i = 0; i < nodeCount; i++) {
+						cost1 += buffer[i]->m_surfaceArea;
+					}
+				} while (cost1 < (dgFloat32(0.99f)) * cost0);
+
+				m_treeEntropy = cost1;
+				m_root->m_parent = this;
+				m_minBox = m_root->m_minBox;
+				m_maxBox = m_root->m_maxBox;
+				m_surfaceArea = m_root->m_surfaceArea;
+			}
+		}
+	}
+}
+
+void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const
+{
+	if (m_root && !m_root->IsLeafNode()) {
+		if (m_isSelfCollidable) {
+			dgTrace(("TODO %s\n", __FUNCTION__));
+		}
 	}
 }

@@ -198,8 +198,7 @@ class dgBroadPhaseNode
 			dgAssert(!m_right);
 			dgAssert(m_body->GetBroadPhase() == this);
 			m_body->SetBroadPhase(NULL);
-		}
-		else {
+		} else {
 			if (m_left) {
 				delete m_left;
 			}
@@ -337,9 +336,10 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 		:dgBroadPhaseNode(NULL)
 		,m_root(NULL)
 		,m_broadPhase(broadPhase)
+		,m_treeEntropy(dgFloat32 (0.0f))
 		,m_updateNode(NULL)
 		,m_isSleeping(false)
-		,m_isSelfColliodable(false)
+		,m_isSelfCollidable(true)
 	{
 		m_minBox = dgVector(dgFloat32(0.0f));
 		m_maxBox = dgVector(dgFloat32(0.0f));
@@ -366,26 +366,29 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 
 	bool GetSelfCollision() const 
 	{
-		return m_isSelfColliodable;
+		return m_isSelfCollidable;
 	}
 	
 	void SetSelfCollision(bool state) 
 	{
-		m_isSelfColliodable = state;
+		m_isSelfCollidable = state;
 	}
 
 	void AddBody (dgBody* const body);
 	void RemoveBody (dgBody* const body);
 
+	void ImproveEntropy ();
 	void SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const;
 	void SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const;
 	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const;
 
 	dgBroadPhaseNode* m_root;
 	dgBroadPhase* m_broadPhase;
+	dgFloat64 m_treeEntropy;
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
+	dgList<dgBroadPhaseNodeAggegate*>::dgListNode* m_myAggregateNode;
 	bool m_isSleeping;
-	bool m_isSelfColliodable;
+	bool m_isSelfCollidable;
 };
 
 
@@ -494,7 +497,6 @@ class dgBroadPhase
 	void UpdateContacts(dgFloat32 timestep);
 	void CollisionChange (dgBody* const body, dgCollisionInstance* const collisionSrc);
 
-
 	protected:
 	bool DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const;
 	dgFloat64 CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNode** const root);
@@ -522,6 +524,8 @@ class dgBroadPhase
 
 	void ApplyForceAndtorque (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID);
 
+	void UpdateAggregateEntropy (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNodeAggegate*>::dgListNode* node, dgInt32 threadID);
+
 	dgBroadPhaseNode* BuildTopDown(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 	dgBroadPhaseNode* BuildTopDownBig(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 
@@ -530,15 +534,18 @@ class dgBroadPhase
 	void SubmitPairs (dgBroadPhaseNode* const body, dgBroadPhaseNode* const node, dgFloat32 timestep, dgInt32 threadID);
 	void FindGeneratedBodiesCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
 	
-	static void CollidingPairsKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void ForceAndToqueKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
+	static void CollidingPairsKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
+	static void UpdateAggregateEntropy(void* const descriptor, void* const worldContext, dgInt32 threadID);
+	
 	static void AddGeneratedBodiesContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static dgInt32 CompareNodes(const dgBroadPhaseNode* const nodeA, const dgBroadPhaseNode* const nodeB, void* const notUsed);
 
 	dgWorld* m_world;
 	dgBroadPhaseNode* m_rootNode;
 	dgList<dgBody*> m_generatedBodies;
-	dgList<dgBroadPhaseNode*> m_updateNodes;
+	dgList<dgBroadPhaseNode*> m_updateList;
+	dgList<dgBroadPhaseNodeAggegate*> m_aggregateList;
 	dgUnsigned32 m_lru;
 	dgThread::dgCriticalSection m_contacJointLock;
 	dgThread::dgCriticalSection m_criticalSectionLock;
