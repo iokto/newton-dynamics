@@ -1503,6 +1503,8 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 
 
 
+
+
 void dgBroadPhaseNodeAggegate::ImproveEntropy()
 {
 	if (m_root && !m_root->IsLeafNode()) {
@@ -1606,26 +1608,19 @@ void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body, dgFloat32 timeste
 	}
 }
 
-void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const
-{
-	dgTrace(("TODO %s\n", __FUNCTION__));
-}
 
-void dgBroadPhaseNodeAggegate::RemoveBody(dgBody* const body)
-{
-	dgAssert(0);
-}
+
 
 void dgBroadPhaseNodeAggegate::AddBody(dgBody* const body)
 {
-	dgAssert (body->GetBroadPhase());
+	dgAssert(body->GetBroadPhase());
 	dgBroadPhaseBodyNode* const node = (dgBroadPhaseBodyNode*)body->GetBroadPhase();
 	if (node->m_updateNode) {
 		m_broadPhase->Remove(body);
 	} else {
 		dgAssert(0);
 	}
-	
+
 	dgBroadPhaseBodyNode* const newNode = new (m_broadPhase->GetWorld()->GetAllocator()) dgBroadPhaseBodyNode(body);
 	if (!m_root) {
 		m_root = newNode;
@@ -1634,11 +1629,24 @@ void dgBroadPhaseNodeAggegate::AddBody(dgBody* const body)
 		m_broadPhase->InsertNode(m_root, newNode);
 		//dgBroadPhaseInternalNode* const node = m_broadPhase->InsertNode(m_root, newNode);
 		//if (!node->m_parent) {
-			//m_root = node;
+		//m_root = node;
 		//}
 	}
 }
 
+void dgBroadPhaseNodeAggegate::RemoveBody(dgBody* const body)
+{
+	dgAssert(0);
+}
+
+
+
+void dgBroadPhaseNodeAggegate::SummitPairs(dgBroadPhaseNodeAggegate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const
+{
+	if (!(m_isSleeping & aggregate->m_isSleeping)) {
+		SummitSeltPairs (m_root, aggregate->m_root, timestep, threadID);
+	}
+}
 
 void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const
 {
@@ -1657,7 +1665,6 @@ void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgBroadPhaseNode* const node0, dg
 	pool[0][0] = node0;
 	pool[0][1] = node1;
 
-int xxx = 0;
 	while (stack) {
 		stack--;
 		dgBroadPhaseNode* const root0 = pool[stack][0];
@@ -1669,7 +1676,6 @@ int xxx = 0;
 					dgBody* const body1 = root1->GetBody();
 					dgAssert(body0);
 					dgAssert(body1);
-xxx ++;
 					m_broadPhase->AddPair(body0, body1, timestep, threadID);
 				} else {
 					dgBroadPhaseInternalNode* const tmpNode1 = (dgBroadPhaseInternalNode*)root1;
@@ -1731,7 +1737,4 @@ xxx ++;
 			}
 		}
 	}
-
-xxx ++;
-
 }
