@@ -121,130 +121,6 @@ class dgBroadPhaseNode
 } DG_GCC_VECTOR_ALIGMENT;
 
 
-/*
-DG_MSC_VECTOR_ALIGMENT
-class dgBroadPhaseNode
-{
-	public:
-	DG_CLASS_ALLOCATOR(allocator)
-
-	dgBroadPhaseNode()
-		:m_minBox(dgFloat32(-1.0e15f))
-		,m_maxBox(dgFloat32(1.0e15f))
-		,m_surfaceArea(dgFloat32(1.0e20f))
-		,m_body(NULL)
-		,m_left(NULL)
-		,m_right(NULL)
-		,m_parent(NULL)
-		,m_fitnessNode(NULL)
-	{
-	}
-
-	dgBroadPhaseNode(dgBody* const body)
-		:m_minBox(body->m_minAABB)
-		,m_maxBox(body->m_maxAABB)
-		,m_body(body)
-		,m_left(NULL)
-		,m_right(NULL)
-		,m_parent(NULL)
-		,m_fitnessNode(NULL)
-	{
-		SetAABB(body->m_minAABB, body->m_maxAABB);
-		m_body->SetBroadPhase (this);
-	}
-
-	dgBroadPhaseNode(dgBroadPhaseNode* const sibling, dgBroadPhaseNode* const myNode)
-		:m_body(NULL)
-		,m_left(sibling)
-		,m_right(myNode)
-		,m_parent(sibling->m_parent)
-		,m_fitnessNode(NULL)
-	{
-		if (m_parent) {
-			if (m_parent->m_left == sibling) {
-				m_parent->m_left = this;
-			} else {
-				dgAssert(m_parent->m_right == sibling);
-				m_parent->m_right = this;
-			}
-		}
-		sibling->m_parent = this;
-		myNode->m_parent = this;
-
-		dgBroadPhaseNode* const left = m_left;
-		dgBroadPhaseNode* const right = m_right;
-
-		m_minBox = left->m_minBox.GetMin(right->m_minBox);
-		m_maxBox = left->m_maxBox.GetMax(right->m_maxBox);
-		dgVector side0(m_maxBox - m_minBox);
-		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
-	}
-
-	dgBroadPhaseNode(dgBroadPhaseNode* const parent, const dgVector& minBox, const dgVector& maxBox)
-		:m_minBox(minBox)
-		,m_maxBox(maxBox)
-		,m_body(NULL)
-		,m_left(NULL)
-		,m_right(NULL)
-		,m_parent(parent)
-		,m_fitnessNode(NULL)
-	{
-	}
-
-	virtual ~dgBroadPhaseNode()
-	{
-		if (m_body) {
-			dgAssert(!m_left);
-			dgAssert(!m_right);
-			dgAssert(m_body->GetBroadPhase() == this);
-			m_body->SetBroadPhase(NULL);
-		} else {
-			if (m_left) {
-				delete m_left;
-			}
-			if (m_right) {
-				delete m_right;
-			}
-		}
-	}
-
-	void SetAABB(const dgVector& minBox, const dgVector& maxBox)
-	{
-		dgAssert(minBox.m_x <= maxBox.m_x);
-		dgAssert(minBox.m_y <= maxBox.m_y);
-		dgAssert(minBox.m_z <= maxBox.m_z);
-
-		dgVector p0(minBox.CompProduct4(m_broadPhaseScale));
-		dgVector p1(maxBox.CompProduct4(m_broadPhaseScale) + dgVector::m_one);
-
-		m_minBox = p0.Floor().CompProduct4(m_broadInvPhaseScale);
-		m_maxBox = p1.Floor().CompProduct4(m_broadInvPhaseScale);
-
-		dgAssert(m_minBox.m_w == dgFloat32(0.0f));
-		dgAssert(m_maxBox.m_w == dgFloat32(0.0f));
-
-		dgVector side0(m_maxBox - m_minBox);
-		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
-	}
-
-	dgVector m_minBox;
-	dgVector m_maxBox;
-	dgFloat32 m_surfaceArea;
-	dgBody* m_body;
-	dgBroadPhaseNode* m_left;
-	dgBroadPhaseNode* m_right;
-	dgBroadPhaseNode* m_parent;
-	dgList<dgBroadPhaseNode*>::dgListNode* m_fitnessNode;
-	static dgVector m_broadPhaseScale;
-	static dgVector m_broadInvPhaseScale;
-
-	friend class dgBody;
-	friend class dgBroadPhaseDefault;
-	friend class dgFitnessList;
-} DG_GCC_VECTOR_ALIGMENT;
-*/ 
-
-
 class dgBroadPhaseInternalNode: public dgBroadPhaseNode
 {
 	public:
@@ -329,30 +205,11 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
 };
 
-class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
+class dgBroadPhaseNodeAggregate: public dgBroadPhaseNode
 {
 	public:
-	dgBroadPhaseNodeAggegate (dgBroadPhase* const broadPhase)
-		:dgBroadPhaseNode(NULL)
-		,m_root(NULL)
-		,m_broadPhase(broadPhase)
-		,m_treeEntropy(dgFloat32 (0.0f))
-		,m_updateNode(NULL)
-		,m_isSleeping(false)
-		,m_isSelfCollidable(true)
-	{
-		m_minBox = dgVector(dgFloat32(0.0f));
-		m_maxBox = dgVector(dgFloat32(0.0f));
-		m_surfaceArea = dgFloat32(0.0f);
-	}
-
-	virtual ~dgBroadPhaseNodeAggegate()
-	{
-		if (m_root) {
-			m_root->m_parent = NULL;
-			delete m_root;
-		}
-	}
+	dgBroadPhaseNodeAggregate (dgBroadPhase* const broadPhase);
+	virtual ~dgBroadPhaseNodeAggregate();;
 
 	virtual bool IsLeafNode() const
 	{
@@ -381,14 +238,15 @@ class dgBroadPhaseNodeAggegate: public dgBroadPhaseNode
 	
 	void SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const;
 	void SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const;
-	void SummitPairs(dgBroadPhaseNodeAggegate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const;
+	void SummitPairs(dgBroadPhaseNodeAggregate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const;
 	void SummitSeltPairs(dgBroadPhaseNode* const node0, dgBroadPhaseNode* const node1, dgFloat32 timestep, dgInt32 threadID) const;
 
 	dgBroadPhaseNode* m_root;
 	dgBroadPhase* m_broadPhase;
-	dgFloat64 m_treeEntropy;
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
-	dgList<dgBroadPhaseNodeAggegate*>::dgListNode* m_myAggregateNode;
+	dgList<dgBroadPhaseNodeAggregate*>::dgListNode* m_myAggregateNode;
+	dgList<dgBroadPhaseInternalNode*> m_fitnessList;
+	dgFloat64 m_treeEntropy;
 	bool m_isSleeping;
 	bool m_isSelfCollidable;
 };
@@ -478,8 +336,8 @@ class dgBroadPhase
 	virtual void ResetEntropy() = 0;
 	virtual void InvalidateCache() = 0;
 	virtual void UpdateFitness() = 0;
-	virtual dgBroadPhaseNodeAggegate* CreateAggegate() = 0;
-	virtual void DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate) = 0;
+	virtual dgBroadPhaseNodeAggregate* CreateAggegate() = 0;
+	virtual void DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate) = 0;
 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) = 0;
 	virtual void ForEachBodyInAABB (const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const = 0;
@@ -526,7 +384,7 @@ class dgBroadPhase
 
 	void ApplyForceAndtorque (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID);
 
-	void UpdateAggregateEntropy (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNodeAggegate*>::dgListNode* node, dgInt32 threadID);
+	void UpdateAggregateEntropy (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNodeAggregate*>::dgListNode* node, dgInt32 threadID);
 
 	dgBroadPhaseNode* BuildTopDown(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 	dgBroadPhaseNode* BuildTopDownBig(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
@@ -547,7 +405,7 @@ class dgBroadPhase
 	dgBroadPhaseNode* m_rootNode;
 	dgList<dgBody*> m_generatedBodies;
 	dgList<dgBroadPhaseNode*> m_updateList;
-	dgList<dgBroadPhaseNodeAggegate*> m_aggregateList;
+	dgList<dgBroadPhaseNodeAggregate*> m_aggregateList;
 	dgUnsigned32 m_lru;
 	dgThread::dgCriticalSection m_contacJointLock;
 	dgThread::dgCriticalSection m_criticalSectionLock;
@@ -560,7 +418,7 @@ class dgBroadPhase
 	friend class dgBody;
 	friend class dgWorld;
 	friend class dgWorldDynamicUpdate;
-	friend class dgBroadPhaseNodeAggegate;
+	friend class dgBroadPhaseNodeAggregate;
 	friend class dgCollisionCompoundFractured;
 };
 

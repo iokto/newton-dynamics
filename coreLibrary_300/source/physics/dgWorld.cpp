@@ -1383,12 +1383,12 @@ dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootB
 }
 
 
-dgBroadPhaseNodeAggegate* dgWorld::CreateAggreGate() const
+dgBroadPhaseNodeAggregate* dgWorld::CreateAggreGate() const
 {
 	return m_broadPhase->CreateAggegate();
 }
 
-void dgWorld::DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate) const
+void dgWorld::DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate) const
 {
-	m_broadPhase->DestroyAggregate((dgBroadPhaseNodeAggegate*) aggregate);
+	m_broadPhase->DestroyAggregate((dgBroadPhaseNodeAggregate*) aggregate);
 }
