@@ -289,8 +289,8 @@ class dgWorld
 	dgCollisionInstance* CreateHeightField (dgInt32 width, dgInt32 height, dgInt32 contructionMode, dgInt32 elevationDataType, const void* const elevationMap, const dgInt8* const atributeMap, dgFloat32 verticalScale, dgFloat32 horizontalScale);
 	dgCollisionInstance* CreateScene ();	
 
-	dgBroadPhaseNodeAggegate* CreateAggreGate() const; 
-	void DestroyAggregate(dgBroadPhaseNodeAggegate* const aggregate) const; 
+	dgBroadPhaseNodeAggregate* CreateAggreGate() const; 
+	void DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate) const; 
 
 	void SetCollisionInstanceConstructorDestructor (OnCollisionInstanceDuplicate constructor, OnCollisionInstanceDestroy destructor);
 

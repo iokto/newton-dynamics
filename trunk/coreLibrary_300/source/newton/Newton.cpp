@@ -8676,6 +8676,15 @@ void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, 
 	skeletonContainer->AddChild((dgBody*) childBone, (dgBody*) parentBone);
 }
 
+void NewtonSkeletonContainernDetachBone(NewtonSkeletonContainer* const skeleton, void* const bone)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgAssert(0);
+//	dgSkeletonContainer* const skeletonContainer = (dgSkeletonContainer*)skeleton;
+//skeletonContainer->AddChild((dgBody*)childBone, (dgBody*)parentBone);
+}
+
+
 void NewtonSkeletonContainerDelete(NewtonSkeletonContainer* const skeleton)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -8683,11 +8692,6 @@ void NewtonSkeletonContainerDelete(NewtonSkeletonContainer* const skeleton)
 }
 
 
-void NewtonSkeletonContainernDetachBone(NewtonSkeletonContainer* const skeleton, void* const bone)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgAssert (0);
-}
 
 void NewtonSkeletonContainerFinalize (NewtonSkeletonContainer* const skeleton)
 {
@@ -8706,35 +8710,34 @@ void* NewtonCollisionAggregateCreate(NewtonWorld* const worldPtr)
 void NewtonCollisionAggregateDestroy(void* const aggregatePtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
+	dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*) aggregatePtr;
 	aggregate->m_broadPhase->GetWorld()->DestroyAggregate(aggregate);
 }
 
 void NewtonCollisionAggregateAddBody(void* const aggregatePtr, const NewtonBody* const body)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
+	dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*) aggregatePtr;
 	aggregate->AddBody((dgBody*)body);
 }
 
 void NewtonCollisionAggregateRemoveBody(void* const aggregatePtr, const NewtonBody* const body)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
+	dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*) aggregatePtr;
 	aggregate->RemoveBody((dgBody*)body);
 }
 
 int NewtonCollisionAggregateGetSeltCollision(void* const aggregatePtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
+	dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*) aggregatePtr;
 	return aggregate->GetSelfCollision() ? true : false;
-	
 }
 
 void NewtonCollisionAggregateSetSeltCollision(void* const aggregatePtr, int state)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgBroadPhaseNodeAggegate* const aggregate = (dgBroadPhaseNodeAggegate*) aggregatePtr;
+	dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*) aggregatePtr;
 	aggregate->SetSelfCollision(state ? true : false);
 }
