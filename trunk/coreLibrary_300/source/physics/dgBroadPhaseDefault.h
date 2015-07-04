@@ -40,8 +40,8 @@ class dgBroadPhaseDefault: public dgBroadPhase
 	virtual void Remove(dgBody* const body);
 	virtual void UpdateFitness();
 	virtual void InvalidateCache();
-	virtual dgBroadPhaseNodeAggregate* CreateAggegate();
-	virtual void DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate);
+	virtual dgBroadPhaseAggregate* CreateAggegate();
+	virtual void DestroyAggregate(dgBroadPhaseAggregate* const aggregate);
 
 	protected:
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) {}

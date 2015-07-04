@@ -24,6 +24,7 @@
 #include "dgWorld.h"
 #include "dgCollisionInstance.h"
 #include "dgBroadPhaseDefault.h"
+#include "dgBroadPhaseAggregate.h"
 
 
 dgBroadPhaseDefault::dgBroadPhaseDefault(dgWorld* const world)
@@ -165,9 +166,9 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 	AddNode(newNode);
 }
 
-dgBroadPhaseNodeAggregate* dgBroadPhaseDefault::CreateAggegate()
+dgBroadPhaseAggregate* dgBroadPhaseDefault::CreateAggegate()
 {
-	dgBroadPhaseNodeAggregate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseNodeAggregate(m_world->GetBroadPhase());
+	dgBroadPhaseAggregate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
 	AddNode(newNode);
 	newNode->m_updateNode = m_updateList.Append(newNode);
 	newNode->m_myAggregateNode = m_aggregateList.Append(newNode);
@@ -182,7 +183,7 @@ void dgBroadPhaseDefault::RemoveNode(dgBroadPhaseNode* const node)
 			dgBroadPhaseInternalNode* const parent = (dgBroadPhaseInternalNode*)node->m_parent;
 			if (parent->m_parent) {
 				if (parent->m_parent->IsAggregate()) {
-					dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*)parent->m_parent;
+					dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*)parent->m_parent;
 					if (parent->m_left == node) {
 						dgAssert(parent->m_right);
 						aggregate->m_root = parent->m_right;
@@ -248,7 +249,7 @@ void dgBroadPhaseDefault::RemoveNode(dgBroadPhaseNode* const node)
 			}
 			delete parent;
 		} else {
-			dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*)node->m_parent;
+			dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*)node->m_parent;
 			dgBody* const body = node->GetBody();
 			dgAssert (body);
 			dgAssert(body->GetBroadPhaseAggregate() == aggregate);
@@ -275,7 +276,7 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 }
 
 
-void dgBroadPhaseDefault::DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate)
+void dgBroadPhaseDefault::DestroyAggregate(dgBroadPhaseAggregate* const aggregate)
 {
 	m_updateList.Remove(aggregate->m_updateNode);
 	m_aggregateList.Remove(aggregate->m_myAggregateNode);
@@ -295,7 +296,7 @@ void dgBroadPhaseDefault::FindCollidingPairs (dgBroadphaseSyncDescriptor* const 
 		dgAssert (!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
 
 		if (broadPhaseNode->IsAggregate()) {
-			((dgBroadPhaseNodeAggregate*)broadPhaseNode)->SummitSeltPairs(timestep, threadID);
+			((dgBroadPhaseAggregate*)broadPhaseNode)->SummitSeltPairs(timestep, threadID);
 		}
 
 		for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
