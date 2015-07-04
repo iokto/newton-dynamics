@@ -1503,6 +1503,68 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 
 
 
+void dgBroadPhaseNodeAggegate::ImproveEntropy()
+{
+	if (m_root && !m_root->IsLeafNode()) {
+		if (!m_isSleeping) {
+			dgBroadPhaseInternalNode* buffer[512];
+			dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH / 2];
+			pool[0] = m_root;
+			dgInt32 stack = 1;
+
+			dgInt32 nodeCount = 0;
+			dgFloat64 entropy = dgFloat32(0.0f);
+			while (stack) {
+				stack--;
+				dgBroadPhaseNode* const rootNode = pool[stack];
+				if (!rootNode->IsLeafNode()) {
+					dgBroadPhaseInternalNode* const tmpNode = (dgBroadPhaseInternalNode*)rootNode;
+
+					buffer[nodeCount] = tmpNode;
+					nodeCount++;
+					dgAssert(nodeCount < dgInt32(sizeof (buffer) / sizeof (buffer[0])));
+					entropy += tmpNode->m_surfaceArea;
+
+					dgAssert(tmpNode->m_left);
+					dgAssert(tmpNode->m_right);
+
+					pool[stack] = tmpNode->m_left;
+					stack++;
+					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+					pool[stack] = tmpNode->m_right;
+					stack++;
+					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+				}
+			}
+
+			if ((entropy > m_treeEntropy * dgFloat32(2.0f)) || (entropy < m_treeEntropy * dgFloat32(0.5f))) {
+				m_root->m_parent = NULL;
+				dgFloat64 cost0 = entropy;
+				dgFloat64 cost1 = cost0;
+				do {
+					cost0 = cost1;
+
+					for (dgInt32 i = 0; i < nodeCount; i++) {
+						m_broadPhase->ImproveNodeFitness(buffer[i], &m_root);
+					}
+					cost1 = dgFloat32(0.0f);
+					for (dgInt32 i = 0; i < nodeCount; i++) {
+						cost1 += buffer[i]->m_surfaceArea;
+					}
+				} while (cost1 < (dgFloat32(0.99f)) * cost0);
+
+				m_treeEntropy = cost1;
+				m_root->m_parent = this;
+				m_minBox = m_root->m_minBox;
+				m_maxBox = m_root->m_maxBox;
+				m_surfaceArea = m_root->m_surfaceArea;
+			}
+		}
+	}
+}
+
+
 void dgBroadPhaseNodeAggegate::SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const
 {
 	if (m_root) {
@@ -1577,72 +1639,99 @@ void dgBroadPhaseNodeAggegate::AddBody(dgBody* const body)
 	}
 }
 
-void dgBroadPhaseNodeAggegate::ImproveEntropy ()
-{
-	if (m_root && !m_root->IsLeafNode()) {
-		if (!m_isSleeping) {
-			dgBroadPhaseInternalNode* buffer[512];
-			dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH / 2];
-			pool[0] = m_root;
-			dgInt32 stack = 1;
-
-			dgInt32 nodeCount = 0;
-			dgFloat64 entropy = dgFloat32(0.0f);
-			while (stack) {
-				stack--;
-				dgBroadPhaseNode* const rootNode = pool[stack];
-				if (!rootNode->IsLeafNode()) {
-					dgBroadPhaseInternalNode* const tmpNode = (dgBroadPhaseInternalNode*)rootNode;
-
-					buffer[nodeCount] = tmpNode;
-					nodeCount++;
-					dgAssert(nodeCount < dgInt32(sizeof (buffer) / sizeof (buffer[0])));
-					entropy += tmpNode->m_surfaceArea;
-
-					dgAssert(tmpNode->m_left);
-					dgAssert(tmpNode->m_right);
-
-					pool[stack] = tmpNode->m_left;
-					stack++;
-					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
-
-					pool[stack] = tmpNode->m_right;
-					stack++;
-					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
-				}
-			}
-
-			if ((entropy > m_treeEntropy * dgFloat32(2.0f)) || (entropy < m_treeEntropy * dgFloat32(0.5f))) {
-				m_root->m_parent = NULL;
-				dgFloat64 cost0 = entropy;
-				dgFloat64 cost1 = cost0;
-				do {
-					cost0 = cost1;
-
-					for (dgInt32 i = 0; i < nodeCount; i++) {
-						m_broadPhase->ImproveNodeFitness(buffer[i], &m_root);
-					}
-					cost1 = dgFloat32(0.0f);
-					for (dgInt32 i = 0; i < nodeCount; i++) {
-						cost1 += buffer[i]->m_surfaceArea;
-					}
-				} while (cost1 < (dgFloat32(0.99f)) * cost0);
-
-				m_treeEntropy = cost1;
-				m_root->m_parent = this;
-				m_minBox = m_root->m_minBox;
-				m_maxBox = m_root->m_maxBox;
-				m_surfaceArea = m_root->m_surfaceArea;
-			}
-		}
-	}
-}
 
 void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const
 {
 	if (m_root && !m_root->IsLeafNode()) {
 		if (m_isSelfCollidable) {
-			dgTrace(("TODO %s\n", __FUNCTION__));
+			SummitSeltPairs (m_root->GetLeft(), m_root->GetRight(), timestep, threadID);
 		}
 	}
+}
+
+void dgBroadPhaseNodeAggegate::SummitSeltPairs(dgBroadPhaseNode* const node0, dgBroadPhaseNode* const node1, dgFloat32 timestep, dgInt32 threadID) const
+{
+	dgInt32 stack = 1;
+	dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH][2];
+
+	pool[0][0] = node0;
+	pool[0][1] = node1;
+
+int xxx = 0;
+	while (stack) {
+		stack--;
+		dgBroadPhaseNode* const root0 = pool[stack][0];
+		dgBroadPhaseNode* const root1 = pool[stack][1];
+		if (dgOverlapTest(root0->m_minBox, root0->m_maxBox, root1->m_minBox, root1->m_maxBox)) {
+			if (root0->IsLeafNode()) {
+				if (root1->IsLeafNode()) {
+					dgBody* const body0 = root0->GetBody();
+					dgBody* const body1 = root1->GetBody();
+					dgAssert(body0);
+					dgAssert(body1);
+xxx ++;
+					m_broadPhase->AddPair(body0, body1, timestep, threadID);
+				} else {
+					dgBroadPhaseInternalNode* const tmpNode1 = (dgBroadPhaseInternalNode*)root1;
+					dgAssert(tmpNode1->m_left);
+					dgAssert(tmpNode1->m_right);
+
+					pool[stack][0] = root0;
+					pool[stack][1] = tmpNode1->m_left;
+					stack++;
+					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+					pool[stack][0] = root0;
+					pool[stack][1] = tmpNode1->m_right;
+					stack++;
+					dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+				}
+			} else if (root1->IsLeafNode()) {
+				dgBroadPhaseInternalNode* const tmpNode0 = (dgBroadPhaseInternalNode*)root0;
+				dgAssert(tmpNode0->m_left);
+				dgAssert(tmpNode0->m_right);
+
+				pool[stack][0] = root1;
+				pool[stack][1] = tmpNode0->m_left;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+				pool[stack][0] = root1;
+				pool[stack][1] = tmpNode0->m_right;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+			} else {
+
+				dgBroadPhaseInternalNode* const tmpNode0 = (dgBroadPhaseInternalNode*)root0;
+				dgBroadPhaseInternalNode* const tmpNode1 = (dgBroadPhaseInternalNode*)root1;
+				dgAssert(tmpNode0->m_left);
+				dgAssert(tmpNode0->m_right);
+				dgAssert(tmpNode1->m_left);
+				dgAssert(tmpNode1->m_right);
+
+				pool[stack][0] = tmpNode0->m_left;
+				pool[stack][1] = tmpNode1->m_left;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+				pool[stack][0] = tmpNode0->m_left;
+				pool[stack][1] = tmpNode1->m_right;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+				pool[stack][0] = tmpNode0->m_right;
+				pool[stack][1] = tmpNode1->m_left;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+
+				pool[stack][0] = tmpNode0->m_right;
+				pool[stack][1] = tmpNode1->m_right;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+			}
+		}
+	}
+
+xxx ++;
+
 }
