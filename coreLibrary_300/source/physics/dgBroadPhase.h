@@ -19,8 +19,8 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef __AFX_BROADPHASE_H_
-#define __AFX_BROADPHASE_H_
+#ifndef __DG_BROADPHASE_H_
+#define __DG_BROADPHASE_H_
 
 #include "dgPhysicsStdafx.h"
 #include "dgBody.h"
@@ -31,6 +31,7 @@ class dgWorld;
 class dgContact;
 class dgCollision;
 class dgCollisionInstance;
+class dgBroadPhaseAggregate;
 
 
 #define DG_CACHE_DIST_TOL				dgFloat32 (1.0e-3f)
@@ -205,53 +206,6 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
 };
 
-class dgBroadPhaseNodeAggregate: public dgBroadPhaseNode
-{
-	public:
-	dgBroadPhaseNodeAggregate (dgBroadPhase* const broadPhase);
-	virtual ~dgBroadPhaseNodeAggregate();;
-
-	virtual bool IsLeafNode() const
-	{
-		return true;
-	}
-
-	virtual bool IsAggregate() const
-	{
-		return true;
-	}
-
-	bool GetSelfCollision() const 
-	{
-		return m_isSelfCollidable;
-	}
-	
-	void SetSelfCollision(bool state) 
-	{
-		m_isSelfCollidable = state;
-	}
-
-	void AddBody (dgBody* const body);
-	void RemoveBody (dgBody* const body);
-
-	void ImproveEntropy ();
-	
-	void SummitSeltPairs(dgFloat32 timestep, dgInt32 threadID) const;
-	void SummitPairs(dgBody* const body, dgFloat32 timestep, dgInt32 threadID) const;
-	void SummitPairs(dgBroadPhaseNodeAggregate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const;
-	void SummitSeltPairs(dgBroadPhaseNode* const node0, dgBroadPhaseNode* const node1, dgFloat32 timestep, dgInt32 threadID) const;
-
-	dgBroadPhaseNode* m_root;
-	dgBroadPhase* m_broadPhase;
-	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
-	dgList<dgBroadPhaseNodeAggregate*>::dgListNode* m_myAggregateNode;
-	dgList<dgBroadPhaseInternalNode*> m_fitnessList;
-	dgFloat64 m_treeEntropy;
-	bool m_isSleeping;
-	bool m_isSelfCollidable;
-};
-
-
 class dgBroadPhase
 {
 	protected:
@@ -336,8 +290,8 @@ class dgBroadPhase
 	virtual void ResetEntropy() = 0;
 	virtual void InvalidateCache() = 0;
 	virtual void UpdateFitness() = 0;
-	virtual dgBroadPhaseNodeAggregate* CreateAggegate() = 0;
-	virtual void DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate) = 0;
+	virtual dgBroadPhaseAggregate* CreateAggegate() = 0;
+	virtual void DestroyAggregate(dgBroadPhaseAggregate* const aggregate) = 0;
 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) = 0;
 	virtual void ForEachBodyInAABB (const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const = 0;
@@ -384,7 +338,7 @@ class dgBroadPhase
 
 	void ApplyForceAndtorque (dgBroadphaseSyncDescriptor* const descriptor, dgBodyMasterList::dgListNode* node, dgInt32 threadID);
 
-	void UpdateAggregateEntropy (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNodeAggregate*>::dgListNode* node, dgInt32 threadID);
+	void UpdateAggregateEntropy (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseAggregate*>::dgListNode* node, dgInt32 threadID);
 
 	dgBroadPhaseNode* BuildTopDown(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 	dgBroadPhaseNode* BuildTopDownBig(dgBroadPhaseNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
@@ -405,7 +359,7 @@ class dgBroadPhase
 	dgBroadPhaseNode* m_rootNode;
 	dgList<dgBody*> m_generatedBodies;
 	dgList<dgBroadPhaseNode*> m_updateList;
-	dgList<dgBroadPhaseNodeAggregate*> m_aggregateList;
+	dgList<dgBroadPhaseAggregate*> m_aggregateList;
 	dgUnsigned32 m_lru;
 	dgThread::dgCriticalSection m_contacJointLock;
 	dgThread::dgCriticalSection m_criticalSectionLock;
@@ -418,7 +372,7 @@ class dgBroadPhase
 	friend class dgBody;
 	friend class dgWorld;
 	friend class dgWorldDynamicUpdate;
-	friend class dgBroadPhaseNodeAggregate;
+	friend class dgBroadPhaseAggregate;
 	friend class dgCollisionCompoundFractured;
 };
 

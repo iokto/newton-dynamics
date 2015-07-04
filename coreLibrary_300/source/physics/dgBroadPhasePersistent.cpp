@@ -148,13 +148,13 @@ dgAssert (0);
 }
 
 
-dgBroadPhaseNodeAggregate* dgBroadPhasePersistent::CreateAggegate()
+dgBroadPhaseAggregate* dgBroadPhasePersistent::CreateAggegate()
 {
 	dgAssert (0);
 	return NULL;
 }
 
-void dgBroadPhasePersistent::DestroyAggregate(dgBroadPhaseNodeAggregate* const aggregate)
+void dgBroadPhasePersistent::DestroyAggregate(dgBroadPhaseAggregate* const aggregate)
 {
 	dgAssert (0);
 }

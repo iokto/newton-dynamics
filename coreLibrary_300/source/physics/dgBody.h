@@ -31,7 +31,7 @@ class dgWorld;
 class dgCollision;
 class dgBroadPhaseNode;
 class dgCollisionInstance;
-class dgBroadPhaseNodeAggregate;
+class dgBroadPhaseAggregate;
 
 //#define DG_USE_FULL_INERTIA_MATRIX
 
@@ -201,8 +201,8 @@ class dgBody
 
 	void SetBroadPhase (dgBroadPhaseNode* const node);
 	dgBroadPhaseNode* GetBroadPhase () const;
-	dgBroadPhaseNodeAggregate* GetBroadPhaseAggregate() const;
-	void SetBroadPhaseAggregate(dgBroadPhaseNodeAggregate* const aggregate);
+	dgBroadPhaseAggregate* GetBroadPhaseAggregate() const;
+	void SetBroadPhaseAggregate(dgBroadPhaseAggregate* const aggregate);
 
 	protected:
 	void UpdateWorlCollisionMatrix() const;
@@ -255,7 +255,7 @@ class dgBody
 	dgCollisionInstance* m_collision;
 	dgBroadPhaseNode* m_broadPhaseNode;
 	dgBodyMasterList::dgListNode* m_masterNode;
-	dgBroadPhaseNodeAggregate* m_broadPhaseaggregateNode;
+	dgBroadPhaseAggregate* m_broadPhaseaggregateNode;
 	OnBodyDestroy m_destructor;
 	OnMatrixUpdateCallback m_matrixUpdate;
 
@@ -284,7 +284,7 @@ class dgBody
 	friend class dgWorldDynamicUpdate;
 	friend class dgBroadPhaseBodyNode;
 	friend class dgBilateralConstraint;
-	friend class dgBroadPhaseNodeAggregate;
+	friend class dgBroadPhaseAggregate;
 	friend class dgCollisionConvexPolygon;
 	friend class dgCollidingPairCollector;
 
@@ -572,12 +572,12 @@ DG_INLINE dgBroadPhaseNode* dgBody::GetBroadPhase() const
 	return m_broadPhaseNode;
 }
 
-DG_INLINE dgBroadPhaseNodeAggregate* dgBody::GetBroadPhaseAggregate() const
+DG_INLINE dgBroadPhaseAggregate* dgBody::GetBroadPhaseAggregate() const
 {
 	return m_broadPhaseaggregateNode;
 }
 
-DG_INLINE void dgBody::SetBroadPhaseAggregate(dgBroadPhaseNodeAggregate* const aggregate)
+DG_INLINE void dgBody::SetBroadPhaseAggregate(dgBroadPhaseAggregate* const aggregate)
 {
 	m_broadPhaseaggregateNode = aggregate;
 }
