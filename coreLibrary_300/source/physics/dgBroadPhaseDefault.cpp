@@ -246,6 +246,7 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 				if (parent->m_fitnessNode) {
 					if (body->GetBroadPhaseAggregate()) {
 						body->GetBroadPhaseAggregate()->m_fitnessList.Remove (parent->m_fitnessNode);
+						body->SetBroadPhaseAggregate(NULL);
 					} else {
 						m_fitness.Remove(parent->m_fitnessNode);
 					}
@@ -253,6 +254,8 @@ void dgBroadPhaseDefault::Remove(dgBody* const body)
 				delete parent;
 			} else {
 				dgBroadPhaseNodeAggregate* const aggregate = (dgBroadPhaseNodeAggregate*) node->m_parent;
+				dgAssert (body->GetBroadPhaseAggregate() == aggregate);
+				body->SetBroadPhaseAggregate(NULL);
 				aggregate->m_root = NULL;
 				node->m_parent = NULL;
 				delete node;

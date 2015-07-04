@@ -202,6 +202,7 @@ class dgBody
 	void SetBroadPhase (dgBroadPhaseNode* const node);
 	dgBroadPhaseNode* GetBroadPhase () const;
 	dgBroadPhaseNodeAggregate* GetBroadPhaseAggregate() const;
+	void SetBroadPhaseAggregate(dgBroadPhaseNodeAggregate* const aggregate);
 
 	protected:
 	void UpdateWorlCollisionMatrix() const;
@@ -576,6 +577,10 @@ DG_INLINE dgBroadPhaseNodeAggregate* dgBody::GetBroadPhaseAggregate() const
 	return m_broadPhaseaggregateNode;
 }
 
+DG_INLINE void dgBody::SetBroadPhaseAggregate(dgBroadPhaseNodeAggregate* const aggregate)
+{
+	m_broadPhaseaggregateNode = aggregate;
+}
 
 DG_INLINE void dgBody::CalcInvInertiaMatrix ()
 {
