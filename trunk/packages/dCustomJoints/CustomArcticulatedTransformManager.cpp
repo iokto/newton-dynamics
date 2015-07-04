@@ -68,6 +68,7 @@ CustomArticulatedTransformController::CustomArticulatedTransformController()
 CustomArticulatedTransformController::~CustomArticulatedTransformController()
 {
 //	CustomArticulaledTransformManager* const manager = (CustomArticulaledTransformManager*) GetManager();
+	NewtonCollisionAggregateDestroy(m_collisionAggregate);
 }
 
 
@@ -242,6 +243,7 @@ for (int i = 0; i < m_boneCount; i++) {
 const CustomArticulatedTransformController::dSkeletonBone* const child = GetBone(i);
 NewtonCollisionAggregateRemoveBody (m_collisionAggregate, child->m_body);
 }
+NewtonCollisionAggregateDestroy(m_collisionAggregate);
 */
 
 }

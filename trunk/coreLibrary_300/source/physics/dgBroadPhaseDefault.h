@@ -55,6 +55,7 @@ class dgBroadPhaseDefault: public dgBroadPhase
 
 	void ResetEntropy ();
 	void AddNode(dgBroadPhaseNode* const node);	
+	void RemoveNode(dgBroadPhaseNode* const node);	
 
 //	static void UpdateSoftBodyForcesKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	void ApplyDeformableForceAndtorque (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);

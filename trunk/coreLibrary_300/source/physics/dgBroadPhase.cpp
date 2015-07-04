@@ -1522,8 +1522,37 @@ dgBroadPhaseNodeAggregate::dgBroadPhaseNodeAggregate(dgBroadPhase* const broadPh
 dgBroadPhaseNodeAggregate::~dgBroadPhaseNodeAggregate()
 {
 	if (m_root) {
-		m_root->m_parent = NULL;
-		delete m_root;
+		dgBody* buffer[2040];
+
+		dgBroadPhaseNode* pool[DG_BROADPHASE_MAX_STACK_DEPTH];
+		pool[0] = m_root;
+		dgInt32 stack = 1;
+
+		dgInt32 count = 0;
+		while (stack) {
+			stack--;
+			dgBroadPhaseNode* const rootNode = pool[stack];
+			if (rootNode->IsLeafNode()) {
+				buffer[count] = rootNode->GetBody();;
+				count ++;
+			} else {
+				dgBroadPhaseInternalNode* const tmpNode = (dgBroadPhaseInternalNode*)rootNode;
+				dgAssert(tmpNode->m_left);
+				dgAssert(tmpNode->m_right);
+
+				pool[stack] = tmpNode->m_left;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+				pool[stack] = tmpNode->m_right;
+				stack++;
+				dgAssert(stack < dgInt32(sizeof (pool) / sizeof (pool[0])));
+			}
+		}
+
+		for (dgInt32 i = 0; i < count; i ++) {
+			RemoveBody(buffer[i]);
+		}
+		dgAssert (!m_root);
 	}
 }
 
