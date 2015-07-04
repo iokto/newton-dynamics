@@ -237,12 +237,11 @@ void CustomArticulatedTransformController::MakeNewtonSkeleton() const
 	}
 	NewtonSkeletonContainerFinalize(skeleton);
 
-
+/*
 for (int i = 0; i < m_boneCount; i++) {
 const CustomArticulatedTransformController::dSkeletonBone* const child = GetBone(i);
-bonePool[stack] = child->m_body;
-NewtonCollisionAggregateRemoveBody (skeleton, child->m_body);
+NewtonCollisionAggregateRemoveBody (m_collisionAggregate, child->m_body);
 }
-
+*/
 
 }

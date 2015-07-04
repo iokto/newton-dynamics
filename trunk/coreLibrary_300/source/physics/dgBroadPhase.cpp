@@ -1612,12 +1612,7 @@ void dgBroadPhaseNodeAggregate::SummitPairs(dgBody* const body, dgFloat32 timest
 void dgBroadPhaseNodeAggregate::AddBody(dgBody* const body)
 {
 	dgAssert(body->GetBroadPhase());
-	dgBroadPhaseBodyNode* const node = (dgBroadPhaseBodyNode*)body->GetBroadPhase();
-	if (node->m_updateNode) {
-		m_broadPhase->Remove(body);
-	} else {
-		dgAssert(0);
-	}
+	m_broadPhase->Remove(body);
 
 	dgBroadPhaseBodyNode* const newNode = new (m_broadPhase->GetWorld()->GetAllocator()) dgBroadPhaseBodyNode(body);
 	if (!m_root) {
@@ -1633,26 +1628,15 @@ void dgBroadPhaseNodeAggregate::AddBody(dgBody* const body)
 
 void dgBroadPhaseNodeAggregate::RemoveBody(dgBody* const body)
 {
-/*
 	dgAssert(body->GetBroadPhase());
-	dgBroadPhaseBodyNode* const node = (dgBroadPhaseBodyNode*)body->GetBroadPhase();
-	if (node->m_updateNode) {
-		m_broadPhase->Remove(body);
-	} else {
-		dgAssert(0);
-	}
-
-	if (node->m_parent) {
-
-	}
-	dgAssert(0);
-*/
+	m_broadPhase->Remove(body);
+	m_broadPhase->Add(body);
 }
 
 
 void dgBroadPhaseNodeAggregate::SummitPairs(dgBroadPhaseNodeAggregate* const aggregate, dgFloat32 timestep, dgInt32 threadID) const
 {
-	if (!(m_isSleeping & aggregate->m_isSleeping)) {
+	if (m_root && aggregate->m_root && !(m_isSleeping & aggregate->m_isSleeping)) {
 		SummitSeltPairs (m_root, aggregate->m_root, timestep, threadID);
 	}
 }
