@@ -54,8 +54,6 @@ class dgBroadPhasePesistanceRootNode: public dgBroadPhaseTreeNode
 	}
 };
 
-
-
 dgBroadPhasePersistent::dgBroadPhasePersistent(dgWorld* const world)
 	:dgBroadPhase(world)
 	,m_staticEntropy(dgFloat32 (0.0f))
@@ -119,95 +117,34 @@ void dgBroadPhasePersistent::Add(dgBody* const body)
 	}
 }
 
+dgBroadPhaseAggregate* dgBroadPhasePersistent::CreateAggregate()
+{
+	dgBroadPhasePesistanceRootNode* const root = (dgBroadPhasePesistanceRootNode*)m_rootNode;
+	dgAssert(m_rootNode->IsPersistentRoot());
+	dgBroadPhaseAggregate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
+	if (root->m_left) {
+		dgBroadPhaseTreeNode* const node = InsertNode(root->m_left, newNode);
+		node->m_fitnessNode = m_dynamicsFitness.Append(node);
+	} else {
+		root->m_left = newNode;
+		root->m_left->m_parent = m_rootNode;
+	}
+	newNode->m_updateNode = m_updateList.Append(newNode);
+	newNode->m_myAggregateNode = m_aggregateList.Append(newNode);
+	return newNode;
+}
+
+void dgBroadPhasePersistent::DestroyAggregate(dgBroadPhaseAggregate* const aggregate)
+{
+	m_updateList.Remove(aggregate->m_updateNode);
+	m_aggregateList.Remove(aggregate->m_myAggregateNode);
+	RemoveNode(aggregate);
+}
 
 void dgBroadPhasePersistent::RemoveNode(dgBroadPhaseNode* const node)
 {
 	dgAssert (node->m_parent);
-/*	
-	if (!node->m_parent->IsAggregate()) {
-		dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)node->m_parent;
-		if (parent->m_parent) {
-			if (parent->m_parent->IsAggregate()) {
-				dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*)parent->m_parent;
-				if (parent->m_left == node) {
-					dgAssert(parent->m_right);
-					aggregate->m_root = parent->m_right;
-					parent->m_right->m_parent = aggregate;
-					parent->m_right = NULL;
-				} else {
-					dgAssert(parent->m_right == node);
-					aggregate->m_root = parent->m_left;
-					parent->m_left->m_parent = aggregate;
-					parent->m_left = NULL;
-				}
-				parent->m_parent = NULL;
-			} else {
-				dgBroadPhaseTreeNode* const grandParent = (dgBroadPhaseTreeNode*)parent->m_parent;
-				if (grandParent->m_left == parent) {
-					if (parent->m_right == node) {
-						grandParent->m_left = parent->m_left;
-						parent->m_left->m_parent = grandParent;
-						parent->m_left = NULL;
-						parent->m_parent = NULL;
-					} else {
-						grandParent->m_left = parent->m_right;
-						parent->m_right->m_parent = grandParent;
-						parent->m_right = NULL;
-						parent->m_parent = NULL;
-					}
-				} else {
-					if (parent->m_right == node) {
-						grandParent->m_right = parent->m_left;
-						parent->m_left->m_parent = grandParent;
-						parent->m_left = NULL;
-						parent->m_parent = NULL;
-					} else {
-						grandParent->m_right = parent->m_right;
-						parent->m_right->m_parent = grandParent;
-						parent->m_right = NULL;
-						parent->m_parent = NULL;
-					}
-				}
-			}
 
-			if (parent->m_fitnessNode) {
-				dgBody* const body = node->GetBody();
-				if (body && body->GetBroadPhaseAggregate()) {
-					body->GetBroadPhaseAggregate()->m_fitnessList.Remove(parent->m_fitnessNode);
-					body->SetBroadPhaseAggregate(NULL);
-				} else {
-					dgAssert(0);
-					//				m_fitness.Remove(parent->m_fitnessNode);
-				}
-			}
-
-		} else {
-			dgAssert(!node->m_parent->IsLeafNode());
-			dgBroadPhasePesistanceRootNode* const parent = (dgBroadPhasePesistanceRootNode*) m_rootNode;
-			dgAssert (parent == node->m_parent);
-
-			if (parent->m_right == node) {
-				m_staticNeedsUpdate = true;
-				parent->m_right = NULL;
-			} else {
-				dgAssert (parent->m_left == node);
-				parent->m_left = NULL;
-			}
-			node->m_parent = NULL;
-		}
-
-		delete parent;
-	} else {
-		dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*)node->m_parent;
-		dgBody* const body = node->GetBody();
-		dgAssert(body);
-		dgAssert(body->GetBroadPhaseAggregate() == aggregate);
-		body->SetBroadPhaseAggregate(NULL);
-		aggregate->m_root = NULL;
-		node->m_parent = NULL;
-		delete node;
-	}
-*/
 	if (node->m_parent->IsPersistentRoot()) {
 		dgBroadPhasePesistanceRootNode* const parent = (dgBroadPhasePesistanceRootNode*)m_rootNode;
 		dgAssert(parent == node->m_parent);
@@ -221,9 +158,45 @@ void dgBroadPhasePersistent::RemoveNode(dgBroadPhaseNode* const node)
 		}
 		node->m_parent = NULL;
 		delete node;
+	} else if (node->m_parent->IsAggregate()) {
+		dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*)node->m_parent;
+		dgBody* const body = node->GetBody();
+		dgAssert(body);
+		dgAssert(body->GetBroadPhaseAggregate() == aggregate);
+		body->SetBroadPhaseAggregate(NULL);
+		aggregate->m_root = NULL;
+		node->m_parent = NULL;
+		delete node;
 	} else {
 		dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)node->m_parent;
-		if (parent->m_parent->IsPersistentRoot()) {
+		if (parent->m_parent->IsAggregate()) {
+			dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*)parent->m_parent;
+			if (parent->m_left == node) {
+				dgAssert(parent->m_right);
+				aggregate->m_root = parent->m_right;
+				parent->m_right->m_parent = aggregate;
+				parent->m_right = NULL;
+			} else {
+				dgAssert(parent->m_right == node);
+				aggregate->m_root = parent->m_left;
+				parent->m_left->m_parent = aggregate;
+				parent->m_left = NULL;
+			}
+			parent->m_parent = NULL;
+
+			if (parent->m_fitnessNode) {
+				dgBody* const body = node->GetBody();
+				if (body && body->GetBroadPhaseAggregate()) {
+					body->GetBroadPhaseAggregate()->m_fitnessList.Remove(parent->m_fitnessNode);
+					body->SetBroadPhaseAggregate(NULL);
+				} else {
+					m_dynamicsFitness.Remove(parent->m_fitnessNode);
+				}
+			}
+
+			delete parent;
+
+		} else if (parent->m_parent->IsPersistentRoot()) {
 			dgBroadPhasePesistanceRootNode* const grandParent = (dgBroadPhasePesistanceRootNode*) parent->m_parent;
 			if (grandParent->m_right == parent) {
 				m_staticNeedsUpdate = true;
@@ -258,6 +231,8 @@ void dgBroadPhasePersistent::RemoveNode(dgBroadPhaseNode* const node)
 			}
 		} else {
 			dgBroadPhaseTreeNode* const grandParent = (dgBroadPhaseTreeNode*)parent->m_parent;
+			dgAssert (grandParent->GetLeft());
+			dgAssert (grandParent->GetRight());
 			if (grandParent->m_left == parent) {
 				if (parent->m_right == node) {
 					grandParent->m_left = parent->m_left;
@@ -289,11 +264,15 @@ void dgBroadPhasePersistent::RemoveNode(dgBroadPhaseNode* const node)
 				if (body->GetInvMass().m_w == dgFloat32(0.0f)) {
 					m_staticNeedsUpdate = true;
 					m_staticFitness.Remove(parent->m_fitnessNode);
+				} else if (body->GetBroadPhaseAggregate()) {
+					body->GetBroadPhaseAggregate()->m_fitnessList.Remove(parent->m_fitnessNode);
+					body->SetBroadPhaseAggregate(NULL);
 				} else {
 					m_dynamicsFitness.Remove(parent->m_fitnessNode);
 				}
 			} else {
-				dgAssert (0);
+				dgAssert (node->IsAggregate());
+				m_dynamicsFitness.Remove(parent->m_fitnessNode);
 			}
 
 			delete parent;
@@ -311,19 +290,6 @@ void dgBroadPhasePersistent::Remove(dgBody* const body)
 		RemoveNode(node);
 	}
 }
-
-
-dgBroadPhaseAggregate* dgBroadPhasePersistent::CreateAggregate()
-{
-	dgAssert (0);
-	return NULL;
-}
-
-void dgBroadPhasePersistent::DestroyAggregate(dgBroadPhaseAggregate* const aggregate)
-{
-	dgAssert (0);
-}
-
 
 void dgBroadPhasePersistent::ResetEntropy()
 {
