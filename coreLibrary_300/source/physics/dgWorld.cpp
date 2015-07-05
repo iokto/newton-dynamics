@@ -1328,27 +1328,23 @@ dgInt32 dgWorld::GetBroadPhaseType() const
 void dgWorld::SetBroadPhaseType(dgInt32 type)
 {
 	if (type != GetBroadPhaseType()) {
-		delete m_broadPhase;
+		dgBroadPhase* newBroadPhase = NULL;
+		
 		switch (type)
 		{
 			case m_persistentBroadphase:
-				m_broadPhase = new (m_allocator) dgBroadPhasePersistent(this);
+				newBroadPhase = new (m_allocator) dgBroadPhasePersistent(this);
 				break;
 
 			case m_defaultBroadphase:
 			default:
-				m_broadPhase = new (m_allocator) dgBroadPhaseDefault(this);
+				newBroadPhase = new (m_allocator) dgBroadPhaseDefault(this);
 				break;
 		}
 
-		const dgBodyMasterList* const masterList = this;
-		for (dgBodyMasterList::dgListNode* node = masterList->GetFirst(); node; node = node->GetNext()) {
-			dgBody* const body = node->GetInfo().GetBody();
-			dgAssert (!body->GetBroadPhase());
-			if (!body->GetCollision()->IsType (dgCollision::dgCollisionNull_RTTI)) {
-				m_broadPhase->Add(body);
-			}
-		}
+		m_broadPhase->MoveNodes(newBroadPhase);
+		delete m_broadPhase;
+		m_broadPhase = newBroadPhase;
 	}
 }
 
@@ -1385,7 +1381,7 @@ dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootB
 
 dgBroadPhaseAggregate* dgWorld::CreateAggreGate() const
 {
-	return m_broadPhase->CreateAggegate();
+	return m_broadPhase->CreateAggregate();
 }
 
 void dgWorld::DestroyAggregate(dgBroadPhaseAggregate* const aggregate) const

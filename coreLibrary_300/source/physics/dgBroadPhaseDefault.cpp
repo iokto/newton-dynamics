@@ -168,16 +168,17 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 
 dgBroadPhaseAggregate* dgBroadPhaseDefault::CreateAggregate()
 {
-	dgBroadPhaseAggregate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
-	AddNode(newNode);
-	newNode->m_updateNode = m_updateList.Append(newNode);
-	newNode->m_myAggregateNode = m_aggregateList.Append(newNode);
-	return newNode;
+	dgBroadPhaseAggregate* const aggregate = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
+	LinkAggregate (aggregate);
+	return aggregate;
 }
 
 void dgBroadPhaseDefault::LinkAggregate(dgBroadPhaseAggregate* const aggregate)
 {
-	dgAssert (0);
+	AddNode(aggregate);
+	aggregate->m_broadPhase = this;
+	aggregate->m_updateNode = m_updateList.Append(aggregate);
+	aggregate->m_myAggregateNode = m_aggregateList.Append(aggregate);
 }
 
 void dgBroadPhaseDefault::RemoveNode(dgBroadPhaseNode* const node)
@@ -270,14 +271,52 @@ void dgBroadPhaseDefault::RemoveNode(dgBroadPhaseNode* const node)
 
 void dgBroadPhaseDefault::UnlinkAggregate(dgBroadPhaseAggregate* const aggregate)
 {
+	dgAssert (m_rootNode);
 	if (m_rootNode == aggregate) {
-		aggregate->m_parent = NULL;
 		m_rootNode = NULL;
 	} else if (aggregate->m_parent == m_rootNode) {
-		dgAssert (0);
+		dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)aggregate->m_parent;
+		if (parent->m_left == aggregate) {
+			m_rootNode = parent->m_right;
+		} else {
+			dgAssert(parent->m_right == aggregate);
+			m_rootNode = parent->m_left;
+		}
+		m_rootNode->m_parent = NULL;
+
+		parent->m_left = NULL;
+		parent->m_right = NULL;
+		parent->m_parent = NULL;
+		delete parent;
 	} else {
-		dgAssert (0);
+		dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)aggregate->m_parent;
+		dgBroadPhaseTreeNode* const grandParent = (dgBroadPhaseTreeNode*)parent->m_parent;
+		if (grandParent->m_left == parent) {
+			if (parent->m_left == aggregate) {
+				grandParent->m_left = parent->m_right;
+				parent->m_right->m_parent = grandParent;
+			} else {
+				dgAssert (parent->m_right == aggregate);
+				grandParent->m_left = parent->m_left;
+				parent->m_left->m_parent = grandParent;
+			}
+		} else {
+			dgAssert (grandParent->m_right == parent);
+			if (parent->m_left == aggregate) {
+				grandParent->m_right = parent->m_right;
+				parent->m_right->m_parent = grandParent;
+			} else {
+				dgAssert(parent->m_right == aggregate);
+				grandParent->m_right = parent->m_left;
+				parent->m_left->m_parent = grandParent;
+			}
+		}
+		parent->m_left = NULL;
+		parent->m_right = NULL;
+		parent->m_parent = NULL;
+		delete parent;
 	}
+	aggregate->m_parent = NULL;
 }
 
 
