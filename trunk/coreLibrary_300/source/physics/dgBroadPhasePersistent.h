@@ -42,6 +42,10 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual dgBroadPhaseAggregate* CreateAggregate();
 	virtual void DestroyAggregate(dgBroadPhaseAggregate* const aggregate);
 
+	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass);
+	virtual void LinkAggregate(dgBroadPhaseAggregate* const aggregate);
+	virtual void UnlinkAggregate(dgBroadPhaseAggregate* const aggregate);
+
 	virtual void ResetEntropy();
 	virtual void UpdateFitness();
 	virtual void ForEachBodyInAABB(const dgVector& minBox, const dgVector& maxBox, OnBodiesInAABB callback, void* const userData) const;
@@ -49,7 +53,6 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual void ConvexRayCast(dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const;
 	virtual dgInt32 ConvexCast(dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32& timeToImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const;
 
-	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass);
 	void RemoveNode(dgBroadPhaseNode* const node);
 
 	dgFloat64 m_staticEntropy;

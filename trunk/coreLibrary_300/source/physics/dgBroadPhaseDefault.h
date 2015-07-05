@@ -43,7 +43,8 @@ class dgBroadPhaseDefault: public dgBroadPhase
 	virtual dgBroadPhaseAggregate* CreateAggregate();
 	virtual void DestroyAggregate(dgBroadPhaseAggregate* const aggregate);
 
-	protected:
+	virtual void LinkAggregate (dgBroadPhaseAggregate* const aggregate); 
+	virtual void UnlinkAggregate (dgBroadPhaseAggregate* const aggregate); 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) {}
 
 	void RayCast (const dgVector& p0, const dgVector& p1, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData) const;

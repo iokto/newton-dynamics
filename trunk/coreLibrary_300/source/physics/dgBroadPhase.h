@@ -300,8 +300,8 @@ class dgBroadPhase
 	virtual void Remove(dgBody* const body) = 0;
 
 	virtual void ResetEntropy() = 0;
-	virtual void InvalidateCache() = 0;
 	virtual void UpdateFitness() = 0;
+	virtual void InvalidateCache() = 0;
 	virtual dgBroadPhaseAggregate* CreateAggregate() = 0;
 	virtual void DestroyAggregate(dgBroadPhaseAggregate* const aggregate) = 0;
 
@@ -323,7 +323,12 @@ class dgBroadPhase
 	void UpdateContacts(dgFloat32 timestep);
 	void CollisionChange (dgBody* const body, dgCollisionInstance* const collisionSrc);
 
+	void MoveNodes (dgBroadPhase* const dest);
+
 	protected:
+	virtual void LinkAggregate (dgBroadPhaseAggregate* const aggregate) = 0; 
+	virtual void UnlinkAggregate (dgBroadPhaseAggregate* const aggregate) = 0; 
+
 	bool DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const;
 	dgFloat64 CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNode** const root);
 	dgBroadPhaseTreeNode* InsertNode (dgBroadPhaseNode* const root, dgBroadPhaseNode* const node);
@@ -359,7 +364,7 @@ class dgBroadPhase
 	void KinematicBodyActivation (dgContact* const contatJoint) const;
 	void SubmitPairs (dgBroadPhaseNode* const body, dgBroadPhaseNode* const node, dgFloat32 timestep, dgInt32 threadID);
 	void FindGeneratedBodiesCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
-	
+		
 	static void ForceAndToqueKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void CollidingPairsKernel(void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void UpdateAggregateEntropy(void* const descriptor, void* const worldContext, dgInt32 threadID);

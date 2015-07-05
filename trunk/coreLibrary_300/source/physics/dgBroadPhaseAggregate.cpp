@@ -103,7 +103,6 @@ void dgBroadPhaseAggregate::RemoveBody(dgBody* const body)
 }
 
 
-
 void dgBroadPhaseAggregate::ImproveEntropy()
 {
 	if (m_root) {
