@@ -302,7 +302,7 @@ class dgBroadPhase
 	virtual void ResetEntropy() = 0;
 	virtual void InvalidateCache() = 0;
 	virtual void UpdateFitness() = 0;
-	virtual dgBroadPhaseAggregate* CreateAggegate() = 0;
+	virtual dgBroadPhaseAggregate* CreateAggregate() = 0;
 	virtual void DestroyAggregate(dgBroadPhaseAggregate* const aggregate) = 0;
 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass) = 0;
