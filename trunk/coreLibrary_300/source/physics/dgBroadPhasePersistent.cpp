@@ -289,7 +289,39 @@ void dgBroadPhasePersistent::RemoveNode(dgBroadPhaseNode* const node)
 
 void dgBroadPhasePersistent::UnlinkAggregate (dgBroadPhaseAggregate* const aggregate)
 {
-	dgAssert (0);
+	dgBroadPhasePesistanceRootNode* const root = (dgBroadPhasePesistanceRootNode*)m_rootNode;
+	dgAssert (root && root->m_left);
+	if (aggregate->m_parent == root) {
+		root->m_left = NULL;
+	} else {
+		dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)aggregate->m_parent;
+		dgBroadPhaseTreeNode* const grandParent = (dgBroadPhaseTreeNode*)parent->m_parent;
+		if (grandParent->m_left == parent) {
+			if (parent->m_left == aggregate) {
+				grandParent->m_left = parent->m_right;
+				parent->m_right->m_parent = grandParent;
+			} else {
+				dgAssert(parent->m_right == aggregate);
+				grandParent->m_left = parent->m_left;
+				parent->m_left->m_parent = grandParent;
+			}
+		} else {
+			dgAssert(grandParent->m_right == parent);
+			if (parent->m_left == aggregate) {
+				grandParent->m_right = parent->m_right;
+				parent->m_right->m_parent = grandParent;
+			} else {
+				dgAssert(parent->m_right == aggregate);
+				grandParent->m_right = parent->m_left;
+				parent->m_left->m_parent = grandParent;
+			}
+		}
+		parent->m_left = NULL;
+		parent->m_right = NULL;
+		parent->m_parent = NULL;
+		delete parent;
+	}
+	aggregate->m_parent = NULL;
 }
 
 void dgBroadPhasePersistent::Remove(dgBody* const body)
