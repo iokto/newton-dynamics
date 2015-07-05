@@ -158,6 +158,30 @@ dgBroadPhase::~dgBroadPhase()
 }
 
 
+void dgBroadPhase::MoveNodes (dgBroadPhase* const dst)
+{
+	const dgBodyMasterList* const masterList = m_world;
+	for (dgBodyMasterList::dgListNode* node = masterList->GetFirst(); node; node = node->GetNext()) {
+		dgBody* const body = node->GetInfo().GetBody();
+		if (body->GetBroadPhase() && !body->GetBroadPhaseAggregate()) {
+			Remove(body);
+			dst->Add(body);
+		}
+	}
+
+	dgList<dgBroadPhaseAggregate*>::dgListNode* next;
+	for (dgList<dgBroadPhaseAggregate*>::dgListNode* ptr = m_aggregateList.GetFirst(); ptr; ptr = next) {
+		next = ptr->GetNext();
+		dgBroadPhaseAggregate* const aggregate = ptr->GetInfo();
+		m_aggregateList.Remove (aggregate->m_myAggregateNode);
+		m_updateList.Remove(aggregate->m_updateNode);
+		aggregate->m_updateNode = NULL;
+		aggregate->m_myAggregateNode = NULL;
+		UnlinkAggregate(aggregate);
+		dst->LinkAggregate(aggregate);
+	}
+}
+
 dgBroadPhaseTreeNode* dgBroadPhase::InsertNode(dgBroadPhaseNode* const root, dgBroadPhaseNode* const node)
 {
 	dgVector p0;

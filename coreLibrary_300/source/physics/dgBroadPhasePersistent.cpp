@@ -119,19 +119,26 @@ void dgBroadPhasePersistent::Add(dgBody* const body)
 
 dgBroadPhaseAggregate* dgBroadPhasePersistent::CreateAggregate()
 {
-	dgBroadPhasePesistanceRootNode* const root = (dgBroadPhasePesistanceRootNode*)m_rootNode;
+	dgBroadPhaseAggregate* const aggregate = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
+	LinkAggregate(aggregate);
+	return aggregate;
+}
+
+void dgBroadPhasePersistent::LinkAggregate(dgBroadPhaseAggregate* const aggregate)
+{
 	dgAssert(m_rootNode->IsPersistentRoot());
-	dgBroadPhaseAggregate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
+	dgBroadPhasePesistanceRootNode* const root = (dgBroadPhasePesistanceRootNode*)m_rootNode;
+
+	aggregate->m_broadPhase = this;
 	if (root->m_left) {
-		dgBroadPhaseTreeNode* const node = InsertNode(root->m_left, newNode);
+		dgBroadPhaseTreeNode* const node = InsertNode(root->m_left, aggregate);
 		node->m_fitnessNode = m_dynamicsFitness.Append(node);
 	} else {
-		root->m_left = newNode;
+		root->m_left = aggregate;
 		root->m_left->m_parent = m_rootNode;
 	}
-	newNode->m_updateNode = m_updateList.Append(newNode);
-	newNode->m_myAggregateNode = m_aggregateList.Append(newNode);
-	return newNode;
+	aggregate->m_updateNode = m_updateList.Append(aggregate);
+	aggregate->m_myAggregateNode = m_aggregateList.Append(aggregate);
 }
 
 void dgBroadPhasePersistent::DestroyAggregate(dgBroadPhaseAggregate* const aggregate)
@@ -278,6 +285,11 @@ void dgBroadPhasePersistent::RemoveNode(dgBroadPhaseNode* const node)
 			delete parent;
 		}
 	}
+}
+
+void dgBroadPhasePersistent::UnlinkAggregate (dgBroadPhaseAggregate* const aggregate)
+{
+	dgAssert (0);
 }
 
 void dgBroadPhasePersistent::Remove(dgBody* const body)

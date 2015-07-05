@@ -175,6 +175,10 @@ dgBroadPhaseAggregate* dgBroadPhaseDefault::CreateAggregate()
 	return newNode;
 }
 
+void dgBroadPhaseDefault::LinkAggregate(dgBroadPhaseAggregate* const aggregate)
+{
+	dgAssert (0);
+}
 
 void dgBroadPhaseDefault::RemoveNode(dgBroadPhaseNode* const node)
 {
@@ -263,6 +267,19 @@ void dgBroadPhaseDefault::RemoveNode(dgBroadPhaseNode* const node)
 		m_rootNode = NULL;
 	}
 }
+
+void dgBroadPhaseDefault::UnlinkAggregate(dgBroadPhaseAggregate* const aggregate)
+{
+	if (m_rootNode == aggregate) {
+		aggregate->m_parent = NULL;
+		m_rootNode = NULL;
+	} else if (aggregate->m_parent == m_rootNode) {
+		dgAssert (0);
+	} else {
+		dgAssert (0);
+	}
+}
+
 
 void dgBroadPhaseDefault::Remove(dgBody* const body)
 {
