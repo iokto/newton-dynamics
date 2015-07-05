@@ -313,7 +313,7 @@ void dgBroadPhasePersistent::Remove(dgBody* const body)
 }
 
 
-dgBroadPhaseAggregate* dgBroadPhasePersistent::CreateAggegate()
+dgBroadPhaseAggregate* dgBroadPhasePersistent::CreateAggregate()
 {
 	dgAssert (0);
 	return NULL;

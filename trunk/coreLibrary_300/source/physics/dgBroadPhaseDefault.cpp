@@ -166,7 +166,7 @@ void dgBroadPhaseDefault::Add(dgBody* const body)
 	AddNode(newNode);
 }
 
-dgBroadPhaseAggregate* dgBroadPhaseDefault::CreateAggegate()
+dgBroadPhaseAggregate* dgBroadPhaseDefault::CreateAggregate()
 {
 	dgBroadPhaseAggregate* const newNode = new (m_world->GetAllocator()) dgBroadPhaseAggregate(m_world->GetBroadPhase());
 	AddNode(newNode);
