@@ -50,8 +50,7 @@ class dgBroadPhasePersistent: public dgBroadPhase
 	virtual dgInt32 ConvexCast(dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32& timeToImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const;
 
 	virtual void CheckStaticDynamic(dgBody* const body, dgFloat32 mass);
-	virtual void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints);
-	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID);
+	void RemoveNode(dgBroadPhaseNode* const node);
 
 	dgFloat64 m_staticEntropy;
 	dgFloat64 m_dynamicsEntropy;

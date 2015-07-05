@@ -67,6 +67,11 @@ class dgBroadPhaseNode
 	{
 	}
 
+	virtual bool IsPersistentRoot() const
+	{
+		return false;
+	}
+
 	virtual bool IsLeafNode() const
 	{
 		return false;
@@ -118,66 +123,7 @@ class dgBroadPhaseNode
 
 	static dgVector m_broadPhaseScale;
 	static dgVector m_broadInvPhaseScale;
-
 } DG_GCC_VECTOR_ALIGMENT;
-
-
-class dgBroadPhaseInternalNode: public dgBroadPhaseNode
-{
-	public:
-	dgBroadPhaseInternalNode(dgBroadPhaseNode* const sibling, dgBroadPhaseNode* const myNode)
-		:dgBroadPhaseNode(sibling->m_parent)
-		,m_left(sibling)
-		,m_right(myNode)
-		,m_fitnessNode(NULL)
-	{
-		if (m_parent) {
-			//dgAssert (!m_parent->IsLeafNode());
-			dgBroadPhaseInternalNode* const myParent = (dgBroadPhaseInternalNode*)m_parent;
-			if (myParent->m_left == sibling) {
-				myParent->m_left = this;
-			} else {
-				dgAssert(myParent->m_right == sibling);
-				myParent->m_right = this;
-			}
-		}
-
-		sibling->m_parent = this;
-		myNode->m_parent = this;
-
-		dgBroadPhaseNode* const left = m_left;
-		dgBroadPhaseNode* const right = m_right;
-
-		m_minBox = left->m_minBox.GetMin(right->m_minBox);
-		m_maxBox = left->m_maxBox.GetMax(right->m_maxBox);
-		dgVector side0(m_maxBox - m_minBox);
-		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
-	}
-
-	virtual ~dgBroadPhaseInternalNode()
-	{
-		if (m_left) {
-			delete m_left;
-		}
-		if (m_right) {
-			delete m_right;
-		}
-	}
-	
-	virtual dgBroadPhaseNode* GetLeft() const
-	{
-		return m_left;
-	}
-
-	virtual dgBroadPhaseNode* GetRight() const
-	{
-		return m_right;
-	}
-
-	dgBroadPhaseNode* m_left;
-	dgBroadPhaseNode* m_right;
-	dgList<dgBroadPhaseInternalNode*>::dgListNode* m_fitnessNode;
-};
 
 
 class dgBroadPhaseBodyNode: public dgBroadPhaseNode
@@ -206,6 +152,71 @@ class dgBroadPhaseBodyNode: public dgBroadPhaseNode
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
 };
 
+class dgBroadPhaseTreeNode: public dgBroadPhaseNode
+{
+	public:
+	dgBroadPhaseTreeNode()
+		:dgBroadPhaseNode(NULL)
+		,m_left(NULL)
+		,m_right(NULL)
+		,m_fitnessNode(NULL)
+	{
+	}
+
+	dgBroadPhaseTreeNode(dgBroadPhaseNode* const sibling, dgBroadPhaseNode* const myNode)
+		:dgBroadPhaseNode(sibling->m_parent)
+		,m_left(sibling)
+		,m_right(myNode)
+		,m_fitnessNode(NULL)
+	{
+		if (m_parent) {
+			dgBroadPhaseTreeNode* const myParent = (dgBroadPhaseTreeNode*)m_parent;
+			if (myParent->m_left == sibling) {
+				myParent->m_left = this;
+			} else {
+				dgAssert(myParent->m_right == sibling);
+				myParent->m_right = this;
+			}
+		}
+
+		sibling->m_parent = this;
+		myNode->m_parent = this;
+
+		dgBroadPhaseNode* const left = m_left;
+		dgBroadPhaseNode* const right = m_right;
+
+		m_minBox = left->m_minBox.GetMin(right->m_minBox);
+		m_maxBox = left->m_maxBox.GetMax(right->m_maxBox);
+		dgVector side0(m_maxBox - m_minBox);
+		m_surfaceArea = side0.DotProduct4(side0.ShiftTripleRight()).m_x;
+	}
+
+	virtual ~dgBroadPhaseTreeNode()
+	{
+		if (m_left) {
+			delete m_left;
+		}
+		if (m_right) {
+			delete m_right;
+		}
+	}
+	
+	virtual dgBroadPhaseNode* GetLeft() const
+	{
+		return m_left;
+	}
+
+	virtual dgBroadPhaseNode* GetRight() const
+	{
+		return m_right;
+	}
+
+	dgBroadPhaseNode* m_left;
+	dgBroadPhaseNode* m_right;
+	dgList<dgBroadPhaseTreeNode*>::dgListNode* m_fitnessNode;
+};
+
+
 class dgBroadPhase
 {
 	protected:
@@ -227,11 +238,11 @@ class dgBroadPhase
 		dgInt32 m_pairsAtomicCounter;
 	};
 	
-	class dgFitnessList: public dgList <dgBroadPhaseInternalNode*>
+	class dgFitnessList: public dgList <dgBroadPhaseTreeNode*>
 	{
 		public:
 		dgFitnessList(dgMemoryAllocator* const allocator)
-			:dgList <dgBroadPhaseInternalNode*>(allocator)
+			:dgList <dgBroadPhaseTreeNode*>(allocator)
 		{
 		}
 
@@ -287,6 +298,7 @@ class dgBroadPhase
 	
 	virtual void Add(dgBody* const body) = 0;
 	virtual void Remove(dgBody* const body) = 0;
+
 	virtual void ResetEntropy() = 0;
 	virtual void InvalidateCache() = 0;
 	virtual void UpdateFitness() = 0;
@@ -299,8 +311,8 @@ class dgBroadPhase
 	virtual void ConvexRayCast (dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, OnRayCastAction filter, OnRayPrecastAction prefilter, void* const userData, dgInt32 threadId) const = 0;
 	virtual dgInt32 ConvexCast (dgCollisionInstance* const shape, const dgMatrix& matrix, const dgVector& target, dgFloat32& timeToImpact, OnRayPrecastAction prefilter, void* const userData, dgConvexCastReturnInfo* const info, dgInt32 maxContacts, dgInt32 threadIndex) const = 0;
 
-	virtual void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints) = 0;
-	virtual void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID) = 0;
+	void ScanForContactJoints(dgBroadphaseSyncDescriptor& syncPoints);
+	void FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const node, dgInt32 threadID);
 
 	void UpdateBody(dgBody* const body, dgInt32 threadIndex);
 	void AddInternallyGeneratedBody(dgBody* const body)
@@ -314,11 +326,11 @@ class dgBroadPhase
 	protected:
 	bool DoNeedUpdate(dgBodyMasterList::dgListNode* const node) const;
 	dgFloat64 CalculateEntropy (dgFitnessList& fitness, dgBroadPhaseNode** const root);
-	dgBroadPhaseInternalNode* InsertNode (dgBroadPhaseNode* const root, dgBroadPhaseNode* const node);
+	dgBroadPhaseTreeNode* InsertNode (dgBroadPhaseNode* const root, dgBroadPhaseNode* const node);
 
-	void RotateLeft(dgBroadPhaseInternalNode* const node, dgBroadPhaseNode** const root);
-	void RotateRight(dgBroadPhaseInternalNode* const node, dgBroadPhaseNode** const root);
-	void ImproveNodeFitness(dgBroadPhaseInternalNode* const node, dgBroadPhaseNode** const root);
+	void RotateLeft(dgBroadPhaseTreeNode* const node, dgBroadPhaseNode** const root);
+	void RotateRight(dgBroadPhaseTreeNode* const node, dgBroadPhaseNode** const root);
+	void ImproveNodeFitness(dgBroadPhaseTreeNode* const node, dgBroadPhaseNode** const root);
 	void ImproveFitness(dgFitnessList& fitness, dgFloat64& oldEntropy, dgBroadPhaseNode** const root);
 
 	bool ValidateContactCache(dgContact* const contact, dgFloat32 timestep) const;
