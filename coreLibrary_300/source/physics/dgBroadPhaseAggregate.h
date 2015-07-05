@@ -65,7 +65,7 @@ class dgBroadPhaseAggregate: public dgBroadPhaseNode
 	dgBroadPhase* m_broadPhase;
 	dgList<dgBroadPhaseNode*>::dgListNode* m_updateNode;
 	dgList<dgBroadPhaseAggregate*>::dgListNode* m_myAggregateNode;
-	dgList<dgBroadPhaseInternalNode*> m_fitnessList;
+	dgList<dgBroadPhaseTreeNode*> m_fitnessList;
 	dgFloat64 m_treeEntropy;
 	bool m_isInEquilibrium;
 	bool m_isSelfCollidable;
