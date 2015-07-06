@@ -60,9 +60,7 @@ class dgSkeletonContainer
 
 	dgWorld* m_world;
 	dgSkeletonBodyGraph* m_skeleton;
-	dgSkeletonGraph** m_buffer;
-	dgSkeletonGraph** m_bottomTopOrder;
-	dgSkeletonGraph** m_topBottomOrder;
+	dgSkeletonGraph** m_nodesOrder;
 	dgInt32 m_id;
 	dgInt32 m_nodeCount;
 	static dgInt32 m_uniqueID;
