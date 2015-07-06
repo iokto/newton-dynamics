@@ -32,10 +32,7 @@ class dgDynamicBody;
 class dgSkeletonContainer
 {
 	public:
-//	class dgSolverData;
 	class dgSkeletonGraph;
-//	class dgSolverJointData;
-	
 	class dgSkeletonBodyGraph;
 	class dgSkeletonJointGraph;
 
@@ -62,10 +59,7 @@ class dgSkeletonContainer
 	static void ResetUniqueId(dgInt32 id);
 
 	dgWorld* m_world;
-//	dgSolverData* m_solverData;
 	dgSkeletonBodyGraph* m_skeleton;
-//	dgSkeletonGraph** m_bodyArray;
-//	dgSkeletonGraph** m_jointArray;
 	dgSkeletonGraph** m_buffer;
 	dgSkeletonGraph** m_bottomTopOrder;
 	dgSkeletonGraph** m_topBottomOrder;
