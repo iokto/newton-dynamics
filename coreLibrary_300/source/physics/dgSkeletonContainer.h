@@ -23,6 +23,7 @@
 #define _DG_SKELETON_CONTAINER_H__
 
 #define DG_SKELETON_BIT_SHIFT_KEY	16
+#define DG_SKELETON_BASEW_UNIQUE_ID	10
 
 #include "dgConstraint.h"
 
@@ -31,9 +32,12 @@ class dgDynamicBody;
 class dgSkeletonContainer
 {
 	public:
-	class dgSolverData;
-	class dgSolverJointData;
+//	class dgSolverData;
 	class dgSkeletonGraph;
+//	class dgSolverJointData;
+	
+	class dgSkeletonBodyGraph;
+	class dgSkeletonJointGraph;
 
 	DG_CLASS_ALLOCATOR(allocator)
 	dgSkeletonContainer(dgWorld* const world, dgDynamicBody* const rootBody);
@@ -58,12 +62,13 @@ class dgSkeletonContainer
 	static void ResetUniqueId(dgInt32 id);
 
 	dgWorld* m_world;
-	dgSolverData* m_solverData;
-	dgSkeletonGraph* m_skeleton;
-	dgSkeletonGraph** m_bodyArray;
-	dgSkeletonGraph** m_jointArray;
+//	dgSolverData* m_solverData;
+	dgSkeletonBodyGraph* m_skeleton;
+//	dgSkeletonGraph** m_bodyArray;
+//	dgSkeletonGraph** m_jointArray;
+	dgSkeletonGraph** m_buffer;
 	dgSkeletonGraph** m_bottomTopOrder;
-//	dgSkeletonGraph** m_topBottomOrder;
+	dgSkeletonGraph** m_topBottomOrder;
 	dgInt32 m_id;
 	dgInt32 m_nodeCount;
 	static dgInt32 m_uniqueID;
