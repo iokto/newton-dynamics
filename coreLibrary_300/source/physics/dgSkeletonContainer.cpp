@@ -1201,9 +1201,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 dgSkeletonContainer::dgSkeletonContainer(dgWorld* const world, dgDynamicBody* const rootBody)
 	:m_world(world)
 	,m_skeleton(new (rootBody->GetWorld()->GetAllocator()) dgSkeletonBodyGraph(rootBody->GetWorld()->GetAllocator(), rootBody, NULL))
-	,m_buffer(NULL)
-	,m_bottomTopOrder(NULL)
-	,m_topBottomOrder(NULL)
+	,m_nodesOrder(NULL)
 	,m_id(m_uniqueID)
 	,m_nodeCount(1)
 {
@@ -1213,8 +1211,8 @@ dgSkeletonContainer::dgSkeletonContainer(dgWorld* const world, dgDynamicBody* co
 dgSkeletonContainer::~dgSkeletonContainer()
 {
 	dgMemoryAllocator* const allocator = m_skeleton->m_body->GetWorld()->GetAllocator();
-	if (m_buffer) {
-		allocator->Free(m_buffer);
+	if (m_nodesOrder) {
+		allocator->Free(m_nodesOrder);
 	}
 	delete m_skeleton;
 }
@@ -1238,8 +1236,7 @@ void dgSkeletonContainer::SortGraph(dgSkeletonGraph* const root, dgSkeletonGraph
 
 	root->SetPriority((m_id << DG_SKELETON_BIT_SHIFT_KEY) + index);
 	dgAssert((m_nodeCount - index - 1) >= 0);
-	m_topBottomOrder[m_nodeCount - index - 1] = root;
-	m_bottomTopOrder[index] = root;
+	m_nodesOrder[index] = root;
 	root->m_index = dgInt16(index);
 	index++;
 	dgAssert(index <= m_nodeCount);
@@ -1303,9 +1300,7 @@ void dgSkeletonContainer::Finalize()
 	dgAssert(m_nodeCount >= 1);
 
 	dgMemoryAllocator* const allocator = m_skeleton->m_body->GetWorld()->GetAllocator();
-	m_buffer = (dgSkeletonGraph**)allocator->Malloc(2 * m_nodeCount * sizeof (dgSkeletonGraph*));
-	m_bottomTopOrder = &m_buffer[m_nodeCount];
-	m_topBottomOrder = &m_bottomTopOrder[m_nodeCount];
+	m_nodesOrder = (dgSkeletonGraph**)allocator->Malloc(2 * m_nodeCount * sizeof (dgSkeletonGraph*));
 
 	dgInt32 index = 0;
 	SortGraph(m_skeleton, NULL, index);
@@ -1378,13 +1373,13 @@ void dgSkeletonContainer::InitMassMatrix (char* const buffer, dgJointInfo* const
 	dgSkeletonGraph::dgData* const ptr = (dgSkeletonGraph::dgData*) buffer;
 	dgAssert( (dgUnsigned64(buffer) & 0x0f) == 0);
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgSkeletonGraph* const node = m_bottomTopOrder[i];
+		dgSkeletonGraph* const node = m_nodesOrder[i];
 		node->Init(&ptr[i], jointInfoArray, matrixRow);
 	}
 
 	dgAssert (Sanity ());
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgSkeletonGraph* const node = m_bottomTopOrder[i];
+		dgSkeletonGraph* const node = m_nodesOrder[i];
 		for (dgList<dgSkeletonGraph*>::dgListNode* child = node->m_children.GetFirst(); child; child = child->GetNext()) {
 			node->CalculateDiagonal(child->GetInfo(), jointInfoArray);
 			dgAssert (Sanity ());
@@ -1407,8 +1402,8 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 	dgFloat32 retAccel = dgFloat32(0.0f);
 	const dgWorldDynamicUpdate& dynamicsUpdate = *m_world;
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		if (m_bottomTopOrder[i]->GetJoint()) {
-			dgSkeletonJointGraph* const skeletonNode = (dgSkeletonJointGraph*)m_bottomTopOrder[i];
+		if (m_nodesOrder[i]->GetJoint()) {
+			dgSkeletonJointGraph* const skeletonNode = (dgSkeletonJointGraph*)m_nodesOrder[i];
 			const dgJointInfo* const jointInfo = &jointInfoArray[index];
 			index ++;
 			dgAssert(jointInfo->m_joint == skeletonNode->m_joint);
@@ -1426,9 +1421,9 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 	index = 0;
 	dgFloat32 accNorm = dgFloat32(0.0f);
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		if (m_bottomTopOrder[i]->GetJoint()) {
-			if (m_bottomTopOrder[i]->GetJoint()) {
-				dgSkeletonJointGraph* const skeletonNode = (dgSkeletonJointGraph*)m_bottomTopOrder[i];
+		if (m_nodesOrder[i]->GetJoint()) {
+			if (m_nodesOrder[i]->GetJoint()) {
+				dgSkeletonJointGraph* const skeletonNode = (dgSkeletonJointGraph*)m_nodesOrder[i];
 				const dgJointInfo* const jointInfo = &jointInfoArray[index];
 				index++;
 				dgAssert(jointInfo->m_joint == skeletonNode->m_joint);
