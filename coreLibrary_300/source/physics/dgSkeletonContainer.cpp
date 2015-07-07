@@ -307,7 +307,7 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		dgSpacialMatrix& diagonal = m_data->m_diagonal;
 		for (dgInt32 i = 0; i < m_jacobianDof; i++) {
 			diagonal[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
-			for (dgInt32 j = 0; j < i; j++) {
+			for (dgInt32 j = i + 1; j < m_jacobianDof; j++) {
 				dgFloat32 a = jacobianTransposed[i].DotProduct(tmp[j]);
 				diagonal[i][j] -= a;
 				diagonal[j][i] -= a;
@@ -758,7 +758,7 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 			for (dgInt32 j = 0; j < count; j++) {
 				dgJacobianMatrixElement* const row = &matrixRow[j + first];
 				dgVector acc(row->m_JMinv.m_jacobianM0.m_linear.CompProduct4(y0.m_linear) + row->m_JMinv.m_jacobianM0.m_angular.CompProduct4(y0.m_angular) +
-								row->m_JMinv.m_jacobianM1.m_linear.CompProduct4(y1.m_linear) + row->m_JMinv.m_jacobianM1.m_angular.CompProduct4(y1.m_angular));
+							 row->m_JMinv.m_jacobianM1.m_linear.CompProduct4(y1.m_linear) + row->m_JMinv.m_jacobianM1.m_angular.CompProduct4(y1.m_angular));
 				acc = dgVector(row->m_coordenateAccel) - acc.AddHorizontal();
 				accel[j] = - acc.GetScalar();
 				accNorm += acc.Abs().GetScalar();
