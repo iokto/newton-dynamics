@@ -730,7 +730,7 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 			dgAssert(jointInfo->m_joint == skeletonNode->m_joint);
 			const dgInt32 count = skeletonNode->m_jacobianDof;
 			if (count < jointInfo->m_pairCount) {
-				dgJointInfo info(jointInfoArray[i]);
+				dgJointInfo info(*jointInfo);
 				info.m_pairStart += count;
 				info.m_pairCount = jointInfo->m_pairCount - dgInt16(count);
 				dgFloat32 accel = dynamicsUpdate.CalculateJointForce(&info, bodyArray, internalForces, matrixRow);

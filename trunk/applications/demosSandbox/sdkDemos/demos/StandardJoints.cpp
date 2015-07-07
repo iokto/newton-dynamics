@@ -391,7 +391,7 @@ hinge0;
 	dVector size(1.0f, 1.0f, 1.0f);
 	NewtonBody* const box0 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
 	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 3.0f, 0.0f, 0.0f), size);
-//	NewtonBody* const box2 = CreateBox(scene, origin + dVector(0.0f, 2.0f, 0.0f, 0.0f), size);
+	NewtonBody* const box2 = CreateBox(scene, origin + dVector(0.0f, 2.0f, 0.0f, 0.0f), size);
 
 	dMatrix matrix(dGrammSchmidt(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
 	matrix.m_posit = origin + dVector(0.0f, 4.0f + 0.5f, 0.0f, 0.0f);
@@ -401,7 +401,7 @@ hinge0;
 	new CustomBallAndSocket(matrix, box1, box0);
 
 	matrix.m_posit.m_y -= 1.0f;
-//	new CustomBallAndSocket(matrix, box2, box1);
+	new CustomBallAndSocket(matrix, box2, box1);
 
 //	NewtonBodySetForceAndTorqueCallback (box1, xxxxxxxx);
 
@@ -411,7 +411,7 @@ hinge0;
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0);
 
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
-//	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
 }
