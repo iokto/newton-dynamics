@@ -165,6 +165,12 @@ class dgSkeletonContainer::dgSkeletonGraph
 					}
 				}
 			}
+			dgAssert (CheckPSD(rows));
+		}
+
+		DG_INLINE bool CheckPSD(dgInt32 rows)
+		{
+			return true;
 		}
 
 		dgSpacialVector m_rows[6];
@@ -304,15 +310,45 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 			childDiagonal.MultiplyMatrix6x6TimeJacobianTransposed(jacobianTransposed[i], tmp[i]);
 		}
 
+/*
+dgSpacialMatrix tmp0(m_data->m_diagonal);
+dgSpacialMatrix tmp1(m_data->m_diagonal);
+for (dgInt32 i = 0; i < m_jacobianDof; i++) {
+	tmp0[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
+	tmp1[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
+	for (dgInt32 j = 0; j < i; j++) {
+		dgFloat32 a = jacobianTransposed[i].DotProduct(tmp[j]);
+		tmp0[i][j] -= a;
+		tmp0[j][i] -= a;
+	}
+
+	for (dgInt32 j = i + 1; j < m_jacobianDof; j++) {
+		dgFloat32 a = jacobianTransposed[i].DotProduct(tmp[j]);
+		tmp1[i][j] -= a;
+		tmp1[j][i] -= a;
+	}
+}
+
+for (dgInt32 i = 0; i < m_jacobianDof; i++) {
+	for (dgInt32 j = 0; j < m_jacobianDof; j++) {
+		dgFloat32 a0 = tmp0[i][j];
+		dgFloat32 a1 = tmp1[i][j];
+		dgAssert(dgAreEqual(a0, a1, dgFloat32 (1.0e-4f)));
+	}
+}
+*/
+
 		dgSpacialMatrix& diagonal = m_data->m_diagonal;
 		for (dgInt32 i = 0; i < m_jacobianDof; i++) {
 			diagonal[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
+			//for (dgInt32 j = 0; j < i; j++) {
 			for (dgInt32 j = i + 1; j < m_jacobianDof; j++) {
 				dgFloat32 a = jacobianTransposed[i].DotProduct(tmp[j]);
 				diagonal[i][j] -= a;
 				diagonal[j][i] -= a;
 			}
 		}
+		dgAssert (diagonal.CheckPSD(m_jacobianDof));
 	}
 
 	virtual void CalculateDiagonalInverse()
@@ -405,6 +441,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 				m_data->m_diagonal[i + 3][j + 3] = inertia[i][j];
 			}
 		}
+		dgAssert (m_data->m_diagonal.CheckPSD(6));
 
 		if (m_parent) {
 			dgSkeletonJointGraph* const jointNode = (dgSkeletonJointGraph*)m_parent;
@@ -472,6 +509,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 				JacobianTranspose.ScaleAdd(val, diagonal[j], diagonal[j]);
 			}
 		}
+		dgAssert (diagonal.CheckPSD(6));
 	}
 
 	virtual void CalculateOffDiagonalBlock()
