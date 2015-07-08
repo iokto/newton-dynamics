@@ -310,34 +310,6 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 			childDiagonal.MultiplyMatrix6x6TimeJacobianTransposed(jacobianTransposed[i], tmp[i]);
 		}
 
-/*
-dgSpacialMatrix tmp0(m_data->m_diagonal);
-dgSpacialMatrix tmp1(m_data->m_diagonal);
-for (dgInt32 i = 0; i < m_jacobianDof; i++) {
-	tmp0[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
-	tmp1[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
-	for (dgInt32 j = 0; j < i; j++) {
-		dgFloat32 a = jacobianTransposed[i].DotProduct(tmp[j]);
-		tmp0[i][j] -= a;
-		tmp0[j][i] -= a;
-	}
-
-	for (dgInt32 j = i + 1; j < m_jacobianDof; j++) {
-		dgFloat32 a = jacobianTransposed[i].DotProduct(tmp[j]);
-		tmp1[i][j] -= a;
-		tmp1[j][i] -= a;
-	}
-}
-
-for (dgInt32 i = 0; i < m_jacobianDof; i++) {
-	for (dgInt32 j = 0; j < m_jacobianDof; j++) {
-		dgFloat32 a0 = tmp0[i][j];
-		dgFloat32 a1 = tmp1[i][j];
-		dgAssert(dgAreEqual(a0, a1, dgFloat32 (1.0e-4f)));
-	}
-}
-*/
-
 		dgSpacialMatrix& diagonal = m_data->m_diagonal;
 		for (dgInt32 i = 0; i < m_jacobianDof; i++) {
 			diagonal[i][i] -= jacobianTransposed[i].DotProduct(tmp[i]);
@@ -496,10 +468,6 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 			}
 		}
 
-		//childDiagonal.Trace(child->m_jacobialDof);
-		//copy.Trace (child->m_jacobialDof);
-		//jacobianMatrix.Trace (child->m_jacobialDof);
-
 		dgSpacialMatrix& diagonal = m_data->m_diagonal;
 		for (dgInt32 i = 0; i < child->m_jacobianDof; i++) {
 			const dgSpacialVector& Jacobian = copy[i];
@@ -601,8 +569,6 @@ void dgSkeletonContainer::SortGraph(dgSkeletonGraph* const root, dgSkeletonGraph
 	dgAssert(index <= m_nodeCount);
 }
 
-
-
 dgSkeletonContainer::dgSkeletonGraph* dgSkeletonContainer::FindNode(dgDynamicBody* const body) const
 {
 	dgInt32 stack = 1;
@@ -664,66 +630,6 @@ void dgSkeletonContainer::Finalize()
 	dgInt32 index = 0;
 	SortGraph(m_skeleton, NULL, index);
 	dgAssert(index == m_nodeCount);
-
-/*
-	dgInt32 bodyIndex = 0;
-	dgInt32 jointIndex = 0;
-	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgSkeletonGraph* const node = m_bottomTopOrder[i];
-		if (node->m_body) {
-			m_bodyArray[bodyIndex] = node;
-			bodyIndex++;
-			if (node->m_parent) {
-				dgSkeletonGraph* const jointNode = node->m_parent;
-				dgAssert(jointNode->m_joint->GetBody0() == node->m_body);
-				dgAssert(jointNode->m_joint->GetBody1() == jointNode->m_parent->m_body);
-				jointNode->m_bodyM0 = (node->m_index + 1) / 2;
-				jointNode->m_bodyM1 = (jointNode->m_parent->m_index + 1) / 2;
-			}
-		}
-		else {
-			m_jointArray[jointIndex] = node;
-			jointIndex++;
-		}
-	}
-*/	
-}
-
-
-bool dgSkeletonContainer::Sanity() const
-{
-/*
-	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgSkeletonGraph* const node = m_bottomTopOrder[i];
-		dgInt32 n = node->m_diaginalDof;
-
-		dgSkeletonGraph::dgSpacialMatrix identity;
-		node->m_data->m_diagonal.Multiply(node->m_data->m_invDiagonal, identity);
-
-		for (dgInt32 j = 0; j < n; j++) {
-			for (dgInt32 k = 0; k < n; k++) {
-				if (dgAbsf (node->m_data->m_diagonal[j][k] - node->m_data->m_diagonal[k][j]) > dgFloat32 (1.0e-5f)) {
-					return false;
-				}
-				dgTrace (("%f, ", node->m_data->m_diagonal[j][k]));
-			}
-
-			dgTrace (("    "));
-			for (dgInt32 k = 0; k < n; k++) {
-				dgTrace (("%f, ", node->m_data->m_invDiagonal[j][k]));
-			}
-
-			dgTrace (("    "));
-			for (dgInt32 k = 0; k < n; k++) {
-				dgTrace(("%f, ", identity[j][k]));
-			}
-			dgTrace (("\n"));
-
-		}
-		dgTrace (("\n"));
-	}
-*/
-	return true;
 }
 
 
@@ -736,23 +642,18 @@ void dgSkeletonContainer::InitMassMatrix (char* const buffer, dgJointInfo* const
 		node->Init(&ptr[i], jointInfoArray, matrixRow);
 	}
 
-	dgAssert (Sanity ());
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
 		dgSkeletonGraph* const node = m_nodesOrder[i];
 		for (dgList<dgSkeletonGraph*>::dgListNode* child = node->m_children.GetFirst(); child; child = child->GetNext()) {
 			node->CalculateDiagonal(child->GetInfo(), jointInfoArray);
-			dgAssert (Sanity ());
 		}
 
 		node->CalculateDiagonalInverse();
-		dgAssert (Sanity ());
 		if (node->m_parent) {
 			node->CalculateOffDiagonalBlock();
-			dgAssert (Sanity ());
 		}
 	}
 }
-
 
 
 dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const
