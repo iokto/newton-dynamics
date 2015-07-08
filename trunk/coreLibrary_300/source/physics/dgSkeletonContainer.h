@@ -51,7 +51,6 @@ class dgSkeletonContainer
 	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	protected:
-	bool Sanity () const;
 	dgSkeletonGraph* FindNode (dgDynamicBody* const node) const;
 	void AddChild (dgDynamicBody* const child, dgDynamicBody* const parent);
 	void SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index);
