@@ -293,9 +293,11 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 
 		for (dgInt32 i = 0; i < m_jacobianDof; i++) {
 			dgInt32 index = jointInfo->m_pairStart + i;
+			const dgJacobianMatrixElement* const row = &matrixRow[index];
+			m_data->m_diagonal[i][i] = row->m_diagDamp;
 			for (dgInt32 j = 0; j < 3; j++) {
-				m_data->m_offDiagonal[i][j + 0] = matrixRow[index].m_Jt.m_jacobianM1.m_linear[j];
-				m_data->m_offDiagonal[i][j + 3] = matrixRow[index].m_Jt.m_jacobianM1.m_angular[j];
+				m_data->m_offDiagonal[i][j + 0] = row->m_Jt.m_jacobianM1.m_linear[j];
+				m_data->m_offDiagonal[i][j + 3] = row->m_Jt.m_jacobianM1.m_angular[j];
 			}
 		}
 	}
