@@ -377,7 +377,7 @@ void DescreteRagDoll (DemoEntityManager* const scene)
 
 	const int defaultMaterialID = NewtonMaterialGetDefaultGroupID(scene->GetNewton());
 	const dVector location(origin);
-	const dVector size(0.5f, 0.5f, 0.75f, 0.0f);
+	const dVector size(0.25f, 0.25f, 0.375f, 0.0f);
 	const int count1 = 5;
 	const dMatrix shapeOffsetMatrix(dGetIdentityMatrix());
 	AddPrimitiveArray(scene, 10.0f, location, size, count1, count1, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
