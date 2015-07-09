@@ -47,8 +47,6 @@ class dgSkeletonContainer::dgSkeletonGraph
 	class dgSpacialVector
 	{
 		public:
-		dgVector m_v[2];
-
 		DG_INLINE dgFloat32& operator[] (dgInt32 i)
 		{
 			dgAssert(i < 8);
@@ -87,6 +85,8 @@ class dgSkeletonContainer::dgSkeletonGraph
 			dst.m_v[0] = b.m_v[0] + m_v[0].CompProduct4(s);
 			dst.m_v[1] = b.m_v[1] + m_v[1].CompProduct4(s);
 		}
+
+		dgVector m_v[2];
 	};
 
 	class dgSpacialMatrix
@@ -185,6 +185,11 @@ class dgSkeletonContainer::dgSkeletonGraph
 		dgSpacialVector m_force;
 	};
 
+	enum dgType 
+	{
+		m_isBody,
+		m_isJoint
+	};
 
 	dgSkeletonGraph (dgSkeletonGraph* const parent)
 		:m_parent(parent)
@@ -200,7 +205,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		}
 	}
 
-	~dgSkeletonGraph()
+	DG_INLINE virtual ~dgSkeletonGraph()
 	{
 		dgSkeletonGraph* next;
 		for (dgSkeletonGraph* ptr = m_child; ptr; ptr = next) {
@@ -209,28 +214,23 @@ class dgSkeletonContainer::dgSkeletonGraph
 		}
 	}
 
-	virtual dgBody* GetBody() const 
+	DG_INLINE dgType GetType () const 
+	{
+		return m_type;
+	}
+
+	DG_INLINE virtual dgBody* GetBody() const 
 	{
 		return NULL;
 	}
 
-	virtual dgBilateralConstraint* GetJoint() const
+	DG_INLINE virtual dgBilateralConstraint* GetJoint() const
 	{
 		return NULL;
 	}
 
-	virtual void SetPriority(dgUnsigned32 priority) const
+	DG_INLINE virtual void SetPriority(dgUnsigned32 priority) const
 	{
-	}
-
-	virtual void NegJtTimeSolutionBackward()
-	{
-		dgAssert(0);
-	}
-
-	virtual void DiagInvTimeSolution ()
-	{
-		dgAssert(0);
 	}
 
 	dgData m_data;
@@ -238,6 +238,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 	dgSkeletonGraph* m_child;
 	dgSkeletonGraph* m_sibling;
 	dgInt16 m_index;
+	dgType m_type;
 };
 
 
@@ -249,14 +250,15 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		, m_joint(Joint)
 		, m_jacobianDof(0)
 	{
+		m_type = m_isJoint;
 	}
 
-	virtual dgBilateralConstraint* GetJoint() const
+	DG_INLINE virtual dgBilateralConstraint* GetJoint() const
 	{
 		return m_joint;
 	}
 
-	virtual void SetPriority(dgUnsigned32 priority) const
+	DG_INLINE virtual void SetPriority(dgUnsigned32 priority) const
 	{
 		m_joint->m_priority = priority;
 	}
@@ -341,7 +343,7 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		}
 	}
 
-	virtual void NegJtTimeSolutionBackward()
+	DG_INLINE void NegJtTimeSolutionBackward()
 	{
 		const dgInt32 dof = m_jacobianDof;
 		const dgSpacialVector& force = m_parent->m_data.m_force;
@@ -352,8 +354,7 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		}
 	}
 
-
-	virtual void DiagInvTimeSolution()
+	DG_INLINE void DiagInvTimeSolution()
 	{
 		dgSpacialVector tmp(m_data.m_force);
 		for (dgInt32 i = m_jacobianDof; i < 6; i ++) {
@@ -361,7 +362,6 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		}
 		m_data.m_invDiagonal.MultiplyMatrixNxNTimeJacobianTransposed(tmp, m_data.m_force, m_jacobianDof);
 	}
-
 
 	dgBilateralConstraint* m_joint;
 	dgInt16 m_jacobianDof;
@@ -375,6 +375,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 		:dgSkeletonGraph(parent)
 		,m_body(child)
 	{
+		m_type = m_isBody;
 	}
 
 	virtual dgBody* GetBody() const
@@ -491,7 +492,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 		}
 	}
 
-	virtual void NegJtTimeSolutionBackward()
+	DG_INLINE void NegJtTimeSolutionBackward()
 	{
 		dgSkeletonJointGraph* const jointNode = (dgSkeletonJointGraph*)m_parent;
 		dgAssert (jointNode->GetJoint());
@@ -505,7 +506,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 		}
 	}
 
-	virtual void DiagInvTimeSolution()
+	DG_INLINE void DiagInvTimeSolution()
 	{
 		dgSpacialVector tmp (m_data.m_force);
 		m_data.m_invDiagonal.MultiplyMatrix6x6TimeJacobianTransposed (tmp, m_data.m_force);
@@ -727,50 +728,56 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 		}
 	}
 
-	for (dgInt32 i = m_nodeCount - 1; i >= 0; i--) {
-		dgSkeletonGraph* const bodyNode = m_nodesOrder[i];
-		bodyNode->DiagInvTimeSolution();
-		if (bodyNode->m_parent) {
-			bodyNode->NegJtTimeSolutionBackward();
+	for (dgInt32 i = m_nodeCount - 1; i >= 0; i -- ) {
+		if (m_nodesOrder[i]->GetType() == dgSkeletonGraph::m_isBody) {
+			dgSkeletonBodyGraph* const bodyNode = (dgSkeletonBodyGraph*) m_nodesOrder[i];
+			bodyNode->DiagInvTimeSolution();
+			if (bodyNode->m_parent) {
+				bodyNode->NegJtTimeSolutionBackward();
+			}
+		} else {
+			dgAssert (m_nodesOrder[i]->GetType() == dgSkeletonGraph::m_isJoint);
+			dgAssert (m_nodesOrder[i]->m_parent);
+			dgSkeletonJointGraph* const jointNode = (dgSkeletonJointGraph*) m_nodesOrder[i];
+			jointNode->DiagInvTimeSolution();
+			jointNode->NegJtTimeSolutionBackward();
 		}
 	}
 
-	dgInt32 index = 0;
-	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		if (m_nodesOrder[i]->GetJoint()) {
-			dgSkeletonJointGraph* const skeletonNode = (dgSkeletonJointGraph*)m_nodesOrder[i];
-			const dgJointInfo* const jointInfo = &jointInfoArray[index];
-			index++;
 
-			dgJacobian y0;
-			dgJacobian y1;
-			y0.m_linear = dgVector::m_zero;
-			y0.m_angular = dgVector::m_zero;
-			y1.m_linear = dgVector::m_zero;
-			y1.m_angular = dgVector::m_zero;
+	for (dgInt32 i = 1; i < m_nodeCount; i += 2) {
+		dgSkeletonJointGraph* const jointNode = (dgSkeletonJointGraph*)m_nodesOrder[i];
+		dgAssert(jointNode->GetJoint());
+		const dgJointInfo* const jointInfo = &jointInfoArray[i>>1];
 
-			dgAssert(jointInfo->m_joint == skeletonNode->m_joint);
-			const dgInt32 first = jointInfo->m_pairStart;
-			const dgInt32 count = skeletonNode->m_jacobianDof;
-			dgSkeletonGraph::dgSpacialVector& force = skeletonNode->m_data.m_force;
-			for (dgInt32 j = 0; j < count; j++) {
-				dgJacobianMatrixElement* const row = &matrixRow[j + first];
-				dgVector val(force[j]);
-				dgAssert(dgCheckFloat(force[j]));
-				row->m_force += force[j];
-				y0.m_linear += row->m_Jt.m_jacobianM0.m_linear.CompProduct4(val);
-				y0.m_angular += row->m_Jt.m_jacobianM0.m_angular.CompProduct4(val);
-				y1.m_linear += row->m_Jt.m_jacobianM1.m_linear.CompProduct4(val);
-				y1.m_angular += row->m_Jt.m_jacobianM1.m_angular.CompProduct4(val);
-			}
-			const dgInt32 m0 = jointInfo->m_m0;
-			const dgInt32 m1 = jointInfo->m_m1;
-			
-			internalForces[m0].m_linear += y0.m_linear;
-			internalForces[m0].m_angular += y0.m_angular;
-			internalForces[m1].m_linear += y1.m_linear;
-			internalForces[m1].m_angular += y1.m_angular;
+		dgJacobian y0;
+		dgJacobian y1;
+		y0.m_linear = dgVector::m_zero;
+		y0.m_angular = dgVector::m_zero;
+		y1.m_linear = dgVector::m_zero;
+		y1.m_angular = dgVector::m_zero;
+
+		dgAssert(jointInfo->m_joint == jointNode->m_joint);
+		const dgInt32 first = jointInfo->m_pairStart;
+		const dgInt32 count = jointNode->m_jacobianDof;
+		dgSkeletonGraph::dgSpacialVector& force = jointNode->m_data.m_force;
+		for (dgInt32 j = 0; j < count; j++) {
+			dgJacobianMatrixElement* const row = &matrixRow[j + first];
+			dgVector val(force[j]);
+			dgAssert(dgCheckFloat(force[j]));
+			row->m_force += force[j];
+			y0.m_linear += row->m_Jt.m_jacobianM0.m_linear.CompProduct4(val);
+			y0.m_angular += row->m_Jt.m_jacobianM0.m_angular.CompProduct4(val);
+			y1.m_linear += row->m_Jt.m_jacobianM1.m_linear.CompProduct4(val);
+			y1.m_angular += row->m_Jt.m_jacobianM1.m_angular.CompProduct4(val);
 		}
+		const dgInt32 m0 = jointInfo->m_m0;
+		const dgInt32 m1 = jointInfo->m_m1;
+			
+		internalForces[m0].m_linear += y0.m_linear;
+		internalForces[m0].m_angular += y0.m_angular;
+		internalForces[m1].m_linear += y1.m_linear;
+		internalForces[m1].m_angular += y1.m_angular;
 	}
 
 	return retAccel;
