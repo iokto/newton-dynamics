@@ -519,6 +519,7 @@ dgSkeletonContainer::dgSkeletonContainer(dgWorld* const world, dgDynamicBody* co
 	:m_world(world)
 	,m_skeleton(new (rootBody->GetWorld()->GetAllocator()) dgSkeletonBodyGraph(rootBody, NULL))
 	,m_nodesOrder(NULL)
+	,m_destructor(NULL)
 	,m_id(m_uniqueID)
 	,m_nodeCount(1)
 {
@@ -527,11 +528,25 @@ dgSkeletonContainer::dgSkeletonContainer(dgWorld* const world, dgDynamicBody* co
 
 dgSkeletonContainer::~dgSkeletonContainer()
 {
-	dgMemoryAllocator* const allocator = m_skeleton->m_body->GetWorld()->GetAllocator();
+	if (m_destructor) {
+		m_destructor (this);
+	}
+	
+	dgMemoryAllocator* const allocator = m_world->GetAllocator();
 	if (m_nodesOrder) {
 		allocator->Free(m_nodesOrder);
 	}
 	delete m_skeleton;
+}
+
+dgWorld* dgSkeletonContainer::GetWorld() const
+{
+	return m_world;
+}
+
+void dgSkeletonContainer::SetDestructorCallback (dgOnSkeletonContainerDestroyCallback destructor)
+{
+	m_destructor = destructor;
 }
 
 void dgSkeletonContainer::ResetUniqueId(dgInt32 id)
@@ -588,20 +603,81 @@ void dgSkeletonContainer::AddChild(dgBody* const child, dgBody* const parent)
 
 void dgSkeletonContainer::AddChild(dgDynamicBody* const child, dgDynamicBody* const parent)
 {
-	dgSkeletonGraph* const parentNode = FindNode(parent);
-	dgAssert(parentNode);
 	dgAssert (m_skeleton->GetBody());
 	dgWorld* const world = m_skeleton->GetBody()->GetWorld();
 	dgMemoryAllocator* const allocator = world->GetAllocator();
 	dgBilateralConstraint* const joint = world->FindBilateralJoint(child, parent);
 	dgAssert(joint);
 
-	dgAssert(joint->GetBody0() == child);
-	dgAssert(joint->GetBody1() == parent);
-	dgSkeletonJointGraph* const jointParent = new (allocator)dgSkeletonJointGraph(joint, parentNode);
-	new (allocator)dgSkeletonBodyGraph(child, jointParent);
+	if ((joint->GetBody0() == child) && (joint->GetBody1() == parent)) {
+		dgSkeletonGraph* const parentNode = FindNode(parent);
+		dgAssert(parentNode);
+		dgSkeletonJointGraph* const jointNode = new (allocator)dgSkeletonJointGraph(joint, parentNode);
+		new (allocator)dgSkeletonBodyGraph(child, jointNode);
+	} else {
+		dgAssert(joint->GetBody1() == child);
+		dgAssert(joint->GetBody0() == parent);
+		dgAssert (m_skeleton->m_body == parent);
+		dgSkeletonBodyGraph* const newRoot = new (allocator) dgSkeletonBodyGraph (child, NULL);
+		dgSkeletonJointGraph* const jointNode = new (allocator)dgSkeletonJointGraph(joint, newRoot);
+
+		m_skeleton->m_parent = jointNode;
+		jointNode->m_child = m_skeleton;
+		m_skeleton = newRoot;
+	}
 	m_nodeCount += 2;
 }
+
+
+void dgSkeletonContainer::AddJointList (dgInt32 count, dgBilateralConstraint** const array)
+{
+	dgTree<dgBody*, dgBody*> filter(m_world->GetAllocator());
+	dgTree<dgConstraint*, dgConstraint*> jointMap(m_world->GetAllocator());
+
+	dgInt32 stack = 0;
+	dgBody* pool[1024][2];
+	filter.Insert(m_skeleton->m_body, m_skeleton->m_body);
+	for (dgInt32 i = 0; i < count; i++) {
+		dgBilateralConstraint* const joint = array[i];
+		jointMap.Insert(joint, joint);
+
+		dgBody* const body0 = joint->GetBody0();
+		dgBody* const body1 = joint->GetBody1();
+		if (body1 == m_skeleton->m_body) {
+			pool[stack][0] = joint->GetBody0();
+			pool[stack][1] = joint->GetBody1();
+			filter.Insert(pool[stack][0], pool[stack][0]);
+			stack++;
+		} else if (body0 == m_skeleton->m_body) {
+			pool[stack][0] = joint->GetBody1();
+			pool[stack][1] = joint->GetBody0();
+			filter.Insert(pool[stack][0], pool[stack][0]);
+			stack++;
+		}
+	}
+
+	while (stack) {
+		stack--;
+		dgBody* const child = pool[stack][0];
+		dgBody* const parent = pool[stack][1];
+		AddChild(child, parent);
+
+		for (dgConstraint* joint = child->GetFirstJoint(); joint; joint = child->GetNextJoint(joint)) {
+			dgAssert(joint->IsBilateral());
+			if (jointMap.Find(joint)) {
+				dgBody* const body = (joint->GetBody0() != child) ? joint->GetBody0() : joint->GetBody1();
+				if (!filter.Find(body)) {
+					pool[stack][0] = body;
+					pool[stack][1] = child;
+					stack++;
+					filter.Insert(body, body);
+					dgAssert(stack < sizeof (pool) / (2 * sizeof (pool[0][0])));
+				}
+			}
+		}
+	}
+}
+
 
 
 void dgSkeletonContainer::Finalize()

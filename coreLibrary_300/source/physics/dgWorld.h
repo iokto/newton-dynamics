@@ -324,10 +324,11 @@ class dgWorld
 	dgCorkscrewConstraint* CreateCorkscrewConstraint (const dgVector& pivot, const dgVector& pin, dgBody* const body0, dgBody *refBody = NULL);
 	dgUniversalConstraint* CreateUniversalConstraint (const dgVector& pivot, const dgVector& pin0, const dgVector& pin1, dgBody* const body0, dgBody *body1 = NULL);
 
-	dgSkeletonContainer* CreateNewtonSkeletonContainer (dgBody* const rootBone);
-	dgSkeletonContainer* CreateNewtonSkeletonContainer (dgBody* const rootBone, dgInt32 jointCount, dgBilateralConstraint** const jointArray);
-
 	void DestroyConstraint (dgConstraint* constraint);
+
+	dgSkeletonContainer* CreateNewtonSkeletonContainer (dgBody* const rootBone);
+	void DestroySkeletonContainer (dgSkeletonContainer* const container);
+
 	dgUnsigned32 CreateBodyGroupID();
 	void RemoveAllGroupID();
 
