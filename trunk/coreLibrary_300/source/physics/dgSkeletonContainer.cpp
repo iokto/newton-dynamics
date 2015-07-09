@@ -188,18 +188,24 @@ class dgSkeletonContainer::dgSkeletonGraph
 
 	dgSkeletonGraph(dgMemoryAllocator* const allocator, dgSkeletonGraph* const parent)
 		:m_parent(parent)
-		,m_children(allocator)
+		,m_child(NULL)
+		,m_sibling(NULL)
 		,m_index(0)
 	{
 		if (m_parent) {
-			m_parent->m_children.Append(this);
+			if (m_parent->m_child) {
+				m_sibling = m_parent->m_child;
+			}
+			m_parent->m_child = this;
 		}
 	}
 
 	~dgSkeletonGraph()
 	{
-		for (dgList<dgSkeletonGraph*>::dgListNode* ptr = m_children.GetFirst(); ptr; ptr = ptr->GetNext()) {
-			delete ptr->GetInfo();
+		dgSkeletonGraph* next;
+		for (dgSkeletonGraph* ptr = m_child; ptr; ptr = next) {
+			next = ptr->m_sibling;
+			delete ptr;
 		}
 	}
 
@@ -255,7 +261,8 @@ class dgSkeletonContainer::dgSkeletonGraph
 
 	dgData m_data;
 	dgSkeletonGraph* m_parent;
-	dgList<dgSkeletonGraph*> m_children;
+	dgSkeletonGraph* m_child;
+	dgSkeletonGraph* m_sibling;
 	dgInt16 m_index;
 };
 
@@ -557,8 +564,8 @@ void dgSkeletonContainer::ResetUniqueId(dgInt32 id)
 
 void dgSkeletonContainer::SortGraph(dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index)
 {
-	for (dgList<dgSkeletonGraph*>::dgListNode* node = root->m_children.GetFirst(); node; node = node->GetNext()) {
-		SortGraph(node->GetInfo(), root, index);
+	for (dgSkeletonGraph* node = root->m_child; node; node = node->m_sibling) {
+		SortGraph(node, root, index);
 	}
 
 	root->SetPriority((m_id << DG_SKELETON_BIT_SHIFT_KEY) + index);
@@ -582,8 +589,8 @@ dgSkeletonContainer::dgSkeletonGraph* dgSkeletonContainer::FindNode(dgDynamicBod
 			return node;
 		}
 
-		for (dgList<dgSkeletonGraph*>::dgListNode* ptr = node->m_children.GetFirst(); ptr; ptr = ptr->GetNext()) {
-			stackPool[stack] = ptr->GetInfo();
+		for (dgSkeletonGraph* ptr = node->m_child; ptr; ptr = ptr->m_sibling) {
+			stackPool[stack] = ptr;
 			stack++;
 			dgAssert(stack < dgInt32(sizeof (stackPool) / sizeof (stackPool[0])));
 		}
@@ -643,8 +650,8 @@ void dgSkeletonContainer::InitMassMatrix (dgJointInfo* const jointInfoArray, dgJ
 
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
 		dgSkeletonGraph* const node = m_nodesOrder[i];
-		for (dgList<dgSkeletonGraph*>::dgListNode* child = node->m_children.GetFirst(); child; child = child->GetNext()) {
-			node->CalculateDiagonal(child->GetInfo(), jointInfoArray);
+		for (dgSkeletonGraph* child = node->m_child; child; child = child->m_sibling) {
+			node->CalculateDiagonal(child, jointInfoArray);
 		}
 
 		node->CalculateDiagonalInverse();
@@ -710,9 +717,8 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce(dgJointInfo* const jointInfoA
 
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
 		dgSkeletonGraph* const node = m_nodesOrder[i];
-		for (dgList<dgSkeletonGraph*>::dgListNode* childNode = node->m_children.GetFirst(); childNode; childNode = childNode->GetNext()) {
-			dgSkeletonGraph* const child = childNode->GetInfo();
-			child->NegJtTimeSolutionForward(node);
+		for (dgSkeletonGraph* childNode = node->m_child; childNode; childNode = childNode->m_sibling) {
+			childNode->NegJtTimeSolutionForward(node);
 		}
 	}
 
