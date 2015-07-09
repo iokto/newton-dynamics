@@ -8660,13 +8660,20 @@ const int* NewtonDeformableMeshSegmentGetIndexList (const NewtonCollision* const
 }
 
 
-
 NewtonSkeletonContainer* NewtonSkeletonContainerCreate(NewtonWorld* const worldPtr, NewtonBody* const rootBone)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)rootBone;
 	dgWorld* const world = (dgWorld*) worldPtr;
 	return (NewtonSkeletonContainer*)world->CreateNewtonSkeletonContainer (body);
+}
+
+NewtonSkeletonContainer* NewtonSkeletonContainerCreateFromJointArray (NewtonWorld* const worldPtr, NewtonBody* const rootBone, int jointCount, NewtonJoint** const jointArray)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgBody* const body = (dgBody *)rootBone;
+	dgWorld* const world = (dgWorld*) worldPtr;
+	return (NewtonSkeletonContainer*)world->CreateNewtonSkeletonContainer (body, jointCount, (dgBilateralConstraint**) jointArray);
 }
 
 void NewtonSkeletonContainerAttachBone(NewtonSkeletonContainer* const skeleton, NewtonBody* const childBone, NewtonBody* const parentBone)
@@ -8728,14 +8735,14 @@ void NewtonCollisionAggregateRemoveBody(void* const aggregatePtr, const NewtonBo
 	aggregate->RemoveBody((dgBody*)body);
 }
 
-int NewtonCollisionAggregateGetSeltCollision(void* const aggregatePtr)
+int NewtonCollisionAggregateGetSelfCollision(void* const aggregatePtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*) aggregatePtr;
 	return aggregate->GetSelfCollision() ? true : false;
 }
 
-void NewtonCollisionAggregateSetSeltCollision(void* const aggregatePtr, int state)
+void NewtonCollisionAggregateSetSelfCollision(void* const aggregatePtr, int state)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBroadPhaseAggregate* const aggregate = (dgBroadPhaseAggregate*) aggregatePtr;
