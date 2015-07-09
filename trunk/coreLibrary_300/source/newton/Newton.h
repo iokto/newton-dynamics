@@ -402,11 +402,10 @@ extern "C" {
 	typedef void (*NewtonUserBilateralGetInfoCallback) (const NewtonJoint* const userJoint, NewtonJointRecord* const info);
 
 	typedef void (*NewtonConstraintDestructor) (const NewtonJoint* const me);
+	typedef void (*NewtonSkeletontDestructor) (const NewtonSkeletonContainer* const me);
 
 	typedef void (*NewtonJobTask) (NewtonWorld* const world, void* const userData, int threadIndex);
-
 	typedef bool (*NewtonReportProgress) (dFloat normalizedProgressPercent, void* const userData);
-
 
 	// **********************************************************************************************
 	//
@@ -1150,10 +1149,10 @@ extern "C" {
 	//	simple robotic contractions with not internal loops, Vehicles, Ropes, etc. That will all interact seamlessly and naturally with the physics world.
 	//	
 	// ************************************************************************************************************************
-	NEWTON_API NewtonSkeletonContainer* NewtonSkeletonContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone);
-	NEWTON_API NewtonSkeletonContainer* NewtonSkeletonContainerCreateFromJointArray (NewtonWorld* const world, NewtonBody* const rootBone, int jointCount, NewtonJoint** const jointarray);
-
+	NEWTON_API NewtonSkeletonContainer* NewtonSkeletonContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone, NewtonSkeletontDestructor onDestroyCallback);
 	NEWTON_API void NewtonSkeletonContainerDelete (NewtonSkeletonContainer* const skeleton);
+
+	NEWTON_API void NewtonSkeletonContainerAttachJointArray (NewtonSkeletonContainer* const skeleton, int jointCount, NewtonJoint** const jointArray);
 	NEWTON_API void NewtonSkeletonContainerAttachBone (NewtonSkeletonContainer* const skeleton, NewtonBody* const childBone, NewtonBody* const parentBone);
 	NEWTON_API void NewtonSkeletonContainernDetachBone (NewtonSkeletonContainer* const skeleton, void* const bone);
 	NEWTON_API void NewtonSkeletonContainerFinalize (NewtonSkeletonContainer* const skeleton);

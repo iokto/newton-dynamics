@@ -313,33 +313,15 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 }
 
 
-static void xxxxxxxx(const NewtonBody* body, dFloat timestep, int threadIndex)
-{
-	PhysicsApplyGravityForce (body, timestep, threadIndex);
-
-static int xxx;
-xxx ++;
-if (xxx > 500) {
-	dFloat Ixx;
-	dFloat Iyy;
-	dFloat Izz;
-	dFloat mass;
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
-	dVector force(0.0f, mass * DEMO_GRAVITY * 100, 0.0f, 0.0f);
-	NewtonBodyAddForce(body, &force.m_x);
-}
-}
-
-
 
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 {
-/*
+#if 0
     dVector size (1.5f, 4.0f, 0.125f);
 
     NewtonBody* const box0 = CreateBox (scene, origin + dVector (0.0f, 4.0f, 0.0f, 0.0f), size);
     NewtonBody* const box1 = CreateBox (scene, origin + dVector (1.5f, 4.0f, 0.0f, 0.0f), size);
-//    NewtonBody* const box2 = CreateBox (scene, origin + dVector (3.0f, 4.0f, 0.0f, 0.0f), size);
+    NewtonBody* const box2 = CreateBox (scene, origin + dVector (3.0f, 4.0f, 0.0f, 0.0f), size);
 
     // the joint pin is the first row of the matrix, to make a upright pin we
     // take the x axis and rotate by 90 degree around the y axis
@@ -353,10 +335,9 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 
     // add hinge with limit and friction
     CustomHinge* const hinge0 = new CustomHinge (matrix, box0, NULL);
-hinge0;
-//    hinge0->EnableLimits (true);
-//    hinge0->SetLimis(-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
-//    hinge0->SetFriction (20.0f);
+    hinge0->EnableLimits (true);
+    hinge0->SetLimis(-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
+    hinge0->SetFriction (20.0f);
 
     // link the two boxes
     NewtonBodyGetMatrix (box1, &matrix[0][0]);
@@ -364,18 +345,18 @@ hinge0;
     matrix = localPin * matrix;
     CustomHinge* const hinge1 = new CustomHinge (matrix, box1, box0);
 	hinge1->EnableLimits (true);
-//  hinge1->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
-//  hinge1->SetFriction (20.0f);
+	hinge1->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
+	hinge1->SetFriction (20.0f);
 
     // link the two boxes
-//    NewtonBodyGetMatrix (box2, &matrix[0][0]);
-//    matrix.m_posit += dVector (-size.m_x * 0.5f, 0.0f, 0.0f);
-//    matrix = localPin * matrix;
-//    CustomHinge* const hinge2 = new CustomHinge (matrix, box2, box1);
-//    hinge2->EnableLimits (true);
-//    hinge2->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
-//	hinge2->SetFriction (20.0f);
-
+    NewtonBodyGetMatrix (box2, &matrix[0][0]);
+    matrix.m_posit += dVector (-size.m_x * 0.5f, 0.0f, 0.0f);
+    matrix = localPin * matrix;
+    CustomHinge* const hinge2 = new CustomHinge (matrix, box2, box1);
+    hinge2->EnableLimits (true);
+    hinge2->SetLimis (-45.0f * 3.141592f / 180.0f, 45.0f * 3.141592f / 180.0f);
+	hinge2->SetFriction (20.0f);
+/*
 	// optionally we can now make this int an skeleton joint 
 //	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0);
@@ -387,7 +368,9 @@ hinge0;
 //	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize (skeleton);
 */
+#endif 0
 
+#if 1
 	dVector size(1.0f, 1.0f, 1.0f);
 	NewtonBody* const box0 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
 	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 3.0f, 0.0f, 0.0f), size);
@@ -398,20 +381,23 @@ hinge0;
 	new CustomBallAndSocket(matrix, box0, NULL);
 
 	matrix.m_posit.m_y -= 1.0f;
-	new CustomBallAndSocket(matrix, box1, box0);
+	CustomBallAndSocket* const joint01 = new CustomBallAndSocket(matrix, box1, box0);
 
 	matrix.m_posit.m_y -= 1.0f;
-	new CustomBallAndSocket(matrix, box2, box1);
+	CustomBallAndSocket* const joint12 = new CustomBallAndSocket(matrix, box2, box1);
 
-//	NewtonBodySetForceAndTorqueCallback (box1, xxxxxxxx);
-
-#if 1
 	// optionally we can now make this int an skeleton joint 
-	//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL);
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0);
+	//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL, NULL);
+	//NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box2, NULL);
 
-	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
-	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+	NewtonJoint* joints[2];
+	joints[0] = joint01->GetJoint();
+	joints[1] = joint12->GetJoint();
+	NewtonSkeletonContainerAttachJointArray (skeleton, 2, joints);
+
+//	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
+//	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
 }
