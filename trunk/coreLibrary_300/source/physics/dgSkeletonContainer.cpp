@@ -223,21 +223,6 @@ class dgSkeletonContainer::dgSkeletonGraph
 	{
 	}
 
-	virtual void CalculateDiagonal(dgSkeletonGraph* const child, dgJointInfo* const jointInfoArray)
-	{
-		dgAssert (0);
-	}
-
-	virtual void CalculateDiagonalInverse()
-	{
-		dgAssert(0);
-	}
-
-	virtual void CalculateOffDiagonalBlock()
-	{
-		dgAssert (0);
-	}
-
 	virtual void NegJtTimeSolutionForward (dgSkeletonGraph* const dst)
 	{
 		dgAssert(0);
@@ -303,7 +288,7 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		}
 	}
 
-	virtual void CalculateDiagonal(dgSkeletonGraph* const child, dgJointInfo* const jointInfoArray)
+	DG_INLINE void CalculateDiagonal(dgSkeletonGraph* const child, dgJointInfo* const jointInfoArray)
 	{
 		dgAssert(child->GetBody());
 		dgSpacialMatrix tmp;
@@ -326,12 +311,12 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		dgAssert (diagonal.CheckPSD(m_jacobianDof));
 	}
 
-	virtual void CalculateDiagonalInverse()
+	DG_INLINE void CalculateDiagonalInverse()
 	{
 		m_data.m_invDiagonal.Inverse(m_data.m_diagonal, m_jacobianDof);
 	}
 
-	virtual void CalculateOffDiagonalBlock()
+	DG_INLINE void CalculateOffDiagonalBlock()
 	{
 		dgSpacialMatrix copy;
 		for (dgInt32 i = 0; i < m_jacobianDof; i++) {
@@ -451,7 +436,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 		}
 	}
 
-	virtual void CalculateDiagonalInverse()
+	DG_INLINE void CalculateDiagonalInverse()
 	{
 		m_data.m_invDiagonal.Inverse(m_data.m_diagonal, 6);
 	}
@@ -489,7 +474,7 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 		dgAssert (diagonal.CheckPSD(6));
 	}
 
-	virtual void CalculateOffDiagonalBlock()
+	DG_INLINE void CalculateOffDiagonalBlock()
 	{
 		for (dgInt32 i = 0; i < 6; i++) {
 			dgSpacialVector	tmp (m_data.m_offDiagonal[i]);
@@ -652,15 +637,26 @@ void dgSkeletonContainer::InitMassMatrix (dgJointInfo* const jointInfoArray, dgJ
 		}
 	}
 
-	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgSkeletonGraph* const node = m_nodesOrder[i];
-		for (dgSkeletonGraph* child = node->m_child; child; child = child->m_sibling) {
-			node->CalculateDiagonal(child, jointInfoArray);
+	for (dgInt32 i = 0; i < m_nodeCount; i += 2) {
+		dgSkeletonBodyGraph* const bodyNode = (dgSkeletonBodyGraph*) m_nodesOrder[i];
+		for (dgSkeletonGraph* child = bodyNode->m_child; child; child = child->m_sibling) {
+			bodyNode->CalculateDiagonal(child, jointInfoArray);
+		}
+		bodyNode->CalculateDiagonalInverse();
+		if (bodyNode->m_parent) {
+			bodyNode->CalculateOffDiagonalBlock();
 		}
 
-		node->CalculateDiagonalInverse();
-		if (node->m_parent) {
-			node->CalculateOffDiagonalBlock();
+		if (bodyNode->m_parent) {
+			dgSkeletonJointGraph* const jointNode = (dgSkeletonJointGraph*)m_nodesOrder[i + 1];
+			for (dgSkeletonGraph* child = jointNode->m_child; child; child = child->m_sibling) {
+				jointNode->CalculateDiagonal(child, jointInfoArray);
+			}
+
+			jointNode->CalculateDiagonalInverse();
+			if (jointNode->m_parent) {
+				jointNode->CalculateOffDiagonalBlock();
+			}
 		}
 	}
 }
