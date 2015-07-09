@@ -223,12 +223,6 @@ class dgSkeletonContainer::dgSkeletonGraph
 	{
 	}
 
-	virtual void Init (dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow) 
-	{
-		m_data.m_diagonal.SetZero();
-		m_data.m_offDiagonal.SetZero();
-	}
-
 	virtual void CalculateDiagonal(dgSkeletonGraph* const child, dgJointInfo* const jointInfoArray)
 	{
 		dgAssert (0);
@@ -287,11 +281,13 @@ class dgSkeletonContainer::dgSkeletonJointGraph: public dgSkeletonGraph
 		m_joint->m_priority = priority;
 	}
 
-	virtual void Init(dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
+	DG_INLINE void Init(dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
 	{
 		dgAssert(m_parent);
 
-		dgSkeletonGraph::Init(jointInfoArray, matrixRow);
+		m_data.m_diagonal.SetZero();
+		m_data.m_offDiagonal.SetZero();
+
 		dgJointInfo* const jointInfo = &jointInfoArray[m_joint->m_index];
 		dgAssert(jointInfo->m_joint == m_joint);
 		dgAssert(jointInfo->m_joint->GetBody1() == m_parent->GetBody());
@@ -406,9 +402,10 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 		return m_body;
 	}
 
-	virtual void Init (dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
+	DG_INLINE void Init (dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
 	{
-		dgSkeletonGraph::Init(jointInfoArray, matrixRow);
+		m_data.m_diagonal.SetZero();
+		m_data.m_offDiagonal.SetZero();
 
 		dgFloat32 mass = m_body->GetMass().m_w;
 		dgAssert (mass < dgFloat32 (1.0e10f));
@@ -432,7 +429,6 @@ class dgSkeletonContainer::dgSkeletonBodyGraph: public dgSkeletonGraph
 
 			dgInt32 count = jointInfo->m_pairCount;
 			const dgInt32 first = jointInfo->m_pairStart;
-			//dgInt32 dofCount = 0;
 			for (dgInt32 j = 0; j < count; j++) {
 				dgJacobianMatrixElement* const row = &matrixRow[j + first];
 				dgInt32 index = ((row->m_lowerBoundFrictionCoefficent < dgFloat32(-1.0e10f)) && (row->m_upperBoundFrictionCoefficent > dgFloat32(1.0e10f))) ? 0 : 1;
@@ -642,10 +638,18 @@ void dgSkeletonContainer::Finalize()
 
 void dgSkeletonContainer::InitMassMatrix (dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
 {
-	for (dgInt32 i = 0; i < m_nodeCount; i++) {
-		dgSkeletonGraph* const node = m_nodesOrder[i];
-		dgAssert( (dgUnsigned64(&node->m_data) & 0x0f) == 0);
-		node->Init(jointInfoArray, matrixRow);
+	for (dgInt32 i = 0; i < m_nodeCount; i += 2) {
+		dgSkeletonBodyGraph* const bodyNode = (dgSkeletonBodyGraph*) m_nodesOrder[i];
+		dgAssert (bodyNode->GetBody());
+		dgAssert( (dgUnsigned64(&bodyNode->m_data) & 0x0f) == 0);
+		bodyNode->Init(jointInfoArray, matrixRow);
+
+		if (bodyNode->m_parent) {
+			dgSkeletonJointGraph* const jointNode = (dgSkeletonJointGraph*)m_nodesOrder[i + 1];
+			dgAssert(jointNode->GetJoint());
+			dgAssert((dgUnsigned64(&jointNode->m_data) & 0x0f) == 0);
+			jointNode->Init(jointInfoArray, matrixRow);
+		}
 	}
 
 	for (dgInt32 i = 0; i < m_nodeCount; i++) {
