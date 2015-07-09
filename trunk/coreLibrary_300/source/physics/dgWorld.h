@@ -325,6 +325,7 @@ class dgWorld
 	dgUniversalConstraint* CreateUniversalConstraint (const dgVector& pivot, const dgVector& pin0, const dgVector& pin1, dgBody* const body0, dgBody *body1 = NULL);
 
 	dgSkeletonContainer* CreateNewtonSkeletonContainer (dgBody* const rootBone);
+	dgSkeletonContainer* CreateNewtonSkeletonContainer (dgBody* const rootBone, dgInt32 jointCount, dgBilateralConstraint** const jointArray);
 
 	void DestroyConstraint (dgConstraint* constraint);
 	dgUnsigned32 CreateBodyGroupID();

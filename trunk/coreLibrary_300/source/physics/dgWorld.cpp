@@ -1378,6 +1378,59 @@ dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootB
 	return container;
 }
 
+dgSkeletonContainer* dgWorld::CreateNewtonSkeletonContainer (dgBody* const rootBone, dgInt32 jointCount, dgBilateralConstraint** const jointArray)
+{
+	dgSkeletonContainer* const container = CreateNewtonSkeletonContainer (rootBone);
+
+	dgTree<dgBody*, dgBody*> filter (GetAllocator());
+	dgTree<dgConstraint*, dgConstraint*> jointMap (GetAllocator());
+
+	dgInt32 stack = 0;
+	dgBody* pool[1024][2];
+	filter.Insert(rootBone, rootBone);
+	for (dgInt32 i = 0; i < jointCount; i ++) {
+		dgBilateralConstraint* const joint = jointArray[i];
+		jointMap.Insert(joint, joint);
+
+		dgBody* const body0 = joint->GetBody0(); 
+		dgBody* const body1 = joint->GetBody1(); 
+		if (body1 == rootBone) {
+			pool[stack][0] = joint->GetBody0();
+			pool[stack][1] = joint->GetBody1();
+			filter.Insert(pool[stack][0], pool[stack][0]);
+			stack ++;
+		} else if (body0 == rootBone) {
+			pool[stack][0] = joint->GetBody1();
+			pool[stack][1] = joint->GetBody0();
+			filter.Insert(pool[stack][0], pool[stack][0]);
+			stack ++;
+		}
+	}
+
+	while (stack) {
+		stack --;
+		dgBody* const child = pool[stack][0];
+		dgBody* const parent = pool[stack][1];
+		container->AddChild(child, parent);
+
+		for (dgConstraint* joint = child->GetFirstJoint(); joint; joint = child->GetNextJoint(joint)) {
+			dgAssert (joint->IsBilateral());
+			if (jointMap.Find(joint)) {
+				dgBody* const body = (joint->GetBody0() != child) ? joint->GetBody0() : joint->GetBody1();
+				if (!filter.Find(body)) {
+					pool[stack][0] = body;
+					pool[stack][1] = child;
+					stack ++;
+					filter.Insert(body, body);
+					dgAssert (stack < sizeof (pool) / (2 * sizeof (pool[0][0])));
+				}
+			}
+		}
+	}
+	container->Finalize();
+	return container;
+}
+
 
 dgBroadPhaseAggregate* dgWorld::CreateAggreGate() const
 {

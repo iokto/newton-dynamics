@@ -848,8 +848,8 @@ extern "C" {
 	NEWTON_API void NewtonCollisionAggregateAddBody (void* const aggregate, const NewtonBody* const body);
 	NEWTON_API void NewtonCollisionAggregateRemoveBody (void* const aggregate, const NewtonBody* const body); 	
 
-	NEWTON_API int NewtonCollisionAggregateGetSeltCollision (void* const aggregate);
-	NEWTON_API void NewtonCollisionAggregateSetSeltCollision (void* const aggregate, int state);
+	NEWTON_API int NewtonCollisionAggregateGetSelfCollision (void* const aggregate);
+	NEWTON_API void NewtonCollisionAggregateSetSelfCollision (void* const aggregate, int state);
 	
 	// **********************************************************************************************
 	//
@@ -1151,6 +1151,8 @@ extern "C" {
 	//	
 	// ************************************************************************************************************************
 	NEWTON_API NewtonSkeletonContainer* NewtonSkeletonContainerCreate (NewtonWorld* const world, NewtonBody* const rootBone);
+	NEWTON_API NewtonSkeletonContainer* NewtonSkeletonContainerCreateFromJointArray (NewtonWorld* const world, NewtonBody* const rootBone, int jointCount, NewtonJoint** const jointarray);
+
 	NEWTON_API void NewtonSkeletonContainerDelete (NewtonSkeletonContainer* const skeleton);
 	NEWTON_API void NewtonSkeletonContainerAttachBone (NewtonSkeletonContainer* const skeleton, NewtonBody* const childBone, NewtonBody* const parentBone);
 	NEWTON_API void NewtonSkeletonContainernDetachBone (NewtonSkeletonContainer* const skeleton, void* const bone);
