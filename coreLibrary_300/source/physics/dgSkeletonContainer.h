@@ -53,12 +53,15 @@ class dgSkeletonContainer
 	void InitMassMatrix (dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow);
 	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
-	protected:
+	private:
 	dgSkeletonGraph* FindNode (dgDynamicBody* const node) const;
 	dgSkeletonGraph* AddChild (dgDynamicBody* const child, dgDynamicBody* const parent);
 	
-	void SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index);
+	void SolveFoward () const;
+	void SolveBackward () const;
+	dgFloat32 SolveUnilaterals (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
+	void SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index);
 	static void ResetUniqueId(dgInt32 id);
 
 	dgWorld* m_world;
