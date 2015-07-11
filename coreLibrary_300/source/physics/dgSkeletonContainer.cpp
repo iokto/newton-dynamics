@@ -412,12 +412,12 @@ class dgSkeletonContainer::dgSkeletonGraph
 	}
 
 
-	DG_INLINE void BodyJacobianTimeMassForward(dgSkeletonGraph* const parent) const 
+	DG_INLINE void BodyJacobianTimeMassForward() const 
 	{
 		for (dgInt32 i = 0; i < m_dof; i++) {
-			m_jointJ[i].ScaleAdd(dgVector(-m_jointForce[i]), parent->m_bodyForce, parent->m_bodyForce);
+			m_jointJ[i].ScaleAdd(dgVector(-m_jointForce[i]), m_parent->m_bodyForce, m_parent->m_bodyForce);
 		}
-		dgAssert (parent->m_bodyForce.Trace (6));
+		dgAssert (m_parent->m_bodyForce.Trace (6));
 	}
 
 
@@ -746,13 +746,14 @@ void dgSkeletonContainer::SolveFoward () const
 		dgSkeletonGraph* const node = m_nodesOrder[i];
 		for (dgSkeletonGraph* child = node->m_child; child; child = child->m_sibling) {
 			dgAssert(child->m_joint);
-			child->BodyJacobianTimeMassForward(node);
+			child->BodyJacobianTimeMassForward();
 		}
 		dgAssert(node->m_joint);
 		node->JointJacobianTimeMassForward();
 	}
-	for (dgSkeletonGraph* child = m_nodesOrder[m_nodeCount - 1]; child; child = child->m_sibling) {
-		child->BodyJacobianTimeMassForward(m_nodesOrder[m_nodeCount - 1]);
+
+	for (dgSkeletonGraph* child = m_nodesOrder[m_nodeCount - 1]->m_child; child; child = child->m_sibling) {
+		child->BodyJacobianTimeMassForward();
 	}
 }
 
