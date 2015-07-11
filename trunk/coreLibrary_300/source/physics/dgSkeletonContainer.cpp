@@ -785,7 +785,7 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce (dgJointInfo* const jointInfo
 	SolveFoward ();
 	SolveBackward ();
 
-	for (dgInt32 i = m_nodeCount - 1; i >= 0 ; i --) {
+	for (dgInt32 i = 0; i < (m_nodeCount - 1)  ; i ++) {
 		dgSkeletonGraph* const node = m_nodesOrder[i];
 		const dgJointInfo* const jointInfo = &jointInfoArray[i];
 

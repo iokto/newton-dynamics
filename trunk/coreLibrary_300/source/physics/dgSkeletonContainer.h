@@ -48,7 +48,7 @@ class dgSkeletonContainer
 	void AddJointList (dgInt32 count, dgBilateralConstraint** const array);
 	
 	void Finalize ();
-	dgInt32 GetJointCount () const {return (m_nodeCount - 1) / 2;}
+	dgInt32 GetJointCount () const {return m_nodeCount - 1;}
 
 	void InitMassMatrix (dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow);
 	dgFloat32 CalculateJointForce (dgJointInfo* const jointInfo, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
