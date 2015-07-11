@@ -388,16 +388,16 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 
 	// optionally we can now make this int an skeleton joint 
 	//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL, NULL);
-	//NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box2, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	//NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box1, NULL);
 
 	NewtonJoint* joints[2];
 	joints[0] = joint01->GetJoint();
 	joints[1] = joint12->GetJoint();
 	NewtonSkeletonContainerAttachJointArray (skeleton, 2, joints);
 
-//	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
-//	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
+	//NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
+	//NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
 }
