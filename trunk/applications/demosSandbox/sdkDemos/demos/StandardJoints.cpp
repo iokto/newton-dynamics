@@ -312,27 +312,6 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 	joint1->SetRollAngle (25.0f * 3.141592f / 180.0f);
 }
 
-
-void xxxxxxxxxxxxx(const NewtonBody* body, dFloat timestep, int threadIndex)
-{
-	dFloat Ixx;
-	dFloat Iyy;
-	dFloat Izz;
-	dFloat mass;
-
-static int xxx;
-xxx ++;
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
-float xxxxx = 0.0f;
-//if (xxx > 1000)
-xxxxx = 0.1f;
-
-	dVector force(0.0f, mass * DEMO_GRAVITY, mass * DEMO_GRAVITY * xxxxx, 0.0f);
-	NewtonBodySetForce(body, &force.m_x);
-}
-
-
-
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 {
 #if 0
@@ -394,8 +373,6 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 	NewtonBody* const box0 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
 	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 3.0f, 0.0f, 0.0f), size, 10000.0f);
 //	NewtonBody* const box2 = CreateBox(scene, origin + dVector(0.0f, 2.0f, 0.0f, 0.0f), size);
-
-NewtonBodySetForceAndTorqueCallback (box1,  xxxxxxxxxxxxx);
 
 	dMatrix matrix(dGrammSchmidt(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
 	matrix.m_posit = origin + dVector(0.0f, 4.0f + 0.5f, 0.0f, 0.0f);
