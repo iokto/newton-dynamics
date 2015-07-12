@@ -918,7 +918,7 @@ static void LoadHangingBridge (DemoEntityManager* const scene, TriggerManager* c
 	}
 
 	// add all the joint to the Newton Skeleton 
-jointCount = 12;
+jointCount = 1;
 	NewtonSkeletonContainerAttachJointArray (skeleton, jointCount, jointArray);
 
 	// complete the skeleton construction
