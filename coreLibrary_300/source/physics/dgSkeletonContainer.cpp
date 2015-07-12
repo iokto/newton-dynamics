@@ -179,19 +179,23 @@ class dgSkeletonContainer::dgSkeletonGraph
 
 		bool Trace(dgInt32 size) const
 		{
+#if 0
 			for (dgInt32 i = 0; i < size; i++) {
 				m_rows[i].Trace(size);
 			}
 			dgTrace(("\n"));
+#endif
 			return true;
 		}
 
 		bool TraceJacobian(dgInt32 dof) const
 		{
+#if 0
 			for (dgInt32 i = 0; i < dof; i++) {
 				m_rows[i].Trace(6);
 			}
 			dgTrace(("\n"));
+#endif
 			return true;
 		}
 		dgSpacialVector m_rows[6];
@@ -255,8 +259,8 @@ class dgSkeletonContainer::dgSkeletonGraph
 				m_bodyMass[i + 3][j + 3] = inertia[i][j];
 			}
 		}
-		dgAssert(m_bodyMass.Trace(6));
-		dgAssert(m_bodyMass.CheckPSD(6));
+		//dgAssert(m_bodyMass.Trace(6));
+		//dgAssert(m_bodyMass.CheckPSD(6));
 
 		if (m_joint) {
 			dgAssert (m_parent);
@@ -284,7 +288,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 				dgInt32 index = jointInfo->m_pairStart + i;
 				const dgJacobianMatrixElement* const row = &matrixRow[index];
 				m_jointMass[i].SetZero();
-//				m_jointMass[i][i] = row->m_diagDamp;
+				//m_jointMass[i][i] = row->m_diagDamp;
 				for (dgInt32 j = 0; j < 3; j++) {
 					m_bodyJt[i][j + 0] = row->m_Jt.m_jacobianM0.m_linear[j];
 					m_bodyJt[i][j + 3] = row->m_Jt.m_jacobianM0.m_angular[j];
@@ -292,8 +296,8 @@ class dgSkeletonContainer::dgSkeletonGraph
 					m_jointJ[i][j + 3] = row->m_Jt.m_jacobianM1.m_angular[j];
 				}
 			}
-			dgAssert(m_bodyJt.TraceJacobian(m_dof));
-			dgAssert(m_jointJ.TraceJacobian(m_dof));
+			//dgAssert(m_bodyJt.TraceJacobian(m_dof));
+			//dgAssert(m_jointJ.TraceJacobian(m_dof));
 		}
 	}
 
@@ -324,8 +328,8 @@ class dgSkeletonContainer::dgSkeletonGraph
 				JacobianTranspose.ScaleAdd(val, m_bodyMass[j], m_bodyMass[j]);
 			}
 		}
-		dgAssert(m_bodyMass.CheckPSD(6));
-		dgAssert (m_bodyMass.Trace(6));
+		//dgAssert(m_bodyMass.CheckPSD(6));
+		//dgAssert (m_bodyMass.Trace(6));
 	}
 
 	DG_INLINE void CalculateJointDiagonal (dgJointInfo* const jointInfoArray)
@@ -346,9 +350,9 @@ class dgSkeletonContainer::dgSkeletonGraph
 		}
 		m_jointMass.Inverse(m_jointInvMass, m_dof);
 
-		dgAssert(m_jointMass.CheckPSD(m_dof));
-		dgAssert(m_jointMass.Trace(m_dof));
-		dgAssert(m_jointInvMass.Trace(m_dof));
+		//dgAssert(m_jointMass.CheckPSD(m_dof));
+		//dgAssert(m_jointMass.Trace(m_dof));
+		//dgAssert(m_jointInvMass.Trace(m_dof));
 	}
 
 
@@ -368,7 +372,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 				jacobian.ScaleAdd(val, m_jointJ[j], m_jointJ[j]);
 			}
 		}
-		dgAssert (m_jointJ.TraceJacobian(m_dof));
+		//dgAssert (m_jointJ.TraceJacobian(m_dof));
 	}
 
 	DG_INLINE void Factorize(dgJointInfo* const jointInfoArray, dgJacobianMatrixElement* const matrixRow)
@@ -377,15 +381,15 @@ class dgSkeletonContainer::dgSkeletonGraph
 			CalculateBodyDiagonal(child, jointInfoArray);
 		}
 		m_bodyMass.Inverse(m_bodyInvMass, 6);
-		dgAssert(m_bodyMass.Trace(6));
-		dgAssert(m_bodyInvMass.Trace(6));
+		//dgAssert(m_bodyMass.Trace(6));
+		//dgAssert(m_bodyInvMass.Trace(6));
 		
 		if (m_joint) {
 			dgAssert (m_parent);
 			for (dgInt32 i = 0; i < m_dof; i++) {
 				m_bodyInvMass.MultiplyNxNMatrixTimeVector(m_bodyJt[i], m_bodyJt[i], 6);
 			}
-			dgAssert(m_bodyJt.TraceJacobian (m_dof));
+			//dgAssert(m_bodyJt.TraceJacobian (m_dof));
 			CalculateJointDiagonal (jointInfoArray);
 			CalculateJacobianBlock ();
 		}
@@ -396,7 +400,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		for (dgInt32 i = 0; i < m_dof; i++) {
 			m_jointForce[i] -= m_bodyJt[i].DotProduct(m_bodyForce);
 		}
-		dgAssert (m_jointForce.Trace (m_dof));
+		//dgAssert (m_jointForce.Trace (m_dof));
 	}
 
 
@@ -405,7 +409,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		for (dgInt32 i = 0; i < m_dof; i++) {
 			m_jointJ[i].ScaleAdd(dgVector(-m_jointForce[i]), m_parent->m_bodyForce, m_parent->m_bodyForce);
 		}
-		dgAssert (m_parent->m_bodyForce.Trace (6));
+		//dgAssert (m_parent->m_bodyForce.Trace (6));
 	}
 
 	DG_INLINE void JointJacobianTimeSolutionBackward()
@@ -414,7 +418,7 @@ class dgSkeletonContainer::dgSkeletonGraph
 		for (dgInt32 i = 0; i < m_dof; i++) {
 			m_jointForce[i] -= force.DotProduct(m_jointJ[i]);
 		}
-		dgAssert (m_jointForce.Trace (m_dof));
+		//dgAssert (m_jointForce.Trace (m_dof));
 	}
 
 	DG_INLINE void BodyJacobianTimeSolutionBackward()
@@ -422,20 +426,20 @@ class dgSkeletonContainer::dgSkeletonGraph
 		for (dgInt32 i = 0; i < m_dof; i++) {
 			m_bodyJt[i].ScaleAdd(dgVector(-m_jointForce[i]), m_bodyForce, m_bodyForce);
 		}
-		dgAssert (m_bodyForce.Trace (6));
+		//dgAssert (m_bodyForce.Trace (6));
 	}
 
 
 	DG_INLINE void BodyDiagInvTimeSolution()
 	{
 		m_bodyInvMass.MultiplyNxNMatrixTimeVector(m_bodyForce, m_bodyForce, 6);
-		dgAssert (m_bodyForce.Trace(6));
+		//dgAssert (m_bodyForce.Trace(6));
 	}
 
 	DG_INLINE void JointDiagInvTimeSolution()
 	{
 		m_jointInvMass.MultiplyNxNMatrixTimeVector (m_jointForce, m_jointForce, m_dof);
-		dgAssert (m_jointForce.Trace(m_dof));
+		//dgAssert (m_jointForce.Trace(m_dof));
 	}
 
 
@@ -793,7 +797,7 @@ dgFloat32 dgSkeletonContainer::CalculateJointForce (dgJointInfo* const jointInfo
 	SolveFoward ();
 	SolveBackward ();
 
-dgTrace (("\n"));
+//dgTrace (("\n"));
 	for (dgInt32 i = 0; i < (m_nodeCount - 1)  ; i ++) {
 		dgSkeletonGraph* const node = m_nodesOrder[i];
 		const dgJointInfo* const jointInfo = &jointInfoArray[i];
@@ -809,7 +813,7 @@ dgTrace (("\n"));
 		const dgInt32 first = jointInfo->m_pairStart;
 		const dgInt32 count = node->m_dof;
 		dgSkeletonGraph::dgSpacialVector& force = node->m_jointForce;
-force.Trace (count);
+//force.Trace (count);
 		for (dgInt32 j = 0; j < count; j++) {
 			dgJacobianMatrixElement* const row = &matrixRow[j + first];
 			dgVector val(force[j]);
