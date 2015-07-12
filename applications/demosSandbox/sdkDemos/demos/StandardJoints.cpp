@@ -132,14 +132,14 @@ class CustomBallAndSocketWithFriction: public CustomBallAndSocket
     dFloat m_dryFriction;
 };
 
-static NewtonBody* CreateBox (DemoEntityManager* const scene, const dVector& location, const dVector& size)
+static NewtonBody* CreateBox (DemoEntityManager* const scene, const dVector& location, const dVector& size, float mass = 1.0f)
 {
     NewtonWorld* const world = scene->GetNewton();
     int materialID =  NewtonMaterialGetDefaultGroupID (world);
     NewtonCollision* const collision = CreateConvexCollision (world, dGetIdentityMatrix(), size, _BOX_PRIMITIVE, 0);
    	DemoMesh* const geometry = new DemoMesh("primitive", collision, "smilli.tga", "smilli.tga", "smilli.tga");
 
-    dFloat mass = 1.0f;
+    //dFloat mass = 1.0f;
     dMatrix matrix (dGetIdentityMatrix());
     matrix.m_posit = location;
     matrix.m_posit.m_w = 1.0f;
@@ -313,6 +313,25 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 }
 
 
+void xxxxxxxxxxxxx(const NewtonBody* body, dFloat timestep, int threadIndex)
+{
+	dFloat Ixx;
+	dFloat Iyy;
+	dFloat Izz;
+	dFloat mass;
+
+static int xxx;
+xxx ++;
+	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
+float xxxxx = 0.0f;
+//if (xxx > 1000)
+xxxxx = 0.1f;
+
+	dVector force(0.0f, mass * DEMO_GRAVITY, mass * DEMO_GRAVITY * xxxxx, 0.0f);
+	NewtonBodySetForce(body, &force.m_x);
+}
+
+
 
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 {
@@ -373,8 +392,10 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 #if 1
 	dVector size(1.0f, 1.0f, 1.0f);
 	NewtonBody* const box0 = CreateBox(scene, origin + dVector(0.0f, 4.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 3.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box2 = CreateBox(scene, origin + dVector(0.0f, 2.0f, 0.0f, 0.0f), size);
+	NewtonBody* const box1 = CreateBox(scene, origin + dVector(0.0f, 3.0f, 0.0f, 0.0f), size, 10000.0f);
+//	NewtonBody* const box2 = CreateBox(scene, origin + dVector(0.0f, 2.0f, 0.0f, 0.0f), size);
+
+NewtonBodySetForceAndTorqueCallback (box1,  xxxxxxxxxxxxx);
 
 	dMatrix matrix(dGrammSchmidt(dVector(0.0f, 1.0f, 0.0f, 0.0f)));
 	matrix.m_posit = origin + dVector(0.0f, 4.0f + 0.5f, 0.0f, 0.0f);
@@ -384,17 +405,16 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 	CustomBallAndSocket* const joint01 = new CustomBallAndSocket(matrix, box1, box0);
 
 	matrix.m_posit.m_y -= 1.0f;
-	CustomBallAndSocket* const joint12 = new CustomBallAndSocket(matrix, box2, box1);
+//	CustomBallAndSocket* const joint12 = new CustomBallAndSocket(matrix, box2, box1);
 
 	// optionally we can now make this int an skeleton joint 
-	//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL, NULL);
 	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
 	//NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box1, NULL);
 
 	NewtonJoint* joints[2];
 	joints[0] = joint01->GetJoint();
-	joints[1] = joint12->GetJoint();
-	NewtonSkeletonContainerAttachJointArray (skeleton, 2, joints);
+//	joints[1] = joint12->GetJoint();
+	NewtonSkeletonContainerAttachJointArray (skeleton, 1, joints);
 
 	//NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	//NewtonSkeletonContainerAttachBone (skeleton, box2, box1);

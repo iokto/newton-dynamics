@@ -59,7 +59,9 @@ class dgSkeletonContainer
 	
 	void SolveFoward () const;
 	void SolveBackward () const;
+
 	dgFloat32 SolveUnilaterals (dgJointInfo* const jointInfoArray, const dgBodyInfo* const bodyArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
+	dgFloat32 CalculateJointAccel (dgJointInfo* const jointInfoArray, dgJacobian* const internalForces, dgJacobianMatrixElement* const matrixRow) const;
 
 	void SortGraph (dgSkeletonGraph* const root, dgSkeletonGraph* const parent, dgInt32& index);
 	static void ResetUniqueId(dgInt32 id);
