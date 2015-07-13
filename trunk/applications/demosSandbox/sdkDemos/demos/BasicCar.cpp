@@ -18,7 +18,7 @@
 #include "DemoCamera.h"
 #include "PhysicsUtils.h"
 #include "HeightFieldPrimitive.h"
-#include "../toolBox/DebugDisplay.h"
+#include "DebugDisplay.h"
 
 
 struct BasciCarParameters
@@ -792,12 +792,7 @@ void BasicCar (DemoEntityManager* const scene)
 	scene->SetCameraMouseLock (true);
 	scene->SetCameraMatrix(camMatrix, camMatrix.m_posit);
 
-//
-	//	dVector location (origin);
-	//	location.m_x += 20.0f;
-	//	location.m_z += 20.0f;
-//	location.m_posit.m_z += 4.0f;
-
+/*
 	int count = 1;
 	dMatrix shapeOffsetMatrix (dGetIdentityMatrix());
 	int defaultMaterialID = NewtonMaterialGetDefaultGroupID (scene->GetNewton());
@@ -816,7 +811,7 @@ void BasicCar (DemoEntityManager* const scene)
 	//	AddPrimitiveArray(scene, 10.0f, location.m_posit, size, count, count, 5.0f, _CONE_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	//	AddPrimitiveArray(scene, 10.0f, location.m_posit, size, count, count, 5.0f, _REGULAR_CONVEX_HULL_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
 	//	AddPrimitiveArray(scene, 10.0f, location.m_posit, size, count, count, 5.0f, _RANDOM_CONVEX_HULL_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
-
 	//	NewtonSerializeToFile (scene->GetNewton(), "C:/Users/Julio/Desktop/newton-dynamics/applications/media/xxxxx.bin");
+*/		
 }
 

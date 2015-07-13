@@ -339,7 +339,7 @@ DG_INLINE T dgSign(T A)
 	return (A >= T(0)) ? T(1) : T(-1);
 }
 
-template <class T>
+template <class T> 
 DG_INLINE bool dgAreEqual(T A, T B, T tol)
 {
 	dgInt32 exp0;
@@ -867,7 +867,7 @@ DG_INLINE void dgThreadYield()
 {
 	#ifndef DG_USE_THREAD_EMULATION
 	sched_yield();
-	#endif
+#endif
 }
 
 DG_INLINE void dgSpinLock (dgInt32* const ptr, bool yield)
@@ -894,6 +894,21 @@ DG_INLINE void dgPrefetchMem(const void* const mem)
 		_mm_prefetch ((const char*)mem, _MM_HINT_T0);
 	#endif
 }
+
+#ifdef __MACH__
+#include <sys/time.h>
+#define CLOCK_REALTIME 0
+#define CLOCK_MONOTONIC 0
+//clock_gettime is not implemented on OSX
+DG_INLINE int clock_gettime(int /*clk_id*/, struct timespec* t) {
+    struct timeval now;
+    int rv = gettimeofday(&now, NULL);
+    if (rv) return rv;
+    t->tv_sec  = now.tv_sec;
+    t->tv_nsec = now.tv_usec * 1000;
+    return 0;
+}
+#endif
 
 #endif
 

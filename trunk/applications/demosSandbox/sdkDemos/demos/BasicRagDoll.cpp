@@ -275,13 +275,13 @@ class RagDollManager: public CustomArticulaledTransformManager
 		DemoEntity* const ragDollEntity = (DemoEntity*) model->CreateClone();
 		scene->Append(ragDollEntity);
 
-		// build the rag doll with rigid bodies connected by joints
+		// build the ragdoll with rigid bodies connected by joints
 		// create a transform controller
 		CustomArticulatedTransformController* const controller = CreateTransformController (ragDollEntity);
 
 		// add the root bone
-		DemoEntity* const rootEntity = (DemoEntity*)ragDollEntity->Find(definition[0].m_boneName);
-		NewtonBody* const rootBone = CreateRagDollBodyPart(rootEntity, definition[0]);
+		DemoEntity* const rootEntity = (DemoEntity*) ragDollEntity->Find (definition[0].m_boneName);
+		NewtonBody* const rootBone = CreateRagDollBodyPart (rootEntity, definition[0]);
 		// for debugging
 		//NewtonBodySetMassMatrix(rootBone, 0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -309,7 +309,7 @@ class RagDollManager: public CustomArticulaledTransformManager
 				if (!strcmp (definition[i].m_boneName, name)) {
 					NewtonBody* const bone = CreateRagDollBodyPart (entity, definition[i]);
 
-					// connect this body part to its parent with a rag doll joint
+					// connect this body part to its parent with a ragdoll joint
 					ConnectBodyParts (bone, parentBone->m_body, definition[i]);
 
 					dMatrix bindMatrix (entity->GetParent()->CalculateGlobalMatrix ((DemoEntity*)NewtonBodyGetUserData (parentBone->m_body)).Inverse());
@@ -364,7 +364,7 @@ void DescreteRagDoll (DemoEntityManager* const scene)
 //	dVector origin (-10.0f, 1.0f, 0.0f, 1.0f);
 	dVector origin (FindFloor (world, dVector (-10.0f, 50.0f, 0.0f, 1.0f), 2.0f * 50.0f));
 
-	int count = 1;
+	int count = 10;
 	for (int x = 0; x < count; x ++) {
 		for (int z = 0; z < count; z ++) {
 			dVector p (origin + dVector ((x - count / 2) * 3.0f - count / 2, 0.0f, (z - count / 2) * 3.0f, 0.0f));
@@ -373,15 +373,15 @@ void DescreteRagDoll (DemoEntityManager* const scene)
 			manager->CreateRagDoll (matrix, &ragDollModel, skeletonRagDoll, sizeof (skeletonRagDoll) / sizeof (skeletonRagDoll[0]));
 		}
 	}
-
+	
 
 	const int defaultMaterialID = NewtonMaterialGetDefaultGroupID(scene->GetNewton());
 	const dVector location(origin);
 	const dVector size(0.25f, 0.25f, 0.375f, 0.0f);
 	const int count1 = 5;
 	const dMatrix shapeOffsetMatrix(dGetIdentityMatrix());
-//	AddPrimitiveArray(scene, 10.0f, location, size, count1, count1, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
-	
+	AddPrimitiveArray(scene, 10.0f, location, size, count1, count1, 5.0f, _BOX_PRIMITIVE, defaultMaterialID, shapeOffsetMatrix);
+
 	origin.m_x -= 25.0f;
 	origin.m_y += 5.0f;
 	dQuaternion rot;
