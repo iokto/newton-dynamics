@@ -241,19 +241,6 @@ void CustomVehicleControllerManager::DestroyController (CustomVehicleController*
 }
 
 
-CustomVehicleController* CustomVehicleControllerManager::CreateVehicle (NewtonBody* const body, const dMatrix& vehicleFrame, const dVector& gravityVector)
-{
-	CustomVehicleController* const controller = CreateController();
-	controller->Init (body, vehicleFrame, gravityVector);
-	return controller;
-}
-
-CustomVehicleController* CustomVehicleControllerManager::CreateVehicle (NewtonCollision* const chassisShape, const dMatrix& vehicleFrame, dFloat mass, const dVector& gravityVector)
-{
-	CustomVehicleController* const controller = CreateController();
-	controller->Init(chassisShape, vehicleFrame, mass, gravityVector);
-	return controller;
-}
 
 
 void CustomVehicleControllerManager::DrawSchematic (const CustomVehicleController* const controller, dFloat scale) const
@@ -743,4 +730,23 @@ void CustomVehicleController::DrawSchematic (dFloat scale) const
 */
 		}
 	}
+}
+
+
+
+
+CustomVehicleController* CustomVehicleControllerManager::CreateVehicle(NewtonBody* const body, const dMatrix& vehicleFrame, const dVector& gravityVector)
+{
+	dAssert (0);
+	CustomVehicleController* const controller = CreateController();
+	controller->Init(body, vehicleFrame, gravityVector);
+	return controller;
+}
+
+CustomVehicleController* CustomVehicleControllerManager::CreateVehicle(NewtonCollision* const chassisShape, const dMatrix& vehicleFrame, dFloat mass, const dVector& gravityVector)
+{
+	dAssert (0);
+	CustomVehicleController* const controller = CreateController();
+	controller->Init(chassisShape, vehicleFrame, mass, gravityVector);
+	return controller;
 }
