@@ -350,6 +350,40 @@ static void AddUniversal(DemoEntityManager* const scene, const dVector& origin)
 
 
 
+static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& origin)
+{
+	dVector size (1.0f, 1.0f, 1.0f);
+	NewtonBody* const box0 = CreateCapule (scene, origin + dVector (0.0f,  5.0f, 0.0f, 0.0f), size);
+	NewtonBody* const box1 = CreateCapule (scene, origin + dVector (0.0f,  5.0 - size.m_y * 2.0f, 0.0f, 0.0f), size);
+
+	dMatrix pinMatrix (dGrammSchmidt (dVector (0.0f, -1.0f, 0.0f, 0.0f)));
+
+	// connect first box to the world
+	dMatrix matrix0;
+	NewtonBodyGetMatrix (box0, & matrix0[0][0]);
+	pinMatrix.m_posit = matrix0.m_posit + dVector (0.0f, size.m_y, 0.0f, 0.0f);
+	CustomControlledBallAndSocket* const joint0 = new CustomControlledBallAndSocket (pinMatrix, box0, NULL);
+	joint0->SetAngularVelocity (1000.0f * 3.141592f / 180.0f);
+	joint0->SetPitchAngle (-45.0f * 3.141592f / 180.0f);
+	joint0->SetYawAngle (-85.0f * 3.141592f / 180.0f);
+	joint0->SetRollAngle (120.0f * 3.141592f / 180.0f);
+
+	// link the two boxes
+	dMatrix matrix1;
+	NewtonBodyGetMatrix (box1, &matrix1[0][0]);
+	pinMatrix.m_posit = (matrix0.m_posit + matrix1.m_posit).Scale (0.5f);
+	CustomControlledBallAndSocket* const joint1 = new CustomControlledBallAndSocket (pinMatrix, box0, box1);
+	joint1->SetAngularVelocity (1000.0f * 3.141592f / 180.0f);
+	joint1->SetPitchAngle (45.0f * 3.141592f / 180.0f);
+	joint1->SetYawAngle ( 30.0f * 3.141592f / 180.0f);
+	joint1->SetRollAngle (25.0f * 3.141592f / 180.0f);
+
+#ifdef _USE_HARD_JOINTS
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
+	NewtonSkeletonContainerFinalize(skeleton);
+#endif
+}
 
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 {
@@ -651,102 +685,6 @@ static void AddGearAndRack (DemoEntityManager* const scene, const dVector& origi
 #endif
 }
 
-/*
-static void AddPoweredRagDoll(DemoEntityManager* const scene, const dVector& origin)
-{
-	dVector size(1.0f, 1.0f, 1.0f);
-	NewtonBody* const box0 = CreateCapule(scene, origin + dVector(0.0f, 5.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box1 = CreateCapule(scene, origin + dVector(0.0f, 5.0 - size.m_y * 2.0f, 0.0f, 0.0f), size);
-
-	dMatrix pinMatrix(dGrammSchmidt(dVector(0.0f, -1.0f, 0.0f, 0.0f)));
-
-	// connect first box to the world
-	dMatrix matrix0;
-	NewtonBodyGetMatrix(box0, &matrix0[0][0]);
-	pinMatrix.m_posit = matrix0.m_posit + dVector(0.0f, size.m_y, 0.0f, 0.0f);
-	CustomControlledBallAndSocket* const joint0 = new CustomControlledBallAndSocket(pinMatrix, box0, NULL);
-	joint0->SetAngularVelocity(1000.0f * 3.141592f / 180.0f);
-	joint0->SetPitchAngle(-45.0f * 3.141592f / 180.0f);
-	joint0->SetYawAngle(-85.0f * 3.141592f / 180.0f);
-	joint0->SetRollAngle(120.0f * 3.141592f / 180.0f);
-
-	// link the two boxes
-	dMatrix matrix1;
-	NewtonBodyGetMatrix(box1, &matrix1[0][0]);
-	pinMatrix.m_posit = (matrix0.m_posit + matrix1.m_posit).Scale(0.5f);
-	CustomControlledBallAndSocket* const joint1 = new CustomControlledBallAndSocket(pinMatrix, box0, box1);
-	joint1->SetAngularVelocity(1000.0f * 3.141592f / 180.0f);
-	joint1->SetPitchAngle(45.0f * 3.141592f / 180.0f);
-	joint1->SetYawAngle(30.0f * 3.141592f / 180.0f);
-	joint1->SetRollAngle(25.0f * 3.141592f / 180.0f);
-
-#ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
-	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
-	NewtonSkeletonContainerFinalize(skeleton);
-#endif
-}
-*/
-
-static void AddPoweredRagDoll(DemoEntityManager* const scene, const dVector& origin)
-{
-	dVector size(1.0f, 1.0f, 1.0f);
-	NewtonBody* const box0 = CreateCapule(scene, origin + dVector(0.0f, 9.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box1 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 2.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box2 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 4.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box3 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 6.0f, 0.0f, 0.0f), size);
-
-	dMatrix pinMatrix(dGrammSchmidt(dVector(0.0f, -1.0f, 0.0f, 0.0f)));
-
-	// connect first box to the world
-	dMatrix matrix0;
-	NewtonBodyGetMatrix(box0, &matrix0[0][0]);
-	pinMatrix.m_posit = matrix0.m_posit + dVector(0.0f, size.m_y, 0.0f, 0.0f);
-	CustomControlledBallAndSocket* const joint0 = new CustomControlledBallAndSocket(pinMatrix, box0, NULL);
-	joint0->SetAngularVelocity(1000.0f * 3.141592f / 180.0f);
-	joint0->SetPitchAngle(-45.0f * 3.141592f / 180.0f);
-	joint0->SetYawAngle(-85.0f * 3.141592f / 180.0f);
-	joint0->SetRollAngle(120.0f * 3.141592f / 180.0f);
-
-	// link the two boxes
-	dMatrix matrix1;
-	NewtonBodyGetMatrix(box1, &matrix1[0][0]);
-	pinMatrix.m_posit = (matrix0.m_posit + matrix1.m_posit).Scale(0.5f);
-	CustomControlledBallAndSocket* const joint1 = new CustomControlledBallAndSocket(pinMatrix, box0, box1);
-	joint1->SetAngularVelocity(1000.0f * 3.141592f / 180.0f);
-	joint1->SetPitchAngle(45.0f * 3.141592f / 180.0f);
-	joint1->SetYawAngle(30.0f * 3.141592f / 180.0f);
-	joint1->SetRollAngle(25.0f * 3.141592f / 180.0f);
-
-	// link next box
-	dMatrix matrix2;
-	NewtonBodyGetMatrix(box2, &matrix2[0][0]);
-	pinMatrix.m_posit = (matrix1.m_posit + matrix2.m_posit).Scale(0.5f);
-	CustomControlledBallAndSocket* const joint2 = new CustomControlledBallAndSocket(pinMatrix, box1, box2);
-	joint2->SetAngularVelocity(1000.0f * 3.141592f / 180.0f);
-	joint2->SetPitchAngle(45.0f * 3.141592f / 180.0f);
-	joint2->SetYawAngle(30.0f * 3.141592f / 180.0f);
-	joint2->SetRollAngle(25.0f * 3.141592f / 180.0f);
-
-	// link next box
-	dMatrix matrix3;
-	NewtonBodyGetMatrix(box3, &matrix3[0][0]);
-	pinMatrix.m_posit = (matrix2.m_posit + matrix3.m_posit).Scale(0.5f);
-	CustomControlledBallAndSocket* const joint3 = new CustomControlledBallAndSocket(pinMatrix, box2, box3);
-	joint3->SetAngularVelocity(1000.0f * 3.141592f / 180.0f);
-	joint3->SetPitchAngle(45.0f * 3.141592f / 180.0f);
-	joint3->SetYawAngle(30.0f * 3.141592f / 180.0f);
-	joint3->SetRollAngle(25.0f * 3.141592f / 180.0f);
-
-#ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
-	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
-	NewtonSkeletonContainerAttachBone(skeleton, box2, box1);
-	NewtonSkeletonContainerAttachBone(skeleton, box3, box2);
-	NewtonSkeletonContainerFinalize(skeleton);
-#endif
-}
-
 
 void StandardJoints (DemoEntityManager* const scene)
 {
@@ -762,14 +700,15 @@ void StandardJoints (DemoEntityManager* const scene)
     dVector location (0.0f, 0.0f, 0.0f, 0.0f);
     dVector size (1.5f, 2.0f, 2.0f, 0.0f);
 
-	AddDistance (scene, dVector (-20.0f, 0.0f, -20.0f));
-	AddBallAndSockectWithFriction (scene, dVector (-20.0f, 0.0f, -15.0f));
-	Add6DOF (scene, dVector (-20.0f, 0.0f, -10.0f));
-	AddUniversal (scene, dVector (-20.0f, 0.0f, -5.0f));
-	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -0.0f));
-	AddHinge (scene, dVector (-20.0f, 0.0f, 5.0f));
-	AddSlider (scene, dVector (-20.0f, 0.0f, 10.0f));
-	AddCylindrical (scene, dVector (-20.0f, 0.0f, 15.0f));
+//	AddDistance (scene, dVector (-20.0f, 0.0f, -20.0f));
+//	AddBallAndSockectWithFriction (scene, dVector (-20.0f, 0.0f, -15.0f));
+//	Add6DOF (scene, dVector (-20.0f, 0.0f, -10.0f));
+//	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -5.0f));
+
+	AddHinge (scene, dVector (-20.0f, 0.0f, 0.0f));
+	AddSlider (scene, dVector (-20.0f, 0.0f, 5.0f));
+	AddCylindrical (scene, dVector (-20.0f, 0.0f, 10.0f));
+	AddUniversal (scene, dVector (-20.0f, 0.0f, 15.0f));
 
 	//just to show up add some relational joints example 
 	AddGear (scene, dVector (-20.0f, 0.0f, 20.0f));
