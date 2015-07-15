@@ -114,9 +114,6 @@ CustomLimitBallAndSocket::CustomLimitBallAndSocket(const dMatrix& pinAndPivotFra
 CustomLimitBallAndSocket::CustomLimitBallAndSocket(const dMatrix& childPinAndPivotFrame, NewtonBody* const child, const dMatrix& parentPinAndPivotFrame, NewtonBody* const parent)
 	:CustomBallAndSocket(childPinAndPivotFrame, child, parent)
 	,m_rotationOffset(childPinAndPivotFrame * parentPinAndPivotFrame.Inverse())
-//	,m_pitch()
-//	,m_yaw()
-//	,m_roll()
 {
 	SetConeAngle (0.0f);
 	SetTwistAngle (0.0f, 0.0f);
@@ -488,13 +485,10 @@ void CustomControlledBallAndSocket::SubmitConstraints (dFloat timestep, int thre
 	}
 
 	dVector euler (m_pitch.Update (euler0.m_x), m_yaw.Update (euler0.m_y), m_roll.Update (euler0.m_z), 0.0f);
-	//dTrace (("(%f %f %f) (%f %f %f)\n", m_pitch.m_angle * 180.0f / 3.141592f, m_yaw.m_angle * 180.0f / 3.141592f, m_roll.m_angle * 180.0f / 3.141592f,  euler0.m_x * 180.0f / 3.141592f, euler0.m_y * 180.0f / 3.141592f, euler0.m_z * 180.0f / 3.141592f));
 
-	//bool limitViolation = false;
 	for (int i = 0; i < 3; i ++) {
 		dFloat error = m_targetAngles[i] - euler[i];
 		if (dAbs (error) > (0.125f * 3.14159213f / 180.0f) ) {
-			//limitViolation = true;
 			dFloat angularStep = dSign(error) * m_angulaSpeed * timestep;
 			if (angularStep > 0.0f) {
 				if (angularStep > error) {
@@ -509,8 +503,6 @@ void CustomControlledBallAndSocket::SubmitConstraints (dFloat timestep, int thre
 		}
 	}
 
-
-	//dMatrix pyr (dPitchMatrix(m_pitch.m_angle) * dYawMatrix(m_yaw.m_angle) * dRollMatrix(m_roll.m_angle));
 	dMatrix p0y0r0 (dPitchMatrix(euler[0]) * dYawMatrix(euler[1]) * dRollMatrix(euler[2]));
 	dMatrix baseMatrix (p0y0r0 * matrix1);
 	dMatrix rotation (matrix0.Inverse() * baseMatrix);
