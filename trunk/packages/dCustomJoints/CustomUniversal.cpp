@@ -171,12 +171,12 @@ void CustomUniversal::SetLimis_1(dFloat minAngle, dFloat maxAngle)
 
 dFloat CustomUniversal::GetJointAngle_0 () const
 {
-	return m_curJointAngle_0.GetAngle();
+	return -m_curJointAngle_0.GetAngle();
 }
 
 dFloat CustomUniversal::GetJointAngle_1 () const
 {
-	return m_curJointAngle_1.GetAngle();
+	return -m_curJointAngle_1.GetAngle();
 }
 
 dFloat CustomUniversal::GetJointOmega_0 () const
