@@ -204,7 +204,7 @@ class dgJacobianMatrixElement
 	dgFloat32 m_deltaForce;
 
 	dgFloat32 m_diagDamp;
-	dgFloat32 m_invDJMinvJt;
+	dgFloat32 m_invJMinvJt;
 	dgFloat32 m_restitution;
 	dgFloat32 m_penetration;
 
