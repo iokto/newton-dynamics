@@ -74,9 +74,9 @@ class CustomDistance: public CustomJoint
 		}
 
 		// Restrict the movement on the pivot point along all tree orthonormal direction
-		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_front[0]);
-		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_up[0]);
-		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix1.m_right[0]);
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix0.m_front[0]);
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix0.m_up[0]);
+		NewtonUserJointAddLinearRow (m_joint, &p0[0], &p1[0], &matrix0.m_right[0]);
 	}
 
 	//dMatrix m_localPivot;
@@ -239,11 +239,11 @@ static void AddDistance (DemoEntityManager* const scene, const dVector& origin)
 	dVector pivot1 (matrix1.m_posit);
 
 	// connect bodies at a corner
-	new CustomDistance (pivot0, pivot1, box0, box1);
-
+	new CustomDistance (pivot1, pivot0, box1, box0);
 	
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
@@ -284,7 +284,8 @@ static void AddLimitedBallAndSocket (DemoEntityManager* const scene, const dVect
 	joint2->SetTwistAngle(-30.0f * 3.141592f / 180.0f, 30.0f * 3.141592f / 180.0f);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	NewtonSkeletonContainerAttachBone(skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize(skeleton);
@@ -311,11 +312,11 @@ static void AddBallAndSockectWithFriction (DemoEntityManager* const scene, const
 	dMatrix matrix1;
 	NewtonBodyGetMatrix (box1, & matrix1[0][0]);
 	pinMatrix.m_posit = (matrix0.m_posit + matrix1.m_posit).Scale (0.5f);
-	//new CustomBallAndSocket (pinMatrix, box0, box1);
-	new CustomBallAndSocketWithFriction (pinMatrix, box0, box1, 10.0f);
+	new CustomBallAndSocketWithFriction (pinMatrix, box1, box0, 10.0f);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
@@ -363,11 +364,13 @@ static void AddUniversal(DemoEntityManager* const scene, const dVector& origin)
 	NewtonBodyGetMatrix(box1, &matrix[0][0]);
 	matrix = dYawMatrix (3.1416f * 0.5f) * matrix; 
 	NewtonBodySetMatrix(box1, &matrix[0][0]);
+	((DemoEntity*) NewtonBodyGetUserData(box1))->ResetMatrix (*scene, matrix);
+
 
 	NewtonBodyGetMatrix(box2, &matrix[0][0]);
 	matrix = dYawMatrix(3.1416f * 0.5f) * matrix;
 	NewtonBodySetMatrix(box2, &matrix[0][0]);
-
+	((DemoEntity*) NewtonBodyGetUserData(box2))->ResetMatrix (*scene, matrix);
 
 	//connect the box0 to the base by a fix joint (a hinge with zero limit)
 	NewtonBodyGetMatrix(box0, &matrix[0][0]);
@@ -387,7 +390,8 @@ static void AddUniversal(DemoEntityManager* const scene, const dVector& origin)
 
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	NewtonSkeletonContainerAttachBone(skeleton, box2, box0);
 	NewtonSkeletonContainerFinalize(skeleton);
@@ -399,11 +403,12 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 {
 	dVector size (1.0f, 1.0f, 1.0f);
 	NewtonBody* const box0 = CreateCapule(scene, origin + dVector(0.0f, 9.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box1 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 2.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box2 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 4.0f, 0.0f, 0.0f), size);
-	NewtonBody* const box3 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 6.0f, 0.0f, 0.0f), size);
+//	NewtonBody* const box1 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 2.0f, 0.0f, 0.0f), size);
+//	NewtonBody* const box2 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 4.0f, 0.0f, 0.0f), size);
+//	NewtonBody* const box3 = CreateCapule(scene, origin + dVector(0.0f, 9.0 - size.m_y * 6.0f, 0.0f, 0.0f), size);
 
 	dMatrix pinMatrix (dGrammSchmidt (dVector (0.0f, -1.0f, 0.0f, 0.0f)));
+//dMatrix pinMatrix (dGrammSchmidt (dVector (1.0f, 0.0f, 0.0f, 0.0f)));
 
 	// connect first box to the world
 	dMatrix matrix0;
@@ -411,10 +416,12 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 	pinMatrix.m_posit = matrix0.m_posit + dVector (0.0f, size.m_y, 0.0f, 0.0f);
 	CustomControlledBallAndSocket* const joint0 = new CustomControlledBallAndSocket (pinMatrix, box0, NULL);
 	joint0->SetAngularVelocity (2000.0f * 3.141592f / 180.0f);
-	joint0->SetPitchAngle (-45.0f * 3.141592f / 180.0f);
-	joint0->SetYawAngle (-85.0f * 3.141592f / 180.0f);
-	joint0->SetRollAngle (120.0f * 3.141592f / 180.0f);
-
+//	joint0->SetPitchAngle (-45.0f * 3.141592f / 180.0f);
+//	joint0->SetYawAngle (-85.0f * 3.141592f / 180.0f);
+//	joint0->SetRollAngle (120.0f * 3.141592f / 180.0f);
+	
+joint0->SetPitchAngle (90.0f * 3.141592f / 180.0f);	
+/*
 	// link the two boxes
 	dMatrix matrix1;
 	NewtonBodyGetMatrix (box1, &matrix1[0][0]);
@@ -452,6 +459,7 @@ static void AddPoweredRagDoll (DemoEntityManager* const scene, const dVector& or
 	NewtonSkeletonContainerAttachBone(skeleton, box3, box2);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
+*/
 }
 
 void AddHinge (DemoEntityManager* const scene, const dVector& origin)
@@ -462,8 +470,8 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
     NewtonBody* const box1 = CreateBox (scene, origin + dVector (1.5f, 4.0f, 0.0f, 0.0f), size);
     NewtonBody* const box2 = CreateBox (scene, origin + dVector (3.0f, 4.0f, 0.0f, 0.0f), size);
 
-    // the joint pin is the first row of the matrix, to make a upright pin we
-    // take the x axis and rotate by 90 degree around the y axis
+    //the joint pin is the first row of the matrix, to make a upright pin we
+    //take the x axis and rotate by 90 degree around the y axis
     dMatrix localPin (dRollMatrix(90.0f * 3.141592f / 180.0f));
 
     // connect first box to the world
@@ -497,7 +505,9 @@ void AddHinge (DemoEntityManager* const scene, const dVector& origin)
 	hinge2->SetFriction (20.0f);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), NULL, NULL);
+//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate (scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainerAttachBone (skeleton, box0, NULL);	
 	NewtonSkeletonContainerAttachBone (skeleton, box1, box0);
 	NewtonSkeletonContainerAttachBone (skeleton, box2, box1);
 	NewtonSkeletonContainerFinalize (skeleton);
@@ -517,6 +527,7 @@ static void AddSlider (DemoEntityManager* const scene, const dVector& origin)
 	CustomHinge* const hinge = new CustomHinge(matrix, box0, NULL);
 	hinge->EnableLimits(true);
 	hinge->SetLimis(0.0f, 0.0f);
+//	NewtonBodySetMassMatrix(box0, 0.0f, 0.0f, 0.0f, 0.0f);
 
 	// connect the bodies by a Slider joint
     NewtonBodyGetMatrix (box1, &matrix[0][0]);
@@ -529,7 +540,9 @@ static void AddSlider (DemoEntityManager* const scene, const dVector& origin)
     slider->SetLimis (-4.0f, 4.0f);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+//	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
@@ -560,7 +573,8 @@ static void AddSlidingContact(DemoEntityManager* const scene, const dVector& ori
 	slider->SetAngularLimis (-60.0f * 3.1416f / 180.0f, 60.0f * 3.1416f / 180.0f);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, box1, box0);
 	NewtonSkeletonContainerFinalize(skeleton);
 #endif
@@ -575,10 +589,11 @@ static void AddCylindrical (DemoEntityManager* const scene, const dVector& origi
 
     dMatrix matrix;
 	//connect the box0 to the base by a fix joint (a hinge with zero limit)
-	NewtonBodyGetMatrix(box0, &matrix[0][0]);
-	CustomHinge* const fixJoint = new CustomHinge(matrix, box0, NULL);
-	fixJoint->EnableLimits(true);
-	fixJoint->SetLimis(0.0f, 0.0f);
+	//NewtonBodyGetMatrix(box0, &matrix[0][0]);
+	//CustomHinge* const fixJoint = new CustomHinge(matrix, box0, NULL);
+	//fixJoint->EnableLimits(true);
+	//fixJoint->SetLimis(0.0f, 0.0f);
+	NewtonBodySetMassMatrix(box0, 0.0f, 0.0f, 0.0f, 0.0f);
 
 	// connect the bodies by a CorkScrew joint
     NewtonBodyGetMatrix (box1, &matrix[0][0]);
@@ -643,7 +658,8 @@ static void AddGear (DemoEntityManager* const scene, const dVector& origin)
     new CustomGear (4.0f, pin0, pin1, body0, body1);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), box0, NULL);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, box0, NULL);
 	NewtonSkeletonContainerAttachBone(skeleton, hinge0->GetBody0(), box0);
 	NewtonSkeletonContainerAttachBone(skeleton, hinge1->GetBody0(), box0);
 	NewtonSkeletonContainerFinalize(skeleton);
@@ -705,13 +721,13 @@ void AddPulley (DemoEntityManager* const scene, const dVector& origin)
     new CustomPulley (4.0f, pin0, pin1, body0, body1);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton0 = NewtonSkeletonContainerCreate(scene->GetNewton(), reel0, NULL);
-	NewtonSkeletonContainerAttachBone(skeleton0, slider0->GetBody0(), reel0);
-	NewtonSkeletonContainerFinalize(skeleton0);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, reel0, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, slider0->GetBody0(), reel0);
 
-	NewtonSkeletonContainer* const skeleton1 = NewtonSkeletonContainerCreate(scene->GetNewton(), reel1, NULL);
-	NewtonSkeletonContainerAttachBone(skeleton1, slider1->GetBody0(), reel1);
-	NewtonSkeletonContainerFinalize(skeleton1);
+	NewtonSkeletonContainerAttachBone(skeleton, reel1, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, slider1->GetBody0(), reel1);
+	NewtonSkeletonContainerFinalize(skeleton);
 #endif
 }
 
@@ -772,14 +788,14 @@ static void AddGearAndRack (DemoEntityManager* const scene, const dVector& origi
     new CustomRackAndPinion (1.0f, pin1, pin2, body1, body2);
 
 #ifdef _USE_HARD_JOINTS
-	NewtonSkeletonContainer* const skeleton0 = NewtonSkeletonContainerCreate(scene->GetNewton(), reel0, NULL);
-	NewtonSkeletonContainerAttachBone(skeleton0, hinge0->GetBody0(), reel0);
-	NewtonSkeletonContainerAttachBone(skeleton0, hinge1->GetBody0(), reel0);
-	NewtonSkeletonContainerFinalize(skeleton0);
+	NewtonSkeletonContainer* const skeleton = NewtonSkeletonContainerCreate(scene->GetNewton(), NULL, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, reel0, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, hinge0->GetBody0(), reel0);
+	NewtonSkeletonContainerAttachBone(skeleton, hinge1->GetBody0(), reel0);
 
-	NewtonSkeletonContainer* const skeleton1 = NewtonSkeletonContainerCreate(scene->GetNewton(), reel1, NULL);
-	NewtonSkeletonContainerAttachBone(skeleton1, cylinder->GetBody0(), reel1);
-	NewtonSkeletonContainerFinalize(skeleton1);
+	NewtonSkeletonContainerAttachBone(skeleton, reel1, NULL);
+	NewtonSkeletonContainerAttachBone(skeleton, cylinder->GetBody0(), reel1);
+	NewtonSkeletonContainerFinalize(skeleton);
 #endif
 }
 
@@ -868,18 +884,17 @@ void StandardJoints (DemoEntityManager* const scene)
     dVector location (0.0f, 0.0f, 0.0f, 0.0f);
     dVector size (1.5f, 2.0f, 2.0f, 0.0f);
 
-
+//	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -15.0f));
 	AddDistance (scene, dVector (-20.0f, 0.0f, -25.0f));
 	AddLimitedBallAndSocket (scene, dVector (-20.0f, 0.0f, -20.0f));
-	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -15.0f));
+//	AddPoweredRagDoll (scene, dVector (-20.0f, 0.0f, -15.0f));
 	AddBallAndSockectWithFriction (scene, dVector (-20.0f, 0.0f, -10.0f));
 	Add6DOF (scene, dVector (-20.0f, 0.0f, -5.0f));
-
 	AddHinge (scene, dVector (-20.0f, 0.0f, 0.0f));
+
 	AddSlider (scene, dVector (-20.0f, 0.0f, 5.0f));
 	AddCylindrical (scene, dVector (-20.0f, 0.0f, 10.0f));
 	AddUniversal (scene, dVector (-20.0f, 0.0f, 15.0f));
-
 	//just to show up add some relational joints example 
 	AddGear (scene, dVector (-20.0f, 0.0f, 20.0f));
 	AddPulley (scene, dVector (-20.0f, 0.0f, 25.0f));
@@ -887,6 +902,7 @@ void StandardJoints (DemoEntityManager* const scene)
 	AddSlidingContact (scene, dVector (-20.0f, 0.0f, 35.0f));
 
 //	AddPathFollow (scene, dVector (20.0f, 0.0f, 0.0f));
+
 
     // place camera into position
     dMatrix camMatrix (dGetIdentityMatrix());
