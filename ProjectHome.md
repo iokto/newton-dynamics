@@ -1,0 +1,1 @@
+Newton Dynamics is an accurate 3d Physics Library for real-time simulation of physics environments.
